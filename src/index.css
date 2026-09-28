@@ -1,0 +1,80 @@
+/* ============================================================
+   Stepping Stones — Global Stylesheet
+   Single CSS entry point for the unified app and all sub-apps.
+   ============================================================ */
+
+/* Google Fonts — used by the Plank sub-app */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+/* Tailwind v4 — single import covers all sub-apps */
+@import "tailwindcss";
+
+/* ----------------------------------------------------------
+   @theme — Custom font tokens (Plank sub-app)
+   ---------------------------------------------------------- */
+@theme {
+  --font-serif: "Cinzel", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-crisp: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ----------------------------------------------------------
+   Keyframe animations — The Expanding Edge sub-app
+   ---------------------------------------------------------- */
+@keyframes spin-tilted {
+  0% {
+    transform: rotate(15deg) rotateY(0deg);
+  }
+  100% {
+    transform: rotate(15deg) rotateY(360deg);
+  }
+}
+
+@keyframes spin-clockwise {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes gentle-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes slow-gentle-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-spin-tilted {
+  animation: spin-tilted 12s linear infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+.animate-spin-clockwise {
+  animation: spin-clockwise 20s linear infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+.animate-gentle-pulse {
+  animation: gentle-pulse 2s ease-in-out infinite;
+}
+
+.animate-slow-gentle-pulse {
+  animation: slow-gentle-pulse 5s ease-in-out infinite;
+}
