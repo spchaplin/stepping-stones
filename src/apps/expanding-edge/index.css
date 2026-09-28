@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@keyframes spin-tilted {
+  0% {
+    transform: rotate(15deg) rotateY(0deg);
+  }
+  100% {
+    transform: rotate(15deg) rotateY(360deg);
+  }
+}
+
+@keyframes spin-clockwise {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes gentle-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes slow-gentle-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-spin-tilted {
+  animation: spin-tilted 12s linear infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+.animate-spin-clockwise {
+  animation: spin-clockwise 20s linear infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+.animate-gentle-pulse {
+  animation: gentle-pulse 2s ease-in-out infinite;
+}
+
+.animate-slow-gentle-pulse {
+  animation: slow-gentle-pulse 5s ease-in-out infinite;
+}

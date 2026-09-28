@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" width="100%" height="100%">
+  <!-- Animating a water snake with a green and black color scheme -->
+  <defs>
+    <!-- Pattern or solid gradients for green & black segments -->
+    <linearGradient id="snake2-body-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#052e16"/> <!-- deep dark border green -->
+      <stop offset="25%" stop-color="#22c55e"/> <!-- vibrant neon green -->
+      <stop offset="50%" stop-color="#020617"/> <!-- absolute black -->
+      <stop offset="75%" stop-color="#10b981"/> <!-- emerald green -->
+      <stop offset="100%" stop-color="#14532d"/> <!-- deep rich forest green -->
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(0, 0)">
+    <!-- Flickering red tongue at the leading head (right-most edge near x=110) -->
+    <path d="M 110,20 L 119,16 M 110,20 L 119,24" stroke="#ef4444" stroke-width="2" fill="none">
+      <animate attributeName="opacity" values="1;0;1;0;1" dur="0.3s" repeatCount="indefinite" />
+      <animate attributeName="d" 
+        values="M 110,20 L 119,16 M 110,20 L 119,24;
+                M 110,19 L 119,22 M 110,19 L 117,15;
+                M 110,20 L 119,16 M 110,20 L 119,24" 
+        dur="0.6s" repeatCount="indefinite" />
+    </path>
+
+    <!-- Glowing reptile yellow eyes -->
+    <circle cx="103" cy="15" r="1.5" fill="#fbbf24" />
+    <circle cx="103" cy="25" r="1.5" fill="#fbbf24" />
+
+    <!-- Slithering Snake Body with seamless wavy keyframe morphs -->
+    <path fill="none" stroke="url(#snake2-body-grad)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+      <animate attributeName="d"
+        dur="1.2s"
+        repeatCount="indefinite"
+        values="
+          M 10,20 Q 22.5,5 35,20 T 60,20 T 85,20 L 110,20;
+          M 10,16 Q 22.5,32 35,16 T 60,24 T 85,16 L 110,20;
+          M 10,24 Q 22.5,8 35,24 T 60,16 T 85,24 L 110,20;
+          M 10,20 Q 22.5,5 35,20 T 60,20 T 85,20 L 110,20
+        "
+      />
+    </path>
+
+    <!-- Overlay black scale bands for the snake pattern -->
+    <path fill="none" stroke="#2a2a2a" stroke-width="7.5" stroke-linecap="butt" stroke-dasharray="3 14" opacity="0.95">
+      <animate attributeName="d"
+        dur="1.2s"
+        repeatCount="indefinite"
+        values="
+          M 10,20 Q 22.5,5 35,20 T 60,20 T 85,20 L 110,20;
+          M 10,16 Q 22.5,32 35,16 T 60,24 T 85,16 L 110,20;
+          M 10,24 Q 22.5,8 35,24 T 60,16 T 85,24 L 110,20;
+          M 10,20 Q 22.5,5 35,20 T 60,20 T 85,20 L 110,20
+        "
+      />
+    </path>
+    
+    <!-- Highlights / glowing neon scales for extra detail -->
+    <path fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.8">
+      <animate attributeName="d"
+        dur="1.2s"
+        repeatCount="indefinite"
+        values="
+          M 15,20 Q 22.5,7 30,20 T 55,20 T 80,20 L 105,20;
+          M 15,17 Q 22.5,30 30,17 T 55,23 T 80,17 L 105,20;
+          M 15,23 Q 22.5,10 30,23 T 55,17 T 80,23 L 105,20;
+          M 15,20 Q 22.5,7 30,20 T 55,20 T 80,20 L 105,20
+        "
+      />
+    </path>
+  </g>
+</svg>

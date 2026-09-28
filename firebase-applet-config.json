@@ -1,0 +1,10 @@
+{
+  "projectId": "speed-visualizer",
+  "appId": "1:624618956970:web:cff35eab41743a29aac8d3",
+  "apiKey": "AIzaSyAupP72GfqdOipFq6He2iO_FD7Dqk697iI",
+  "authDomain": "speed-visualizer.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-c2b86ed3-a059-4159-8144-f4c017a7af4a",
+  "storageBucket": "speed-visualizer.firebasestorage.app",
+  "messagingSenderId": "624618956970",
+  "measurementId": ""
+}

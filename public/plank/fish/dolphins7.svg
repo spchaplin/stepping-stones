@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="cp-main">
+      <rect height="400" width="600" y="0" x="0"/>
+    </clipPath>
+    <!-- Clip that shows ONLY below-waterline region (to hide dolphin when submerged) -->
+    <clipPath id="cp-above-water">
+      <rect x="-500" y="-500" width="1600" height="770"/>
+    </clipPath>
+  </defs>
+
+  <!-- Dolphin layer: clipped to above-water region so they vanish at waterline -->
+  <g id="dolphinLayer" clip-path="url(#cp-above-water)"></g>
+
+  <!-- Splash layer: rendered above everything, not clipped -->
+  <g id="splashLayer"></g>
+
+  <script type="text/javascript"><![CDATA[
+    const svgNS = "http://www.w3.org/2000/svg";
+    const WATER_Y = 270;
+
+    // --- Dolphin path data (original local coords, nose points LEFT toward negative X) ---
+    // Dolphins travel right→left, so the nose naturally faces the correct direction of travel.
+    // No X-flip needed. scale(s,s) keeps them right-side-up.
+    const BODY_PATH    = "M186.712,-83.084C175.079,-91.112,162.921,-89.624,156.207,-88.501C146.207,-95.756,131.183,-113.801,68.5,-120.5C45.5,-123.5,-8.754,-117.076,-15.754,-80.326C-17.754,-75.576,-21.748,-72.794,-26.498,-71.044C-31.248,-69.294,-30.998,-65.044,-25.748,-65.294C-20.498,-65.544,-5.498,-73.294,-2.748,-73.294C0.002,-73.294,41.078,-75.978,41.078,-75.978C41.078,-75.978,58.706,-60.022,84.719,-68.748C84.469,-77.748,75.081,-75.205,70.703,-79.559C80.453,-79.809,106.08,-96.843,149.328,-84.904C153.322,-78.667,153.438,-70.14,167.334,-63.145C167.495,-69.145,167.776,-71.925,165.917,-75.407C173.76,-77.199,188.462,-82.334,186.712,-83.084Z";
+    const BELLY_PATH   = "M150.166,-90.006C108.867,-109.91,-6.498,-85.544,-24.748,-66.919C-17.373,-65.419,-10.873,-68.794,-5.873,-68.794C-0.873,-68.794,3.702,-71.255,6.625,-71.125C12.25,-70.875,59.305,-65.968,83.25,-76C111.814,-87.968,131.221,-86.596,150.166,-90.006Z";
+    const DORSAL_PATH  = "M81.352,-141.645C68.227,-140.645,53.375,-125.875,51.25,-119.625C55.75,-120.75,72.089,-118.684,72.089,-118.684C72.089,-118.684,79.727,-134.895,81.352,-141.645Z";
+    const TAIL_PATH    = "M42.771,-73.631C38.521,-74.006,25.71,-71.654,25.71,-71.654C25.71,-71.654,40.633,-58.927,56.557,-59.907C57.932,-64.407,42.521,-70.881,42.771,-73.631Z";
+    const SHEEN_PATH   = "M114.566,-112.062C64.544,-128.761,42.659,-122.974,15.342,-113.208C-9.537,-104.314,-17.267,-81.403,-12.55,-81.373C-3.01,-81.311,2.12,-97.275,14.265,-104.213C31.718,-114.183,58.229,-114.255,114.566,-112.062Z";
+
+    function createDolphinGroup() {
+      const g = document.createElementNS(svgNS, "g");
+      function makePath(d, fill, stroke) {
+        const p = document.createElementNS(svgNS, "path");
+        p.setAttribute("d", d);
+        p.setAttribute("fill", fill);
+        if (stroke) {
+          p.setAttribute("stroke", stroke);
+          p.setAttribute("stroke-width", "1");
+          p.setAttribute("stroke-linejoin", "miter");
+          p.setAttribute("stroke-linecap", "butt");
+        }
+        return p;
+      }
+      g.appendChild(makePath(BODY_PATH,   "#8ac4f3", "#4a6da8"));
+      g.appendChild(makePath(BELLY_PATH,  "#f4f5f4", "#4a6da8"));
+      g.appendChild(makePath(DORSAL_PATH, "#8ac4f3", "#4a6da8"));
+      g.appendChild(makePath(TAIL_PATH,   "#8ac4f3", "#4a6da8"));
+      g.appendChild(makePath(SHEEN_PATH,  "#48a1ea", null));
+      return g;
+    }
+
+    // --- Splash system ---
+    // A splash is a burst of teardrop droplets radiating upward from a point
+    const splashLayer = document.getElementById("splashLayer");
+    const activeSplashes = [];
+
+    function spawnSplash(x, y) {
+      const NUM_DROPS = 7;
+      const splash = { drops: [], born: performance.now(), duration: 520 };
+      for (let i = 0; i < NUM_DROPS; i++) {
+        const angle = (-110 + i * (220 / (NUM_DROPS - 1))) * Math.PI / 180; // fan upward
+        const speed = 38 + Math.random() * 38;
+        const drop = document.createElementNS(svgNS, "ellipse");
+        drop.setAttribute("rx", "2.2");
+        drop.setAttribute("ry", "4.5");
+        drop.setAttribute("fill", "#7dd4f8");
+        drop.setAttribute("opacity", "0.85");
+        splashLayer.appendChild(drop);
+        splash.drops.push({ el: drop, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, x, y });
+      }
+      activeSplashes.push(splash);
+    }
+
+    function updateSplashes(now) {
+      for (let si = activeSplashes.length - 1; si >= 0; si--) {
+        const splash = activeSplashes[si];
+        const elapsed = now - splash.born;
+        const t = elapsed / splash.duration;
+        if (t >= 1) {
+          splash.drops.forEach(d => splashLayer.removeChild(d.el));
+          activeSplashes.splice(si, 1);
+          continue;
+        }
+        const gravity = 180; // px/s^2 downward
+        const sec = elapsed / 1000;
+        splash.drops.forEach(d => {
+          const px = d.x + d.vx * sec;
+          const py = d.y + d.vy * sec + 0.5 * gravity * sec * sec;
+          const fade = 1 - t * t;
+          // teardrop rotates along velocity
+          const vxCur = d.vx;
+          const vyCur = d.vy + gravity * sec;
+          const ang = Math.atan2(vyCur, vxCur) * 180 / Math.PI + 90;
+          d.el.setAttribute("cx", px.toFixed(1));
+          d.el.setAttribute("cy", py.toFixed(1));
+          d.el.setAttribute("transform", `rotate(${ang.toFixed(1)},${px.toFixed(1)},${py.toFixed(1)})`);
+          d.el.setAttribute("opacity", (fade * 0.85).toFixed(3));
+        });
+      }
+    }
+
+    // --- Dolphin configs ---
+    // startX: right side (where head emerges), endX: left side (where head re-enters)
+    // Dolphins travel RIGHT → LEFT. Nose points left in local coords = correct direction.
+    // peakHeight: pixels above WATER_Y at apex
+    // duration: full cycle ms (air + underwater pause)
+    // delayMs: stagger offset
+    // scale: render size
+    const dolphins = [
+      { startX: 550, endX: 50, peakHeight: 115, duration: 2900, delayMs:    0, scale: 0.285 },
+      { startX: 530, endX: 70, peakHeight:  85, duration: 2600, delayMs: 1050, scale: 0.232 },
+      { startX: 570, endX: 30, peakHeight: 140, duration: 3100, delayMs: 1900, scale: 0.322 },
+    ];
+
+    const layer = document.getElementById("dolphinLayer");
+    const groups = [];
+
+    dolphins.forEach(cfg => {
+      const wrapper = document.createElementNS(svgNS, "g");
+      const dg = createDolphinGroup();
+      wrapper.appendChild(dg);
+      layer.appendChild(wrapper);
+      // Track splash state so we only fire once per entry/exit
+      groups.push({ wrapper, cfg, dg, didEntrySplash: false, didExitSplash: false });
+    });
+
+    // Air fraction: how much of the cycle the dolphin is above water
+    const AIR_FRACTION = 0.72;
+
+    function animate(now) {
+      groups.forEach(state => {
+        const { wrapper, cfg, dg } = state;
+        const cycleDur = cfg.duration;
+        const t_raw = ((now + cfg.delayMs * 9999) % cycleDur) / cycleDur; // 0..1 over full cycle
+
+        // Only airborne during the first AIR_FRACTION of the cycle
+        if (t_raw >= AIR_FRACTION) {
+          wrapper.setAttribute("opacity", "0");
+          // Reset splash flags when underwater
+          state.didEntrySplash = false;
+          state.didExitSplash = false;
+          return;
+        }
+
+        // arcT: 0..1 along the arc
+        const arcT = t_raw / AIR_FRACTION;
+
+        // Position along arc
+        const x = cfg.startX + (cfg.endX - cfg.startX) * arcT;
+        const yOffset = -Math.sin(Math.PI * arcT) * cfg.peakHeight;
+        const y = WATER_Y + yOffset;
+
+        // Tangent angle: look a tiny bit ahead
+        const dt = 0.003;
+        const arcT2 = Math.min(arcT + dt, 1);
+        const x2 = cfg.startX + (cfg.endX - cfg.startX) * arcT2;
+        const yOffset2 = -Math.sin(Math.PI * arcT2) * cfg.peakHeight;
+        const y2 = WATER_Y + yOffset2;
+        // Angle of travel in degrees
+        const angle = Math.atan2(y2 - y, x2 - x) * 180 / Math.PI;
+
+        // Opacity: fade in at start, fade out at end
+        let opacity = 1;
+        const fadeZone = 0.07;
+        if (arcT < fadeZone) opacity = arcT / fadeZone;
+        else if (arcT > 1 - fadeZone) opacity = (1 - arcT) / fadeZone;
+        wrapper.setAttribute("opacity", opacity.toFixed(3));
+
+        // Splash on entry: fire once, right at the waterline crossing (arcT≈0 → x≈startX)
+        if (!state.didEntrySplash && arcT > 0.01 && arcT < 0.08) {
+          state.didEntrySplash = true;
+          spawnSplash(cfg.startX, WATER_Y);
+        }
+        // Splash on exit: fire once, right at the waterline crossing (arcT≈1 → x≈endX)
+        if (!state.didExitSplash && arcT > 0.92) {
+          state.didExitSplash = true;
+          spawnSplash(cfg.endX, WATER_Y);
+        }
+
+        // Transform:
+        //   translate to (x, y) in SVG space
+        //   rotate(angle - 177): the dolphin's nose→tail axis sits at 177° in local space
+        //     (after the centering translate below), so subtracting 177 aligns the nose
+        //     with the direction of travel. This single correction also keeps the dorsal
+        //     fin pointing upward throughout the arc — no separate Y-flip needed.
+        //   scale(s, s) — uniform positive scale, no flips
+        //   translate(-80, 90) — centers the body on the local origin
+        const s = cfg.scale;
+        dg.setAttribute("transform",
+          `translate(${x.toFixed(1)},${y.toFixed(1)}) rotate(${(angle - 177).toFixed(1)}) scale(${s},${s}) translate(-80,90)`
+        );
+      });
+
+      updateSplashes(now);
+      requestAnimationFrame(animate);
+    }
+
+    requestAnimationFrame(animate);
+  ]]></script>
+</svg>
