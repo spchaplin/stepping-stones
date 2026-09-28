@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Environment variables — never commit secrets
+.env
+.env.local
+.env.*.local
+
+# Vite
+*.local
+vite.config.ts.timestamp-*
+
+# TypeScript
+*.tsbuildinfo
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Compiled server bundle
+server.js
