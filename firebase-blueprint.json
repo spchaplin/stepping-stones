@@ -1,0 +1,121 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Account details for speed visualizer personal shoppers.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "lastLogin": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "activeCategory": {
+          "type": "string",
+          "enum": [
+            "faster",
+            "slower",
+            "strategy"
+          ]
+        }
+      },
+      "required": [
+        "userId",
+        "email",
+        "lastLogin",
+        "activeCategory"
+      ]
+    },
+    "PaceCard": {
+      "title": "PaceCard",
+      "description": "A speed-up or bottleneck factor note card with its layout order.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "stage": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "faster",
+            "slower"
+          ]
+        },
+        "order": {
+          "type": "integer"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "stage",
+        "type",
+        "order",
+        "userId",
+        "updatedAt"
+      ]
+    },
+    "StrategyCard": {
+      "title": "StrategyCard",
+      "description": "A strategic priority note card with its layout order.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "order",
+        "userId",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles and login record info."
+    },
+    "/users/{userId}/cards/{cardId}": {
+      "schema": "PaceCard",
+      "description": "All speed visualizer cards belonging to a user."
+    },
+    "/users/{userId}/strategyCards/{cardId}": {
+      "schema": "StrategyCard",
+      "description": "All strategic priority cards belonging to a user."
+    }
+  }
+}

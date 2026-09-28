@@ -1,0 +1,93 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Catch-all default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global reusable helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Entity validator: User
+    function isValidUser(data, userId) {
+      return data.keys().hasAll(['userId', 'email', 'activeCategory']) 
+        && data.userId == userId
+        && data.email is string
+        && data.activeCategory is string
+        && (data.activeCategory == 'faster' || data.activeCategory == 'slower' || data.activeCategory == 'strategy');
+    }
+
+    // Entity validator: StrategyCard
+    function isValidStrategyCard(data, userId) {
+      return data.keys().hasAll(['id', 'name'])
+        && data.id is string
+        && data.name is string
+        && (!('userId' in data) || data.userId == userId);
+    }
+
+    // Entity validator: PaceCard
+    function isValidCard(data, userId) {
+      return data.keys().hasAll(['id', 'name', 'stage', 'type'])
+        && data.id is string
+        && data.name is string
+        && (data.stage is int || data.stage is float)
+        && data.type is string
+        && (data.type == 'faster' || data.type == 'slower')
+        && (!('userId' in data) || data.userId == userId);
+    }
+
+    // User Profile matching rule
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(incoming(), userId);
+      allow update: if isOwner(userId) && isValidUser(incoming(), userId);
+
+      // Card entries subcollection matching rule
+      match /cards/{cardId} {
+        allow list: if isOwner(userId);
+        allow get: if isOwner(userId);
+        allow create: if isOwner(userId) 
+          && isValidId(cardId)
+          && isValidCard(incoming(), userId);
+        
+        allow update: if isOwner(userId)
+          && isValidCard(incoming(), userId);
+          
+        allow delete: if isOwner(userId) && isValidId(cardId);
+      }
+
+      // Strategy Card entries subcollection matching rule
+      match /strategyCards/{cardId} {
+        allow list: if isOwner(userId);
+        allow get: if isOwner(userId);
+        allow create: if isOwner(userId) 
+          && isValidId(cardId)
+          && isValidStrategyCard(incoming(), userId);
+        
+        allow update: if isOwner(userId)
+          && isValidStrategyCard(incoming(), userId);
+          
+        allow delete: if isOwner(userId) && isValidId(cardId);
+      }
+    }
+  }
+}
