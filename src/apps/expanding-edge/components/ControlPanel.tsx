@@ -73,19 +73,19 @@ const PLANET_PRESETS: { type: PlanetType; label: string; desc: string; color: st
 const getPlanetPathAndState = (type: PlanetType): { path: string; isStill: boolean } => {
   switch (type) {
     case 'elysium':
-      return { path: '/assets/.aistudio/planet/elysium.svg', isStill: false };
+      return { path: '/expanding-edge/planet/elysium.svg', isStill: false };
     case 'gaia':
-      return { path: '/assets/.aistudio/planet/gaia.svg', isStill: false };
+      return { path: '/expanding-edge/planet/gaia.svg', isStill: false };
     case 'lumina':
-      return { path: '/assets/.aistudio/planet/lumina.svg', isStill: true };
+      return { path: '/expanding-edge/planet/lumina.svg', isStill: true };
     case 'mythos':
-      return { path: '/assets/.aistudio/planet/mythos.svg', isStill: false };
+      return { path: '/expanding-edge/planet/mythos.svg', isStill: false };
     case 'storm':
-      return { path: '/assets/.aistudio/planet/storm.svg', isStill: true };
+      return { path: '/expanding-edge/planet/storm.svg', isStill: true };
     case 'vespera':
-      return { path: '/assets/.aistudio/planet/vespera.svg', isStill: true };
+      return { path: '/expanding-edge/planet/vespera.svg', isStill: true };
     default:
-      return { path: '/assets/.aistudio/planet/gaia.svg', isStill: false };
+      return { path: '/expanding-edge/planet/gaia.svg', isStill: false };
   }
 };
 
@@ -127,7 +127,7 @@ const TimelineCoreItem = React.memo(function TimelineCoreItem({
       <div className="absolute -left-[38px] top-0 w-8 h-8 flex items-center justify-center">
         <svg viewBox="-25 -25 50 50" className="w-9 h-9 overflow-visible">
           <image
-            href="/assets/.aistudio/planet/sun_512.gif"
+            href="/expanding-edge/planet/sun_512.gif"
             x="-25"
             y="-25"
             width="50"

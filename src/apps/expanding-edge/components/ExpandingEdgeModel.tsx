@@ -85,19 +85,19 @@ const ExpandingEdgeModel = React.memo(function ExpandingEdgeModel({ state, setSt
   const getPlanetPath = (planetType: PlanetType): { path: string; isStill: boolean } => {
     switch (planetType) {
       case 'elysium':
-        return { path: '/assets/.aistudio/planet/elysium.svg', isStill: false };
+        return { path: '/expanding-edge/planet/elysium.svg', isStill: false };
       case 'gaia':
-        return { path: '/assets/.aistudio/planet/gaia.svg', isStill: false };
+        return { path: '/expanding-edge/planet/gaia.svg', isStill: false };
       case 'lumina':
-        return { path: '/assets/.aistudio/planet/lumina.svg', isStill: true };
+        return { path: '/expanding-edge/planet/lumina.svg', isStill: true };
       case 'mythos':
-        return { path: '/assets/.aistudio/planet/mythos.svg', isStill: false };
+        return { path: '/expanding-edge/planet/mythos.svg', isStill: false };
       case 'storm':
-        return { path: '/assets/.aistudio/planet/storm.svg', isStill: true };
+        return { path: '/expanding-edge/planet/storm.svg', isStill: true };
       case 'vespera':
-        return { path: '/assets/.aistudio/planet/vespera.svg', isStill: true };
+        return { path: '/expanding-edge/planet/vespera.svg', isStill: true };
       default:
-        return { path: '/assets/.aistudio/planet/gaia.svg', isStill: false };
+        return { path: '/expanding-edge/planet/gaia.svg', isStill: false };
     }
   };
 
@@ -406,7 +406,7 @@ const ExpandingEdgeModel = React.memo(function ExpandingEdgeModel({ state, setSt
 
             {/* Solid Sun Core Image */}
             <image
-              href="/assets/.aistudio/planet/sun_512.gif"
+              href="/expanding-edge/planet/sun_512.gif"
               x={cx - rCore}
               y={cy - rCore}
               width={rCore * 2}

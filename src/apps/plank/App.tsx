@@ -296,7 +296,7 @@ export default function App() {
   useEffect(() => {
     // Programmatically initialize the background audio to avoid DOM-ref timing and clearing issues
     if (!bgAudioRef.current) {
-      bgAudioRef.current = new Audio("/birds/bird%20sounds.mp3");
+      bgAudioRef.current = new Audio("/plank/birds/bird%20sounds.mp3");
     }
     const audio = bgAudioRef.current;
     if (!audio) return;

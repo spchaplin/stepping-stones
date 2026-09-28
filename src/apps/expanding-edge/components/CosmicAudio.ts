@@ -35,7 +35,7 @@ class CosmicAudioEngine {
   private ensureAudioEl() {
     if (!this.audioEl) {
       try {
-        this.audioEl = new Audio('/sound/space.mp3');
+        this.audioEl = new Audio('/expanding-edge/sound/space.mp3');
         this.audioEl.loop = true;
         this.audioEl.volume = this.currentVolume;
       } catch (e) {
