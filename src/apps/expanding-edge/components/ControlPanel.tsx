@@ -132,7 +132,6 @@ const TimelineCoreItem = React.memo(function TimelineCoreItem({
             y="-25"
             width="50"
             height="50"
-            referrerPolicy="no-referrer"
             className="animate-pulse"
           />
         </svg>
@@ -278,7 +277,6 @@ const TimelineStepItem = React.memo(function TimelineStepItem({
                   y="-20"
                   width="40"
                   height="40"
-                  referrerPolicy="no-referrer"
                 />
               </g>
             </svg>
@@ -686,7 +684,6 @@ export default function ControlPanel({ state, setState, activeStepId, setActiveS
                                         y={-previewRadius}
                                         width={previewRadius * 2}
                                         height={previewRadius * 2}
-                                        referrerPolicy="no-referrer"
                                       />
                                     );
                                   })()}

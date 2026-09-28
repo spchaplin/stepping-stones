@@ -412,7 +412,6 @@ const ExpandingEdgeModel = React.memo(function ExpandingEdgeModel({ state, setSt
               width={rCore * 2}
               height={rCore * 2}
               style={{ pointerEvents: 'none', maxWidth: '400px', background: 'transparent' }}
-              referrerPolicy="no-referrer"
             />
 
             {/* Selection / Highlight Stroke Overlay */}
@@ -585,7 +584,6 @@ const ExpandingEdgeModel = React.memo(function ExpandingEdgeModel({ state, setSt
                           y={-scaledRadius}
                           width={scaledRadius * 2}
                           height={scaledRadius * 2}
-                          referrerPolicy="no-referrer"
                           className="filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] group-hover:scale-110 transition-transform duration-300"
                         />
                       </g>
