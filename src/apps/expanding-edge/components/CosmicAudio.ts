@@ -66,13 +66,15 @@ class CosmicAudioEngine {
     }
   }
 
-  public toggleBackgroundHum(enable: boolean) {
+  public toggleBackgroundHum(enable: boolean, immediate: boolean = false) {
     this.ensureInitialized();
     
     if (enable) {
       if (this.audioEl) {
         this.audioEl.play().catch(err => {
-          console.warn("Autoplay or space.mp3 playback was blocked or failed:", err);
+          if (err.name !== 'AbortError') {
+            console.warn("Autoplay or space.mp3 playback was blocked or failed:", err);
+          }
         });
       }
 
@@ -151,18 +153,28 @@ class CosmicAudioEngine {
         const currentLfo = this.lfo;
 
         try {
-          // Fade out background hum
-          currentGain.gain.cancelScheduledValues(this.ctx.currentTime);
-          currentGain.gain.setValueAtTime(currentGain.gain.value, this.ctx.currentTime);
-          currentGain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 1.5);
-
-          setTimeout(() => {
+          if (immediate) {
+            currentGain.gain.cancelScheduledValues(this.ctx.currentTime);
+            currentGain.gain.setValueAtTime(0, this.ctx.currentTime);
             try {
               currentDrone?.stop();
               (currentDrone as any)?._secondaryOsc?.stop();
               currentLfo?.stop();
-            } catch (err) {}
-          }, 1600);
+            } catch (_) {}
+          } else {
+            // Fade out background hum
+            currentGain.gain.cancelScheduledValues(this.ctx.currentTime);
+            currentGain.gain.setValueAtTime(currentGain.gain.value, this.ctx.currentTime);
+            currentGain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.3);
+
+            setTimeout(() => {
+              try {
+                currentDrone?.stop();
+                (currentDrone as any)?._secondaryOsc?.stop();
+                currentLfo?.stop();
+              } catch (_) {}
+            }, 350);
+          }
         } catch (e) {}
       }
 
@@ -171,6 +183,10 @@ class CosmicAudioEngine {
       this.lfo = null;
       this.lfoGain = null;
     }
+  }
+
+  public stopBackgroundMusic() {
+    this.toggleBackgroundHum(false, true);
   }
 
   public playChime() {

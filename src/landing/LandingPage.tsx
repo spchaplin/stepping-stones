@@ -2,6 +2,8 @@ import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Footprints, Layers, Globe, Sparkles, ArrowRight } from 'lucide-react';
+import { stopPlankAudio } from '../apps/plank/App';
+import { CosmicAudio } from '../apps/expanding-edge/components/CosmicAudio';
 
 /* ─────────────────────────────────────────────
    App card data
@@ -180,6 +182,12 @@ function AppCard({ app, index }: AppCardProps) {
    Landing page
 ───────────────────────────────────────────── */
 export default function LandingPage() {
+  // Ensure all sub-app background music is stopped when visiting the landing page
+  useEffect(() => {
+    stopPlankAudio();
+    CosmicAudio.stopBackgroundMusic();
+  }, []);
+
   return (
     <div
       className="relative min-h-screen flex flex-col items-center px-6 py-16 overflow-x-hidden"

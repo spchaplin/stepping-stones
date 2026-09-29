@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Plus,
@@ -278,36 +279,56 @@ const initialAnimals = (): FlyingAnimal[] => {
   return [...clouds, ...processedBirds];
 };
 
+// Shared persistent background Audio instance for Plank
+let plankAudioInstance: HTMLAudioElement | null = null;
+
+export function getPlankAudio(): HTMLAudioElement {
+  if (!plankAudioInstance) {
+    plankAudioInstance = new Audio("/plank/birds/bird%20sounds.mp3");
+    plankAudioInstance.loop = true;
+    plankAudioInstance.volume = 0.4;
+  }
+  return plankAudioInstance;
+}
+
+export function stopPlankAudio() {
+  if (plankAudioInstance) {
+    plankAudioInstance.pause();
+  }
+}
+
 export default function App() {
   const [planks, setPlanks] = useState<PlankData[]>([]);
   const [hoveredPlankId, setHoveredPlankId] = useState<string | null>(null);
 
-  // Sound enablement state
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  // Sound enablement state (persisted in localStorage)
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    try {
+      const saved = localStorage.getItem('plank_sound_enabled');
+      return saved !== null ? JSON.parse(saved) : true;
+    } catch {
+      return true;
+    }
+  });
   const soundEnabledRef = useRef(soundEnabled);
   useEffect(() => {
     soundEnabledRef.current = soundEnabled;
+    try {
+      localStorage.setItem('plank_sound_enabled', JSON.stringify(soundEnabled));
+    } catch {}
   }, [soundEnabled]);
-
-  // Persistent reference to single continuous background Audio instance
-  const bgAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Background bird sounds continuous playback, loop, and interactive autoplay recovery
   useEffect(() => {
-    // Programmatically initialize the background audio to avoid DOM-ref timing and clearing issues
-    if (!bgAudioRef.current) {
-      bgAudioRef.current = new Audio("/plank/birds/bird%20sounds.mp3");
-    }
-    const audio = bgAudioRef.current;
-    if (!audio) return;
-
-    audio.loop = true;
-    audio.volume = 0.4; // comfortably balanced background volume
+    const audio = getPlankAudio();
+    let isCleanedUp = false;
 
     const playAudio = () => {
-      if (soundEnabled) {
+      if (soundEnabled && !isCleanedUp) {
         audio.play().catch((err) => {
-          console.log("Audio autoplay was restricted initially, waiting for user activity: ", err);
+          if (err.name !== 'AbortError') {
+            console.log("Audio autoplay was restricted initially, waiting for user activity: ", err);
+          }
         });
       } else {
         audio.pause();
@@ -320,9 +341,11 @@ export default function App() {
     // Attach user activity listeners to automatically resume playing if blocked by browser policy
     // Using capturing phase { capture: true } ensures we catch the event before any component calls stopPropagation()
     const resumeAudio = () => {
-      if (audio && soundEnabled && audio.paused) {
+      if (!isCleanedUp && audio && soundEnabled && audio.paused) {
         audio.play().catch((err) => {
-          console.log("Interactive playback attempt: ", err);
+          if (err.name !== 'AbortError') {
+            console.log("Interactive playback attempt: ", err);
+          }
         });
       }
     };
@@ -334,14 +357,13 @@ export default function App() {
     });
 
     return () => {
+      isCleanedUp = true;
       interactionEvents.forEach(evt => {
         window.removeEventListener(evt, resumeAudio, { capture: true });
         document.removeEventListener(evt, resumeAudio, { capture: true });
       });
-      // We pause the audio on cleanup if soundEnabled is toggled off
-      if (!soundEnabled) {
-        audio.pause();
-      }
+      // CRITICAL: Always pause Plank background audio when navigating away / unmounting!
+      audio.pause();
     };
   }, [soundEnabled]);
 
@@ -842,6 +864,14 @@ export default function App() {
         <div className="max-w-[1530px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           
           <div className="flex items-center gap-3">
+            <Link
+              to="/"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-100 text-stone-700 hover:text-stone-900 text-xs font-semibold transition-all shadow-2xs cursor-pointer group shrink-0"
+              title="Return to Stepping Stones landing page"
+            >
+              <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+              <span className="hidden sm:inline">Stepping Stones</span>
+            </Link>
             <div className="w-10 h-10 rounded-xl bg-stone-200 p-0.5 shadow-xs flex items-center justify-center border border-stone-300">
               <div className="w-full h-full rounded-[10px] bg-white flex items-center justify-center">
                 <Compass className="w-5 h-5 text-stone-700 rotate-12" />

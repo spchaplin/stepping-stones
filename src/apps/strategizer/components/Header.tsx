@@ -4,7 +4,8 @@
  */
 
 import React from 'react';
-import { ShoppingBag, ShoppingCart, Zap, Sparkles, LogOut } from 'lucide-react';
+import { ShoppingBag, ShoppingCart, Zap, Sparkles, LogOut, ChevronLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { PaceCard, StrategyCard } from '../types.ts';
 import { User } from 'firebase/auth';
 
@@ -16,6 +17,7 @@ interface HeaderProps {
   user: User | null;
   onLogin: () => void;
   onLogout: () => void;
+  isGuestMode?: boolean;
 }
 
 export function Header({ 
@@ -24,7 +26,9 @@ export function Header({
   activeCategory, 
   onCategoryChange,
   user,
-  onLogout
+  onLogin,
+  onLogout,
+  isGuestMode
 }: HeaderProps) {
   // Calculate dynamic stats for completing goals
   const fasterCompleted = cards.filter(
@@ -46,10 +50,19 @@ export function Header({
   return (
     <header className="h-[12vh] min-h-[95px] py-2 w-full bg-slate-900 border-b border-slate-800 px-10 flex flex-col md:grid md:grid-cols-3 items-center justify-between select-none shadow-lg shrink-0 gap-4">
       {/* Brand / Title Info */}
-      <div className="flex items-center gap-4 justify-start w-full md:w-auto transition-transform duration-300 hover:scale-105 origin-left">
-        <div className="p-2 py-2 bg-emerald-500 rounded-xl text-white shadow-lg shadow-emerald-500/15">
-          <ShoppingBag className="w-6 h-6" />
-        </div>
+      <div className="flex items-center gap-3 justify-start w-full md:w-auto">
+        <Link
+          to="/"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold transition-all shadow-xs cursor-pointer group shrink-0"
+          title="Return to Stepping Stones landing page"
+        >
+          <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+          <span className="hidden sm:inline">Stepping Stones</span>
+        </Link>
+        <div className="flex items-center gap-3 transition-transform duration-300 hover:scale-105 origin-left">
+          <div className="p-2 py-2 bg-emerald-500 rounded-xl text-white shadow-lg shadow-emerald-500/15">
+            <ShoppingBag className="w-6 h-6" />
+          </div>
         <div>
           <h1 className="text-[33px] font-extrabold text-white tracking-tight italic uppercase drop-shadow-[0_0_12px_rgba(255,255,255,0.15)]">
             Strategizer
@@ -62,6 +75,7 @@ export function Header({
           </p>
         </div>
       </div>
+    </div>
 
       {/* Navigation menu in the center */}
       <div className="flex flex-col items-center gap-1 bg-slate-950/40 p-1.5 rounded-xl border border-slate-800/60 w-full max-w-[440px] md:max-w-[685px] mx-auto">
@@ -111,7 +125,7 @@ export function Header({
       {/* Auth and Visualization Power Alignment */}
       <div className="flex items-center gap-6 justify-end w-full md:w-auto">
         {/* User Account Info */}
-        {user && (
+        {user ? (
           <div className="flex flex-col items-center bg-slate-800 border border-slate-700 py-3 px-4 rounded-lg gap-1 shadow-inner select-none shrink-0 min-w-[140px] leading-none justify-center">
             <div className="text-[9px] text-slate-400 font-black tracking-wider uppercase leading-none mb-1">
               Active Shopper
@@ -145,6 +159,22 @@ export function Header({
                 <LogOut className="w-[18px] h-[18px] stroke-[2.2]" />
               </button>
             </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2.5">
+            {isGuestMode && (
+              <span className="text-[10px] text-amber-400/90 font-bold uppercase tracking-wider bg-amber-400/10 border border-amber-400/25 px-2.5 py-1.5 rounded-lg hidden sm:inline-block">
+                Local Mode
+              </span>
+            )}
+            <button
+              onClick={onLogin}
+              type="button"
+              className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold uppercase text-[11px] tracking-wider py-2 px-3.5 rounded-lg shadow-md shadow-emerald-500/15 transition-all cursor-pointer"
+              title="Sign in with Google to sync to cloud"
+            >
+              Sign In
+            </button>
           </div>
         )}
 

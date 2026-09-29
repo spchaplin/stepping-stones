@@ -265,26 +265,30 @@ export default function App() {
 
   const [activeStepId, setActiveStepId] = useState<string | 'core' | 'new' | null>(null);
 
-  // Synchronize audio state
+  // Synchronize audio state & ensure audio stops when navigating back to landing page
   useEffect(() => {
     CosmicAudio.toggleBackgroundHum(state.isAudioEnabled);
+    return () => {
+      CosmicAudio.stopBackgroundMusic();
+    };
   }, [state.isAudioEnabled]);
 
-  // Handle browser autoplay blockages by playing on first user interaction
+  // Handle browser autoplay blockages by resuming on first user interaction
   useEffect(() => {
     if (state.isAudioEnabled) {
-      const startAudio = () => {
+      const resumeAudio = () => {
         if (state.isAudioEnabled) {
           CosmicAudio.toggleBackgroundHum(true);
         }
-        window.removeEventListener('click', startAudio);
-        window.removeEventListener('pointerdown', startAudio);
       };
-      window.addEventListener('click', startAudio);
-      window.addEventListener('pointerdown', startAudio);
+      const interactionEvents = ['click', 'mousedown', 'keydown', 'touchstart', 'pointerdown'];
+      interactionEvents.forEach(evt => {
+        window.addEventListener(evt, resumeAudio, { capture: true, passive: true });
+      });
       return () => {
-        window.removeEventListener('click', startAudio);
-        window.removeEventListener('pointerdown', startAudio);
+        interactionEvents.forEach(evt => {
+          window.removeEventListener(evt, resumeAudio, { capture: true });
+        });
       };
     }
   }, [state.isAudioEnabled]);
