@@ -183,13 +183,13 @@ const createLilyPad = (type: 'white' | 'pink', initialY?: number, spawnDelay = 0
   let imageHref = "";
 
   if (type === 'white') {
-    imageHref = "/plank/misc images/lily-pad-white-small.png";
+    imageHref = "/plank/misc%20images/lily-pad-white-small.png";
     const nativeWidth = 120; // Simulated native width of png
     const scale = (0.25 + Math.random() * 0.07) * 1.15 * 0.85; // Increased in size by 15%, then max size made 15% smaller
     width = nativeWidth * scale;
     height = width;
   } else {
-    imageHref = "/plank/misc images/lily-pad-pink.svg";
+    imageHref = "/plank/misc%20images/lily-pad-pink.svg";
     width = (30 + Math.random() * 5) * 1.27 * 0.85; // 27% bigger, then max size made 15% smaller
     height = width;
   }
@@ -1712,6 +1712,7 @@ export default function GorgeStage({
                 {/* Embedded dynamic animated SVG bird from the public folder */}
                 <image
                   href={`/plank/birds/${animal.svgFilename}`}
+                  xlinkHref={`/plank/birds/${animal.svgFilename}`}
                   x={animal.x - width / 2}
                   y={animal.y - height / 2}
                   width={width}
@@ -1788,6 +1789,7 @@ export default function GorgeStage({
         <image
           id="lovebirds-instance"
           href="/plank/birds/lovebirds.svg"
+          xlinkHref="/plank/birds/lovebirds.svg"
           x={lovebirdsX - 16.458}
           y={lovebirdsY - 14.106}
           width={32.92}
@@ -1797,7 +1799,8 @@ export default function GorgeStage({
         {/* Orange Butterfly moving back and forth in a gentle, slow, and organic fluttering motion (increased by 25%, maintaining 1:1 aspect ratio) */}
         <image
           id="orange-butterfly-instance"
-          href="/plank/misc images/orange butterfly.svg"
+          href="/plank/misc%20images/orange%20butterfly.svg"
+          xlinkHref="/plank/misc%20images/orange%20butterfly.svg"
           x={butterflyX - 5.36}
           y={butterflyY - 5.36}
           width={10.73}
@@ -1814,7 +1817,7 @@ export default function GorgeStage({
           height={227.48}
         >
           <video
-            src="/plank/misc images/rocket.webm"
+            src="/plank/misc%20images/rocket.webm"
             autoPlay
             loop
             muted
@@ -1826,7 +1829,8 @@ export default function GorgeStage({
         {/* Present Self Figure standing on the Left Cliff - Replaced with happy-hiker.svg (scaled 1.6x as tall as original hiker, adjusted 20% bigger and aligned to top of bluff) */}
         <image
           id="happy-hiker"
-          href="/plank/misc images/happy-hiker.svg"
+          href="/plank/misc%20images/happy-hiker.svg"
+          xlinkHref="/plank/misc%20images/happy-hiker.svg"
           x={76.83}
           y={241.2}
           width={66.34}
@@ -1918,6 +1922,7 @@ export default function GorgeStage({
               >
                 <image
                   href={pad.imageHref}
+                  xlinkHref={pad.imageHref}
                   x={-pad.width / 2}
                   y={-pad.height / 2}
                   width={pad.width}
@@ -1934,7 +1939,8 @@ export default function GorgeStage({
             return (
               <image
                 key={b.id}
-                href={`/misc%20images/bubbles.svg?t=${encodeURIComponent(b.id)}`}
+                href={`/plank/misc%20images/bubbles.svg?t=${encodeURIComponent(b.id)}`}
+                xlinkHref={`/plank/misc%20images/bubbles.svg?t=${encodeURIComponent(b.id)}`}
                 x={b.x - b.width / 2}
                 y={b.y - b.height / 2}
                 width={b.width}
@@ -1951,7 +1957,8 @@ export default function GorgeStage({
             return (
               <image
                 key={b.id}
-                href={`/misc%20images/bubbles-lottie.svg?t=${encodeURIComponent(b.id)}`}
+                href={`/plank/misc%20images/bubbles-lottie.svg?t=${encodeURIComponent(b.id)}`}
+                xlinkHref={`/plank/misc%20images/bubbles-lottie.svg?t=${encodeURIComponent(b.id)}`}
                 x={b.x - b.width / 2}
                 y={b.y - b.height / 2}
                 width={b.width}
@@ -1967,6 +1974,7 @@ export default function GorgeStage({
             <image
               key={s.id}
               href="/plank/misc%20images/snake-small.gif"
+              xlinkHref="/plank/misc%20images/snake-small.gif"
               x={s.x - s.width / 2}
               y={s.y - s.height / 2}
               width={s.width}
@@ -1988,6 +1996,7 @@ export default function GorgeStage({
               >
                 <image
                   href="/plank/misc%20images/snake2.svg"
+                  xlinkHref="/plank/misc%20images/snake2.svg"
                   x={-s.width / 2}
                   y={-s.height / 2}
                   width={s.width}
@@ -2009,6 +2018,7 @@ export default function GorgeStage({
                 key={`single-jellyfish-${spawnCount}`}
                 id="jellyfish-instance"
                 href="/plank/fish/jellyfish.svg"
+                xlinkHref="/plank/fish/jellyfish.svg"
                 x={jellyfishX}
                 y={y}
                 width={28.05}
@@ -2029,6 +2039,7 @@ export default function GorgeStage({
                 <image
                   id="turtle-instance"
                   href="/plank/fish/turtle.svg?v=2"
+                  xlinkHref="/plank/fish/turtle.svg?v=2"
                   x={-15.45}
                   y={-15.45}
                   width={30.91}
@@ -2050,6 +2061,7 @@ export default function GorgeStage({
                 <image
                   id="turtle-left-instance"
                   href="/plank/fish/turtle-left.svg?v=2"
+                  xlinkHref="/plank/fish/turtle-left.svg?v=2"
                   x={-15.45}
                   y={-15.45}
                   width={30.91}
@@ -2078,6 +2090,7 @@ export default function GorgeStage({
               <g key={v.id} transform={transformStr} style={{ pointerEvents: "none" }}>
                 <image
                   href={v.href}
+                  xlinkHref={v.href}
                   x={-v.width / 2}
                   y={-v.height / 2}
                   width={v.width}
@@ -2113,6 +2126,7 @@ export default function GorgeStage({
               >
                 <image
                   href="/plank/fish/seahorse-left.gif"
+                  xlinkHref="/plank/fish/seahorse-left.gif"
                   x={-s.width / 2}
                   y={-s.height / 2}
                   width={s.width}
@@ -2142,6 +2156,7 @@ export default function GorgeStage({
               >
                 <image
                   href="/plank/fish/tadpoles-top-align.gif"
+                  xlinkHref="/plank/fish/tadpoles-top-align.gif"
                   x={-tp.width / 2}
                   y={-tp.height / 2}
                   width={tp.width}
@@ -2185,6 +2200,7 @@ export default function GorgeStage({
                 <g transform={crab.isFlipped ? "scale(-1, 1)" : undefined}>
                   <image
                     href="/plank/misc%20images/crab-animated.svg"
+                    xlinkHref="/plank/misc%20images/crab-animated.svg"
                     x={-crab.width / 2}
                     y={-crab.height / 2}
                     width={crab.width}
@@ -2224,7 +2240,8 @@ export default function GorgeStage({
             >
               <g transform={activeFrogFly.isFlipped ? "scale(-1, 1)" : undefined}>
                 <image
-                  href="/plank/misc images/frog-fly.svg"
+                  href="/plank/misc%20images/frog-fly.svg"
+                  xlinkHref="/plank/misc%20images/frog-fly.svg"
                   x={-width / 2}
                   y={-height / 2}
                   width={width}
