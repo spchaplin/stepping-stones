@@ -105,7 +105,7 @@ function StarCanvas() {
 }
 
 /* ─────────────────────────────────────────────
-   App card component (Monolithic Obsidian & Amber)
+   App card component (Monolithic Obsidian & Silver)
 ───────────────────────────────────────────── */
 interface AppCardProps {
   app: (typeof APPS)[number];
@@ -123,19 +123,19 @@ function AppCard({ app, index }: AppCardProps) {
       className="relative group flex flex-col h-full"
       style={{ zIndex: 1 }}
     >
-      {/* Subtle warm amber radiance on hover */}
+      {/* Subtle silver radiance on hover */}
       <div
-        className="absolute -inset-0.5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl pointer-events-none bg-amber-500/15"
+        className="absolute -inset-0.5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl pointer-events-none bg-zinc-400/10"
       />
 
       {/* Card body */}
       <div
-        className="relative flex flex-col h-full rounded-2xl p-7 gap-5 transition-all duration-300 group-hover:-translate-y-1 bg-zinc-900/65 backdrop-blur-xl border border-zinc-800/80 group-hover:border-amber-500/40 shadow-[0_4px_30px_rgba(0,0,0,0.5)]"
+        className="relative flex flex-col h-full rounded-2xl p-7 gap-5 transition-all duration-300 group-hover:-translate-y-1 bg-zinc-900/65 backdrop-blur-xl border border-zinc-800/80 group-hover:border-zinc-500/40 shadow-[0_4px_30px_rgba(0,0,0,0.5)]"
       >
         {/* Top header row: Icon badge & Editorial index */}
         <div className="flex items-center justify-between gap-4">
           <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center bg-zinc-800/90 border border-zinc-700/60 text-zinc-200 group-hover:text-amber-400 group-hover:border-amber-500/40 group-hover:bg-amber-500/10 transition-all duration-300 shadow-md shrink-0"
+            className="w-12 h-12 rounded-xl flex items-center justify-center bg-zinc-800/90 border border-zinc-700/60 text-zinc-200 group-hover:text-zinc-100 group-hover:border-zinc-500/40 group-hover:bg-zinc-700/40 transition-all duration-300 shadow-md shrink-0"
           >
             <Icon size={22} strokeWidth={1.9} />
           </div>
@@ -149,7 +149,7 @@ function AppCard({ app, index }: AppCardProps) {
           <h2 className="text-xl font-bold text-zinc-100 tracking-tight group-hover:text-white transition-colors">
             {app.label}
           </h2>
-          <p className="text-xs font-semibold uppercase tracking-wider text-amber-400/90 leading-snug">
+          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 leading-snug">
             {app.tagline}
           </p>
           <p className="text-sm text-zinc-400 leading-relaxed mt-1">
@@ -157,13 +157,13 @@ function AppCard({ app, index }: AppCardProps) {
           </p>
         </div>
 
-        {/* CTA: Exact Expanding Edge amber button style */}
+        {/* CTA: Monochromatic Obsidian button */}
         <Link
           to={app.to}
-          className="mt-3 group/btn inline-flex items-center justify-between gap-2 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider text-zinc-950 bg-amber-500 hover:bg-amber-400 active:scale-[0.98] transition-all duration-150 shadow-[0_0_15px_rgba(245,158,11,0.25)] hover:shadow-[0_0_20px_rgba(245,158,11,0.4)] cursor-pointer"
+          className="mt-3 group/btn inline-flex items-center justify-between gap-2 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider text-zinc-100 hover:text-white bg-zinc-800 hover:bg-zinc-700 active:scale-[0.98] border border-zinc-700/80 hover:border-zinc-500/60 transition-all duration-150 shadow-[0_4px_14px_rgba(0,0,0,0.4)] hover:shadow-[0_0_15px_rgba(255,255,255,0.06)] cursor-pointer"
         >
           <span>Open app</span>
-          <ArrowRight size={14} strokeWidth={2.4} className="transition-transform duration-200 group-hover/btn:translate-x-0.5" />
+          <ArrowRight size={14} strokeWidth={2.4} className="text-zinc-400 group-hover/btn:text-white transition-all duration-200 group-hover/btn:translate-x-0.5" />
         </Link>
       </div>
     </motion.div>
@@ -182,7 +182,7 @@ export default function LandingPage() {
 
   return (
     <div
-      className="relative min-h-screen flex flex-col items-center justify-between px-6 py-12 sm:py-16 overflow-x-hidden selection:bg-amber-500/30 selection:text-amber-200"
+      className="relative min-h-screen flex flex-col items-center justify-between px-6 py-12 sm:py-16 overflow-x-hidden selection:bg-zinc-700 selection:text-zinc-200"
       style={{
         background: 'radial-gradient(ellipse at 50% 0%, #18181b 0%, #09090b 60%, #050505 100%)',
       }}
@@ -209,7 +209,7 @@ export default function LandingPage() {
           </div>
 
           <div className="flex flex-col items-center gap-1.5">
-            <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-tight">
+            <h1 className="text-4xl sm:text-5xl font-black text-zinc-200 tracking-tight leading-tight select-none drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
               Stepping Stones
             </h1>
           </div>
