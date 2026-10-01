@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Footprints, Layers, Globe, Sparkles, ArrowRight } from 'lucide-react';
+import { Footprints, Layers, Globe, ArrowRight } from 'lucide-react';
 import { stopPlankAudio } from '../apps/plank/App';
 import { CosmicAudio } from '../apps/expanding-edge/components/CosmicAudio';
 
@@ -199,18 +199,16 @@ export default function LandingPage() {
           transition={{ duration: 0.5, ease: 'easeOut' }}
           style={{ zIndex: 1 }}
         >
-          {/* Logo mark with warm amber corona */}
-          <div className="relative mb-2">
-            <div className="absolute inset-0 rounded-2xl blur-xl opacity-40 bg-amber-500 scale-125" />
-            <div className="relative w-14 h-14 rounded-2xl bg-zinc-900 border border-zinc-700/80 flex items-center justify-center shadow-2xl text-amber-400">
-              <Sparkles size={24} strokeWidth={1.8} />
-            </div>
+          {/* Obsidian Stepping Stones */}
+          <div className="relative mb-2 flex justify-center w-full">
+            <img
+              src="/landing/obsidian.svg"
+              alt="Stepping Stones obsidian"
+              className="w-full max-w-[320px] sm:max-w-[380px] lg:w-[450px] lg:max-w-none h-auto object-contain select-none pointer-events-none drop-shadow-[0_12px_24px_rgba(0,0,0,0.6)]"
+            />
           </div>
 
           <div className="flex flex-col items-center gap-1.5">
-            <span className="text-[11px] font-mono uppercase tracking-[0.25em] text-amber-400 font-bold">
-              Suite Portal
-            </span>
             <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-tight">
               Stepping Stones
             </h1>
