@@ -55,13 +55,34 @@ service cloud.firestore {
         && (!('userId' in data) || data.userId == userId);
     }
 
+    // Entity validator: PlankDoc
+    function isValidPlankDoc(data, userId) {
+      return data.keys().hasAll(['planks', 'soundEnabled'])
+        && data.planks is list
+        && data.planks.size() <= 7
+        && data.soundEnabled is bool
+        && (!('userId' in data) || data.userId == userId);
+    }
+
+    // Entity validator: ExpandingEdgeDoc
+    function isValidExpandingEdgeDoc(data, userId) {
+      return data.keys().hasAll(['coreLabel', 'steps', 'isAudioEnabled'])
+        && data.coreLabel is string
+        && data.coreLabel.size() <= 100
+        && (!('coreDescription' in data) || (data.coreDescription is string && data.coreDescription.size() <= 200))
+        && data.steps is list
+        && data.steps.size() <= 25
+        && data.isAudioEnabled is bool
+        && (!('userId' in data) || data.userId == userId);
+    }
+
     // User Profile matching rule
     match /users/{userId} {
       allow get: if isOwner(userId);
       allow create: if isOwner(userId) && isValidUser(incoming(), userId);
       allow update: if isOwner(userId) && isValidUser(incoming(), userId);
 
-      // Card entries subcollection matching rule
+      // Card entries subcollection matching rule (Strategizer)
       match /cards/{cardId} {
         allow list: if isOwner(userId);
         allow get: if isOwner(userId);
@@ -75,7 +96,7 @@ service cloud.firestore {
         allow delete: if isOwner(userId) && isValidId(cardId);
       }
 
-      // Strategy Card entries subcollection matching rule
+      // Strategy Card entries subcollection matching rule (Strategizer)
       match /strategyCards/{cardId} {
         allow list: if isOwner(userId);
         allow get: if isOwner(userId);
@@ -87,6 +108,20 @@ service cloud.firestore {
           && isValidStrategyCard(incoming(), userId);
           
         allow delete: if isOwner(userId) && isValidId(cardId);
+      }
+
+      // Plank Progression Bridge document matching rule
+      match /plank/{docId} {
+        allow get: if isOwner(userId) && docId == 'current';
+        allow create, update: if isOwner(userId) && docId == 'current' && isValidPlankDoc(incoming(), userId);
+        allow delete: if isOwner(userId) && docId == 'current';
+      }
+
+      // The Expanding Edge Concentric Model document matching rule
+      match /expandingEdge/{docId} {
+        allow get: if isOwner(userId) && docId == 'current';
+        allow create, update: if isOwner(userId) && docId == 'current' && isValidExpandingEdgeDoc(incoming(), userId);
+        allow delete: if isOwner(userId) && docId == 'current';
       }
     }
   }

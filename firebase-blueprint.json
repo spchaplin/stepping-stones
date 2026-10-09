@@ -102,6 +102,80 @@
         "userId",
         "updatedAt"
       ]
+    },
+    "PlankDoc": {
+      "title": "PlankDoc",
+      "description": "A user's 7-step plank progression bridge with audio settings.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "planks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string",
+                "maxLength": 300
+              }
+            },
+            "required": ["id", "text"]
+          }
+        },
+        "soundEnabled": {
+          "type": "boolean"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "userId",
+        "planks",
+        "soundEnabled",
+        "updatedAt"
+      ]
+    },
+    "ExpandingEdgeDoc": {
+      "title": "ExpandingEdgeDoc",
+      "description": "A user's Expanding Edge solar system model containing core anchor and orbital steps.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "coreLabel": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "coreDescription": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "steps": {
+          "type": "array"
+        },
+        "isAudioEnabled": {
+          "type": "boolean"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "userId",
+        "coreLabel",
+        "steps",
+        "isAudioEnabled",
+        "updatedAt"
+      ]
     }
   },
   "firestore": {
@@ -116,6 +190,14 @@
     "/users/{userId}/strategyCards/{cardId}": {
       "schema": "StrategyCard",
       "description": "All strategic priority cards belonging to a user."
+    },
+    "/users/{userId}/plank/current": {
+      "schema": "PlankDoc",
+      "description": "A user's active 7-step plank progression bridge."
+    },
+    "/users/{userId}/expandingEdge/current": {
+      "schema": "ExpandingEdgeDoc",
+      "description": "A user's active concentric planetary journey model."
     }
   }
 }

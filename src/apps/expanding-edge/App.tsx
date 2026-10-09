@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { JourneyState, LifeStep } from './types';
 import Starfield from './components/Starfield';
 import ControlPanel from './components/ControlPanel';
 import ExpandingEdgeModel from './components/ExpandingEdgeModel';
 import { CosmicAudio } from './components/CosmicAudio';
 import { Sparkles, Compass, Milestone, Info } from 'lucide-react';
+import { useAuth } from '../../firebase/AuthContext';
+import { db, handleFirestoreError, OperationType } from '../../firebase/firebase';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 
 const LOCAL_STORAGE_KEY = 'expanding_edge_journey';
 
@@ -237,12 +240,14 @@ const DEMO_STEPS: LifeStep[] = [
 ];
 
 export default function App() {
+  const { user } = useAuth();
+  const isSyncingFromCloud = useRef(false);
+
   const [state, setState] = useState<JourneyState>(() => {
     try {
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Ensure defaults if any properties are missing
         return {
           coreLabel: parsed.coreLabel || '',
           coreDescription: parsed.coreDescription || '',
@@ -254,7 +259,6 @@ export default function App() {
       console.error("Failed to load saved state:", e);
     }
     
-    // Default initial empty state
     return {
       coreLabel: '',
       coreDescription: '',
@@ -264,6 +268,45 @@ export default function App() {
   });
 
   const [activeStepId, setActiveStepId] = useState<string | 'core' | 'new' | null>(null);
+
+  // Subscribe to user's Expanding Edge voyage in Firestore
+  useEffect(() => {
+    if (!user) return;
+    const docRef = doc(db, 'users', user.uid, 'expandingEdge', 'current');
+    const unsubscribe = onSnapshot(docRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        isSyncingFromCloud.current = true;
+        setState({
+          coreLabel: data.coreLabel || '',
+          coreDescription: data.coreDescription || '',
+          steps: Array.isArray(data.steps) ? data.steps : [],
+          isAudioEnabled: data.isAudioEnabled !== undefined ? data.isAudioEnabled : true
+        });
+        setTimeout(() => {
+          isSyncingFromCloud.current = false;
+        }, 150);
+      } else {
+        // First cloud sign-in: migrate existing local voyage if any
+        if (state.coreLabel || state.steps.length > 0) {
+          setDoc(docRef, {
+            userId: user.uid,
+            coreLabel: state.coreLabel,
+            coreDescription: state.coreDescription,
+            steps: state.steps,
+            isAudioEnabled: state.isAudioEnabled,
+            updatedAt: new Date().toISOString()
+          }).catch(err => {
+            handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/expandingEdge/current`);
+          });
+        }
+      }
+    }, (err) => {
+      handleFirestoreError(err, OperationType.GET, `users/${user.uid}/expandingEdge/current`);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
 
   // Synchronize audio state & ensure audio stops when navigating back to landing page
   useEffect(() => {
@@ -293,7 +336,7 @@ export default function App() {
     }
   }, [state.isAudioEnabled]);
 
-  // Sync state changes to localStorage
+  // Sync state changes to localStorage (always) and to Firestore (when signed in)
   useEffect(() => {
     try {
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
@@ -305,7 +348,25 @@ export default function App() {
     } catch (e) {
       console.error("Failed to write to localStorage:", e);
     }
-  }, [state.coreLabel, state.coreDescription, state.steps, state.isAudioEnabled]);
+
+    if (!user || isSyncingFromCloud.current) return;
+
+    const timer = setTimeout(() => {
+      const docRef = doc(db, 'users', user.uid, 'expandingEdge', 'current');
+      setDoc(docRef, {
+        userId: user.uid,
+        coreLabel: state.coreLabel,
+        coreDescription: state.coreDescription,
+        steps: state.steps,
+        isAudioEnabled: state.isAudioEnabled,
+        updatedAt: new Date().toISOString()
+      }).catch(err => {
+        handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/expandingEdge/current`);
+      });
+    }, 450);
+
+    return () => clearTimeout(timer);
+  }, [state.coreLabel, state.coreDescription, state.steps, state.isAudioEnabled, user]);
 
   // Load standard Demo Voyage to showcase the visual system immediately
   const handleLoadDemo = () => {

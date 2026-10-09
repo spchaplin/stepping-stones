@@ -25,8 +25,23 @@ import {
 import { PlankData, FlyingAnimal, JumpingRiverCritter, SkyParticle } from './types';
 import GorgeStage from './components/GorgeStage';
 import PlankEditor from './components/PlankEditor';
+import { useAuth, AuthWidget } from '../../firebase/AuthContext';
+import { db, handleFirestoreError, OperationType } from '../../firebase/firebase';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 
 const TARGET_PLANKS = 7;
+const LOCAL_STORAGE_PLANKS_KEY = 'plank_bridge_steps';
+
+const getInitialPlanks = (): PlankData[] => {
+  try {
+    const saved = localStorage.getItem(LOCAL_STORAGE_PLANKS_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {}
+  return [];
+};
 
 // Gentle, highly achievable beginner presets for a recent high-school graduate
 const ROADMAP_PRESETS = [
@@ -298,8 +313,10 @@ export function stopPlankAudio() {
 }
 
 export default function App() {
-  const [planks, setPlanks] = useState<PlankData[]>([]);
+  const { user } = useAuth();
+  const [planks, setPlanks] = useState<PlankData[]>(getInitialPlanks);
   const [hoveredPlankId, setHoveredPlankId] = useState<string | null>(null);
+  const isSyncingFromCloud = useRef(false);
 
   // Sound enablement state (persisted in localStorage)
   const [soundEnabled, setSoundEnabled] = useState(() => {
@@ -317,6 +334,67 @@ export default function App() {
       localStorage.setItem('plank_sound_enabled', JSON.stringify(soundEnabled));
     } catch {}
   }, [soundEnabled]);
+
+  // Subscribe to user's Plank bridge in Firestore with live onSnapshot listener
+  useEffect(() => {
+    if (!user) return;
+    const docRef = doc(db, 'users', user.uid, 'plank', 'current');
+    const unsubscribe = onSnapshot(docRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        isSyncingFromCloud.current = true;
+        if (Array.isArray(data.planks)) {
+          setPlanks(data.planks);
+        }
+        if (typeof data.soundEnabled === 'boolean') {
+          setSoundEnabled(data.soundEnabled);
+        }
+        setTimeout(() => {
+          isSyncingFromCloud.current = false;
+        }, 150);
+      } else {
+        // First cloud sign-in: migrate existing local planks if present
+        const local = getInitialPlanks();
+        if (local.length > 0) {
+          setDoc(docRef, {
+            userId: user.uid,
+            planks: local.slice(0, TARGET_PLANKS),
+            soundEnabled: soundEnabledRef.current,
+            updatedAt: new Date().toISOString()
+          }).catch(err => {
+            handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/plank/current`);
+          });
+        }
+      }
+    }, (err) => {
+      handleFirestoreError(err, OperationType.GET, `users/${user.uid}/plank/current`);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  // Persist planks to localStorage (always) and to Firestore (when signed in)
+  useEffect(() => {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_PLANKS_KEY, JSON.stringify(planks));
+    } catch {}
+
+    if (!user || isSyncingFromCloud.current) return;
+
+    const timer = setTimeout(() => {
+      const docRef = doc(db, 'users', user.uid, 'plank', 'current');
+      setDoc(docRef, {
+        userId: user.uid,
+        planks: planks.slice(0, TARGET_PLANKS),
+        soundEnabled,
+        updatedAt: new Date().toISOString()
+      }).catch(err => {
+        handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/plank/current`);
+      });
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [planks, soundEnabled, user]);
 
   // Background bird sounds continuous playback, loop, and interactive autoplay recovery
   useEffect(() => {
@@ -948,6 +1026,9 @@ export default function App() {
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Clear Board</span>
             </button>
+
+            {/* Google Cloud Auth Widget */}
+            <AuthWidget compact />
           </div>
 
         </div>

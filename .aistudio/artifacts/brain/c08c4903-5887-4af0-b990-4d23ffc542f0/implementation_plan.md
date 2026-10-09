@@ -1,132 +1,174 @@
-# Landing Page Palette Restyle: Color Swatches & Options
+# Unified Firestore Persistence & Auth Architecture for Stepping Stones
 
-A cohesive visual redesign for the **Stepping Stones** landing page (`src/landing/LandingPage.tsx`), replacing fragmented candy gradients (cyan, purple, emerald) with a high-contrast neutral grayscale foundation (black, charcoal, white) accented by the signature warm amber-orange (`#f59e0b` / `amber-500`) drawn from the "Define Life Baseline" button on *The Expanding Edge*.
-
----
-
-## Color Swatch Comparisons & Visual Samples
-
-Below are detailed color swatches, exact hex codes, contrast ratios, and simulated card previews for the three design options:
+Expand cloud data persistence across all three Stepping Stones instruments (**Strategizer**, **Plank**, and **The Expanding Edge**) using Google Firebase Firestore and Google Authentication, eliminating data loss and enabling seamless cross-device synchronization with zero backend maintenance.
 
 ---
 
-### Option 1: Monolithic Obsidian & Warm Amber (Recommended)
+## User Review & Critical Decisions
 
-> **Mood**: Modern architectural glass, deep space serenity, premium aerospace instrument aesthetics.
+> [!IMPORTANT]
+> The architectural direction has been confirmed based on the cost/benefit analysis:
 
-#### Palette Swatches
-
-| Role | Swatch Preview | Name | Hex Code | Tailwind Token | Usage in Interface |
-| :--- | :---: | :--- | :--- | :--- | :--- |
-| **Canvas (60%)** | ⬛ | Deep Obsidian | `#09090b` | `bg-zinc-950` | Full page backdrop |
-| **Card Surface (25%)** | ⬛ | Matte Carbon | `#18181b` (85%) | `bg-zinc-900/85` | Frosted glass card bodies |
-| **Borders & Lines** | ◽ | Hairline Zinc | `#27272a` | `border-zinc-800` | Subtle 1px structural borders |
-| **Primary Text** | ⬜ | Crisp Snow White | `#fafafa` | `text-zinc-50` | App titles & headlines |
-| **Secondary Text** | ◽ | Pewter Gray | `#a1a1aa` | `text-zinc-400` | Taglines & descriptions |
-| **Primary Accent (10%)** | 🟧 | Expanding Edge Amber | `#f59e0b` | `bg-amber-500` | "Open app" CTA & brand spark |
-| **Accent Hover** | 🟨 | Sunlit Amber | `#fbbf24` | `hover:bg-amber-400` | Button hover & active glows |
-| **Glow Aura** | 🟧 | Amber Ambient Glow | `rgba(245,158,11,0.20)` | `shadow-amber-500/20` | Card hover radiance |
-
-#### Card Component Visual Mockup (Option 1)
-```
-┌────────────────────────────────────────────────────────┐
-│  [bg-zinc-900/85, border-zinc-800, hover:border-amber-500/40]
-│                                                        │
-│  ┌──────────┐                                          │
-│  │ ⚡ Icon  │  (bg-zinc-800, text-zinc-200, hover:text-amber-400)
-│  └──────────┘                                          │
-│                                                        │
-│  PLANK                                      (#fafafa)  │
-│  Build your future, one step at a time      (#fbbf24)  │
-│                                                        │
-│  Lay down seven planks across the gorge.    (#a1a1aa)  │
-│  Each plank is a concrete, achievable goal...          │
-│                                                        │
-│  ┌────────────────────────┐                            │
-│  │ Open app  →            │ (bg-amber-500 text-zinc-950 font-bold)
-│  └────────────────────────┘ (shadow-[0_0_15px_rgba(245,158,11,0.25)])
-└────────────────────────────────────────────────────────┘
-```
+- **Confirmed Decision 1 (Database Strategy)**: Firestore remains the database for the entire suite. We will not migrate to Cloud SQL (PostgreSQL), avoiding ongoing cloud compute charges ($10–$50+/mo), backend server maintenance, and ORM proxy plumbing.
+- **Confirmed Decision 2 (Authentication Strategy)**: Unified Google Sign-In (`signInWithPopup`) shared across all three apps and the landing portal, paired with local storage fallback for guest/offline resilience.
+- **Confirmed Decision 3 (Data Migration)**: Existing Strategizer pacing cards and strategy collections under `/users/{userId}/cards` and `/users/{userId}/strategyCards` are strictly preserved without disruption.
 
 ---
 
-### Option 2: High-Contrast Stark Monochrome with Punchy Amber Action
+## 1. Overview & Core Concept
 
-> **Mood**: Utilitarian Swiss typography, stark black-and-white contrast, zero blur, surgical orange CTAs.
-
-#### Palette Swatches
-
-| Role | Swatch Preview | Name | Hex Code | Tailwind Token | Usage in Interface |
-| :--- | :---: | :--- | :--- | :--- | :--- |
-| **Canvas (60%)** | ⬛ | Jet Black (Zero) | `#050505` | `bg-neutral-950` | Void black page backdrop |
-| **Card Surface (25%)** | ⬛ | Dark Graphite | `#121214` | `bg-neutral-900` | Solid opaque card surface |
-| **Borders & Lines** | ◽ | Ghost White Hairline | `rgba(255,255,255,0.12)`| `border-white/10` | High-contrast razor-thin line |
-| **Primary Text** | ⬜ | Pure White | `#ffffff` | `text-white` | Sharp high-contrast headlines |
-| **Secondary Text** | ◽ | Architectural Gray | `#737373` | `text-neutral-500` | Quiet body copy |
-| **Primary Accent (10%)** | 🟧 | Punchy Amber | `#f59e0b` | `bg-amber-500` | Crisp solid button with no glow |
-| **Accent Text** | 🟨 | Sharp Gold | `#fbbf24` | `text-amber-400` | Inline kicker / index marker |
-| **Glow Aura** | 🚫 | None | `none` | `shadow-none` | Deliberately unblurred edges |
-
-#### Card Component Visual Mockup (Option 2)
-```
-┌────────────────────────────────────────────────────────┐
-│  [bg-neutral-900, border border-white/10]              │
-│                                                        │
-│  01 · PLANK                                 (#ffffff)  │
-│  Build your future, one step at a time      (#737373)  │
-│                                                        │
-│  Lay down seven planks across the gorge.    (#a3a3a3)  │
-│  Each plank is a concrete, achievable goal...          │
-│                                                        │
-│  ┌────────────────────────┐                            │
-│  │ Open app  →            │ (bg-amber-500 text-neutral-950 font-bold)
-│  └────────────────────────┘ (border border-amber-400/30)
-└────────────────────────────────────────────────────────┘
-```
+- **What It Does**: Provides real-time cloud data persistence for all three personal growth tools. Plank bridges (7 custom steps) and The Expanding Edge solar systems (life core anchor + milestone planets) will automatically sync to Firestore when signed in, while falling back gracefully to local browser storage for guest exploration.
+- **Target Audience**: Individuals tracking personal goals, runners managing pacing strategies, and students/professionals planning long-term life milestones across phones, laptops, and tablets.
+- **Key Value**: Never lose progress when clearing browser data or changing devices. Users log in once and immediately have their goals, pace strategies, and orbital life journeys live and synchronized everywhere.
 
 ---
 
-### Option 3: Warm Stone Gallery with Amber Horizon Edge
+## 2. User Experience & Visual Design
 
-> **Mood**: Tactile stone texture, museum gallery editorial, subtle warm basalt tones with top amber piping.
+### Key User Flows
 
-#### Palette Swatches
+1. **Guest Exploration Flow**:
+   - A new or signed-out user opens Plank or The Expanding Edge.
+   - The app loads their local draft or default presets.
+   - A quiet, non-intrusive status pill in the top header indicates: `Guest Mode (Local Only)` alongside a `Sign in with Google` button.
+2. **One-Click Cloud Sync Flow**:
+   - User clicks `Sign in with Google`.
+   - Google popup authenticates the user.
+   - If cloud data exists, it seamlessly loads with real-time listeners (`onSnapshot`). If no cloud data exists yet, their current local draft is automatically migrated to Firestore so no work is lost.
+   - Status transitions to a subtle indicator: `Synced to Cloud` with user avatar/email and a `Sign Out` action.
+3. **Multi-Device Live Update Flow**:
+   - Updates made on one device (e.g. adding a new orbital milestone or checking off a plank) instantly reflect across any other open browser tabs or devices via Firestore's real-time document listeners.
 
-| Role | Swatch Preview | Name | Hex Code | Tailwind Token | Usage in Interface |
-| :--- | :---: | :--- | :--- | :--- | :--- |
-| **Canvas (60%)** | ⬛ | Warm Basalt | `#0c0a09` | `bg-stone-950` | Earthy dark backdrop |
-| **Card Surface (25%)** | ⬛ | Dark Travertine | `#1c1917` (90%) | `bg-stone-900/90` | Textured dark stone cards |
-| **Top Horizon Accent**| 🟧 | Burnished Amber Pipe | `#f59e0b` | `border-t-2 border-amber-500` | Top edge accent on cards |
-| **Borders & Dividers**| ◽ | Basalt Seam | `#292524` | `border-stone-800` | Subtle side/bottom borders |
-| **Primary Text** | ⬜ | Soft Linen White | `#f5f5f4` | `text-stone-100` | Warm editorial titles |
-| **Secondary Text** | ◽ | Warm Ash Gray | `#a8a29e` | `text-stone-400` | Descriptions and body |
-| **Primary Accent (10%)**| 🟧 | Burnished Amber | `#d97706` → `#f59e0b`| `bg-gradient-to-r` | Warm gradient button fill |
-| **Glow Aura** | 🟧 | Hearth Amber Glow | `rgba(217,119,6,0.18)` | `shadow-amber-600/20` | Subtle bottom-edge reflection |
+### Visual Identity & Theme Integration
 
-#### Card Component Visual Mockup (Option 3)
-```
-┌════════════════════════════════════════════════════════┐  <= 2px Amber Horizon Top Border (#f59e0b)
-│  [bg-stone-900/90, border-x border-b border-stone-800] │
-│                                                        │
-│  [Stone Icon]                                          │
-│  PLANK                                      (#f5f5f4)  │
-│  BUILD YOUR FUTURE                          (#a8a29e)  │
-│                                                        │
-│  Lay down seven planks across the gorge...  (#78716c)  │
-│                                                        │
-│  ┌────────────────────────┐                            │
-│  │ Open app  →            │ (bg-gradient-to-r from-amber-600 to-amber-500)
-│  └────────────────────────┘                            │
-└────────────────────────────────────────────────────────┘
-```
+- **Design System Alignment**: Follows the established monochromatic obsidian & silver aesthetic (`#09090b` canvas, `#18181b` surface, `#27272a` borders, and `#f4f4f5` silver typography).
+- **Header Auth Controls**:
+  - Compact single-line user pill: clean 28px circular Google avatar or letter monogram, user email, and a quiet dropdown/button for sign out.
+  - Matches the 3-zone Top Bar contract without cluttering the screen or shifting existing toolbars.
+- **No Intrusive Modals**: Authentication is completely opt-in and never blocks app functionality.
 
 ---
 
-## Recommendation & Next Step
+## 3. Key Product Decisions & Trade-Offs
 
-**Option 1 (Monolithic Obsidian & Warm Amber)** is recommended because:
-1. It perfectly bridges the deep cosmic black of *The Expanding Edge*, the sleek dashboard styling of *Strategizer*, and the natural depth of *Plank*.
-2. The button style (`bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold shadow-[0_0_15px_rgba(245,158,11,0.25)]`) is a 1:1 match with the "Define Life Baseline" button in The Expanding Edge.
-3. It completely purges the clashing rainbow gradients from the landing page while providing clean, accessible contrast across all viewports.
+### Decision 1: Shared Core Firebase Service Module
+- *Chosen Approach*: Move core Firebase configuration and auth state management from `src/apps/strategizer/firebase.ts` into a centralized `src/firebase/` directory (`src/firebase/firebase.ts` and `src/firebase/AuthContext.tsx`).
+- *Why*: Prevents code duplication and avoids initializing duplicate Firebase app instances in the same browser tab.
+- *Alternatives Considered*: Importing from `strategizer` into `plank` (rejected: creates brittle circular cross-app dependencies).
 
-Please let me know which option you prefer (Option 1, 2, or 3), or click **Proceed** to implement Option 1!
+### Decision 2: Document Model vs. Subcollection Model for New Apps
+- *Chosen Approach*:
+  - **Plank**: Store user state as a single consolidated document at `/users/{userId}/plank/current`. Planks are strictly capped at 7 items with lightweight text; a single document ensures atomic saves and zero multiple-read overhead.
+  - **The Expanding Edge**: Store user voyage as a single consolidated document at `/users/{userId}/expandingEdge/current`. The core anchor and array of 1–15 orbiting planets save atomically.
+  - **Strategizer**: Keep existing subcollections (`/users/{userId}/cards/{cardId}` and `/users/{userId}/strategyCards/{cardId}`) unchanged to guarantee 100% backward compatibility.
+- *Why*: Minimizes Firestore read/write operations (1 write per snapshot save), staying well within the free tier.
+
+---
+
+## 4. Technical Architecture & Data Strategy
+
+### System Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                           STEPPING STONES SUITE                                  │
+│                                                                                 │
+│   ┌────────────────────┐   ┌────────────────────┐   ┌────────────────────────┐  │
+│   │    PLANK APP       │   │  STRATEGIZER APP   │   │  EXPANDING EDGE APP    │  │
+│   │ (7-step bridge)    │   │ (Pacing splits)    │   │ (Solar orbit model)    │  │
+│   └─────────┬──────────┘   └─────────┬──────────┘   └───────────┬────────────┘  │
+│             │                        │                          │               │
+│             └────────────────────────┼──────────────────────────┘               │
+│                                      ▼                                          │
+│                    ┌───────────────────────────────────┐                        │
+│                    │     SHARED AUTH CONTEXT & SDK     │                        │
+│                    │     (src/firebase/AuthContext)    │                        │
+│                    │  • onAuthStateChanged             │                        │
+│                    │  • signInWithPopup (Google)       │                        │
+│                    │  • handleFirestoreError           │                        │
+│                    └─────────────────┬─────────────────┘                        │
+│                                      │                                          │
+└──────────────────────────────────────┼──────────────────────────────────────────┘
+                                       ▼
+                   ┌───────────────────────────────────────┐
+                   │          FIRESTORE CLOUD DB           │
+                   │                                       │
+                   │  /users/{userId}                      │
+                   │    ├── cards/{cardId}                 │ (Strategizer splits)
+                   │    ├── strategyCards/{cardId}         │ (Strategizer notes)
+                   │    ├── plank/current                  │ (Plank 7-step state)
+                   │    └── expandingEdge/current          │ (Expanding Edge state)
+                   └───────────────────────────────────────┘
+```
+
+### Data Schema Definitions
+
+#### 1. Plank Document (`/users/{userId}/plank/current`)
+```typescript
+interface PlankDocument {
+  userId: string;
+  planks: {
+    id: string;
+    text: string;
+  }[];
+  soundEnabled: boolean;
+  updatedAt: string; // ISO-8601 string or serverTimestamp
+}
+```
+
+#### 2. The Expanding Edge Document (`/users/{userId}/expandingEdge/current`)
+```typescript
+interface ExpandingEdgeDocument {
+  userId: string;
+  coreLabel: string;
+  coreDescription: string;
+  steps: {
+    id: string;
+    index: number;
+    label: string;
+    description: string;
+    risk: string;
+    skill: string;
+    planetType: string;
+    planetName: string;
+    color: string;
+    orbitSpeed: number;
+    orbitRadius: number;
+    unlockedAt: string;
+    isCustomized: boolean;
+  }[];
+  isAudioEnabled: boolean;
+  updatedAt: string;
+}
+```
+
+### Security Rules Hardening (`firestore.rules`)
+- Add strict validation functions:
+  - `isValidPlankDoc(data, userId)`: verifies `planks` array length $\le 7$, each plank has `id` and `text` $\le 300$ chars, `userId` matches `request.auth.uid`.
+  - `isValidExpandingEdgeDoc(data, userId)`: verifies `coreLabel` $\le 100$ chars, `coreDescription` $\le 100$ chars, `steps` array $\le 20$ planets, each step adheres to schema, `userId` matches `request.auth.uid`.
+- Restrict read/write strictly to `isOwner(userId)`. Default-deny catch-all remains active.
+
+---
+
+## 5. Execution Steps (Post-Approval)
+
+1. **Shared Firebase Core Setup**:
+   - Establish `src/firebase/` with `firebase.ts` and `AuthContext.tsx`.
+   - Expose `useAuth()` hook providing user state, login/logout functions, and sync status.
+2. **Update Blueprint & Security Rules**:
+   - Update `firebase-blueprint.json` with `PlankDoc` and `ExpandingEdgeDoc` entities and paths.
+   - Update `firestore.rules` with validators for the new document paths.
+   - Deploy updated security rules via `DeployRules` RPC.
+3. **Plank App Integration**:
+   - Wire `src/apps/plank/App.tsx` to `useAuth()`.
+   - Add top-bar authentication widget with guest mode / cloud sync indicator.
+   - Listen to `/users/{userId}/plank/current` on login; sync changes to Firestore with debounce and local fallback.
+4. **Expanding Edge App Integration**:
+   - Wire `src/apps/expanding-edge/App.tsx` and `ControlPanel.tsx` to `useAuth()`.
+   - Place auth pill in the new top header row next to "Stepping Stones" and "Restart".
+   - Listen to `/users/{userId}/expandingEdge/current` on login; sync state changes to Firestore with local fallback.
+5. **Strategizer Refactor to Shared Core**:
+   - Update Strategizer to consume the shared `src/firebase/` modules without modifying database paths or card schema.
+6. **Verification & Quality Checks**:
+   - Verify TypeScript compilation and linter.
+   - Test sign-in, real-time sync, guest fallback, and multi-tab synchronization across all three instruments.

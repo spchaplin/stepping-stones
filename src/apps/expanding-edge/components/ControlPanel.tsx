@@ -19,6 +19,7 @@ import {
 import { Link } from 'react-router-dom';
 import { LifeStep, JourneyState, PlanetType, getPlanetName, getPlanetSizeMultiplier, getOrbitRadius } from '../types';
 import { CosmicAudio } from './CosmicAudio';
+import { AuthWidget } from '../../../firebase/AuthContext';
 
 interface ControlPanelProps {
   state: JourneyState;
@@ -564,8 +565,8 @@ export default function ControlPanel({ state, setState, activeStepId, setActiveS
     <div className="flex flex-col h-full bg-slate-950/90 backdrop-blur-xl border-r border-white/5 text-slate-100 overflow-y-auto custom-scrollbar shadow-2xl">
       {/* Header */}
       <div className="p-6 pb-5 border-b border-white/5 bg-gradient-to-b from-slate-900/50 to-slate-950/50 space-y-4">
-        {/* Top Action Row: Navigation & Restart */}
-        <div className="flex items-center justify-between gap-3">
+        {/* Top Action Row: Navigation, Auth & Restart */}
+        <div className="flex items-center justify-between gap-2.5">
           <Link
             to="/"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-white/10 text-slate-300 hover:text-white text-xs font-mono transition-all group shrink-0"
@@ -574,14 +575,17 @@ export default function ControlPanel({ state, setState, activeStepId, setActiveS
             <ChevronLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
             <span>Stepping Stones</span>
           </Link>
-          <button
-            onClick={handleResetAll}
-            className="text-xs text-slate-400 hover:text-red-400 transition-colors px-2.5 py-1.5 rounded-lg bg-slate-900/60 hover:bg-red-500/10 border border-white/5 hover:border-red-500/20 font-mono shrink-0 cursor-pointer"
-            title="Reset your journey"
-            id="btn-reset"
-          >
-            Restart
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <AuthWidget compact />
+            <button
+              onClick={handleResetAll}
+              className="text-xs text-slate-400 hover:text-red-400 transition-colors px-2.5 py-1.5 rounded-lg bg-slate-900/60 hover:bg-red-500/10 border border-white/5 hover:border-red-500/20 font-mono shrink-0 cursor-pointer"
+              title="Reset your journey"
+              id="btn-reset"
+            >
+              Restart
+            </button>
+          </div>
         </div>
 
         {/* Title & Icon Row: Takes up full horizontal space */}
