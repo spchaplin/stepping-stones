@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { LifeDomain, DomainVision } from '../types';
 import { lifeVisionAudio } from './LifeVisionAudio';
-import { CheckCircle2, Sparkles, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle2, HelpCircle } from 'lucide-react';
 
 interface DomainCardProps {
   domain: LifeDomain;
@@ -13,7 +13,6 @@ interface DomainCardProps {
 const PRIORITY_OPTIONS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
 
 export default function DomainCard({ domain, data, onChange, index }: DomainCardProps) {
-  const [showPrompts, setShowPrompts] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
   const visionText = data?.vision || '';
@@ -101,26 +100,17 @@ export default function DomainCard({ domain, data, onChange, index }: DomainCard
           {domain.description}
         </p>
 
-        {/* Prompt toggle / helper sparks */}
-        <div>
-          <button
-            type="button"
-            onClick={() => setShowPrompts(!showPrompts)}
-            className="flex items-center gap-1.5 text-xs text-[#98664f] hover:text-[#7e4f3a] transition-colors py-0.5 cursor-pointer select-none"
-          >
-            <HelpCircle size={13} className="text-[#b5795b]" />
-            <span>{showPrompts ? 'Hide guiding question' : 'Guiding question'}</span>
-            {showPrompts ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-          </button>
-
-          {showPrompts && (
-            <div className="mt-2 p-3 rounded-xl bg-[#f4ede4] border border-[#e6d8c9] text-xs text-[#665548] leading-relaxed animate-in fade-in duration-200">
-              <div className="flex items-start gap-2">
-                <Sparkles size={14} className="text-[#b4864f] shrink-0 mt-0.5" />
-                <p>{domain.prompt}</p>
-              </div>
-            </div>
-          )}
+        {/* Guiding question */}
+        <div className="p-3 rounded-xl bg-[#f4ede4] border border-[#e6d8c9] text-xs text-[#665548] leading-relaxed">
+          <div className="flex items-start gap-2">
+            <HelpCircle
+              size={14}
+              className="text-[#b5795b] shrink-0 mt-0.5"
+              role="img"
+              aria-label="guiding question"
+            />
+            <p>{domain.prompt}</p>
+          </div>
         </div>
 
         {/* Vision textarea */}
