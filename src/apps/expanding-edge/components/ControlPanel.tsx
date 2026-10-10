@@ -19,7 +19,7 @@ import {
 import { Link } from 'react-router-dom';
 import { LifeStep, JourneyState, PlanetType, getPlanetName, getPlanetSizeMultiplier, getOrbitRadius } from '../types';
 import { CosmicAudio } from './CosmicAudio';
-import { AuthWidget } from '../../../firebase/AuthContext';
+import ExpandingEdgeAuthWidget from './ExpandingEdgeAuthWidget';
 
 interface ControlPanelProps {
   state: JourneyState;
@@ -569,17 +569,17 @@ export default function ControlPanel({ state, setState, activeStepId, setActiveS
         <div className="flex items-center justify-between gap-2.5">
           <Link
             to="/"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-white/10 text-slate-300 hover:text-white text-xs font-mono transition-all group shrink-0"
+            className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-white/10 text-slate-300 hover:text-white text-xs font-mono transition-all group shrink-0"
             title="Return to Stepping Stones landing page"
           >
             <ChevronLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
             <span>Stepping Stones</span>
           </Link>
           <div className="flex items-center gap-2 shrink-0">
-            <AuthWidget compact />
+            <ExpandingEdgeAuthWidget />
             <button
               onClick={handleResetAll}
-              className="text-xs text-slate-400 hover:text-red-400 transition-colors px-2.5 py-1.5 rounded-lg bg-slate-900/60 hover:bg-red-500/10 border border-white/5 hover:border-red-500/20 font-mono shrink-0 cursor-pointer"
+              className="h-8 flex items-center text-xs text-slate-400 hover:text-red-400 transition-colors px-2.5 rounded-lg bg-slate-900/60 hover:bg-red-500/10 border border-white/5 hover:border-red-500/20 font-mono shrink-0 cursor-pointer"
               title="Reset your journey"
               id="btn-reset"
             >
