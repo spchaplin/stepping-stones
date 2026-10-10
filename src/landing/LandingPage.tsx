@@ -1,9 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Footprints, Layers, Globe, ArrowRight } from 'lucide-react';
+import { Footprints, Layers, Globe, ArrowRight, Compass } from 'lucide-react';
 import { stopPlankAudio } from '../apps/plank/App';
 import { CosmicAudio } from '../apps/expanding-edge/components/CosmicAudio';
+import { lifeVisionAudio } from '../apps/life-vision/components/LifeVisionAudio';
 import LandingAuthWidget from './components/LandingAuthWidget';
 
 /* ─────────────────────────────────────────────
@@ -36,6 +37,15 @@ const APPS = [
     description:
       'Visualise your path as an ever-growing solar system. Each milestone is a planet you unlock, spinning in its own orbit — a cosmic reminder that growth is infinite and the edge always expands.',
     icon: Globe,
+  },
+  {
+    to: '/life-vision',
+    indexLabel: '04',
+    label: 'Life Vision',
+    tagline: 'Chart your vision across every life domain',
+    description:
+      'Write the vision you hold for your future across eight life domains — from health and safety to community and advocacy. Each domain you complete builds a vivid, holistic map of your good life.',
+    icon: Compass,
   },
 ] as const;
 
@@ -179,6 +189,7 @@ export default function LandingPage() {
   useEffect(() => {
     stopPlankAudio();
     CosmicAudio.stopBackgroundMusic();
+    lifeVisionAudio.stopAmbient();
   }, []);
 
   return (
@@ -222,13 +233,13 @@ export default function LandingPage() {
           </div>
 
           <p className="text-sm sm:text-base text-zinc-400 leading-relaxed max-w-md mt-1">
-            Three focused instruments for personal direction, execution, and growth. Pick a tool and begin.
+            Four focused instruments for personal direction, execution, and growth. Pick a tool and begin.
           </p>
         </motion.div>
 
         {/* ── App cards grid ── */}
         <div
-          className="relative grid grid-cols-1 md:grid-cols-3 gap-6 w-full"
+          className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full"
           style={{ zIndex: 1 }}
         >
           {APPS.map((app, i) => (
@@ -252,6 +263,8 @@ export default function LandingPage() {
           <span>Strategizer</span>
           <span aria-hidden="true" className="text-zinc-700">·</span>
           <span>The Expanding Edge</span>
+          <span aria-hidden="true" className="text-zinc-700">·</span>
+          <span>Life Vision</span>
         </div>
       </motion.footer>
     </div>
