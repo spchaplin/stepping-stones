@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Footprints, Layers, Globe, ArrowRight, Compass } from 'lucide-react';
+import { Footprints, Layers, Globe, Compass } from 'lucide-react';
 import { stopPlankAudio } from '../apps/plank/App';
 import { CosmicAudio } from '../apps/expanding-edge/components/CosmicAudio';
 import LandingAuthWidget from './components/LandingAuthWidget';
@@ -25,7 +25,7 @@ const APPS = [
     label: 'Strategizer',
     tagline: 'Pace smarter, not just harder',
     description:
-      'A real-time pacing dashboard for runners and racers. Plot your pace strategy, track splits, and hit your goal with data-backed confidence — synced across devices via the cloud.',
+      'Visually map out your strategy to succeed as a personal shopper by identifying what speeds you up, slows you down, and settle on a prioritized strategy.',
     icon: Layers,
   },
   {
@@ -34,7 +34,7 @@ const APPS = [
     label: 'The Expanding Edge',
     tagline: 'Map the cosmos of your life journey',
     description:
-      'Visualise your path as an ever-growing solar system. Each milestone is a planet you unlock, spinning in its own orbit — a cosmic reminder that growth is infinite and the edge always expands.',
+      'Visualise your path as an ever-growing solar system. Each new planet is a cosmic reminder that the edge of your capability grows outward as you take risks.',
     icon: Globe,
   },
   {
@@ -43,7 +43,7 @@ const APPS = [
     label: 'Life Vision',
     tagline: 'Chart your vision across every life domain',
     description:
-      'Write the vision you hold for your future across eight life domains — from health and safety to community and advocacy. Each domain you complete builds a vivid, holistic map of your good life.',
+      'Write the vision you hold for your future across eight life domains — from health and safety to community and advocacy. Each domain you complete builds a vivid, holistic map of a meaningful life.',
     icon: Compass,
   },
 ] as const;
@@ -126,57 +126,47 @@ function AppCard({ app, index }: AppCardProps) {
   const Icon = app.icon;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 32 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 + index * 0.12, ease: 'easeOut' }}
-      className="relative group flex flex-col h-full"
-      style={{ zIndex: 1 }}
+    <Link
+      to={app.to}
+      className="relative block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
     >
-      {/* Subtle silver radiance on hover */}
-      <div
-        className="absolute -inset-0.5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl pointer-events-none bg-zinc-400/10"
-      />
-
-      {/* Card body */}
-      <div
-        className="relative flex flex-col h-full rounded-2xl p-7 gap-5 transition-all duration-300 group-hover:-translate-y-1 bg-zinc-900/65 backdrop-blur-xl border border-zinc-800/80 group-hover:border-zinc-500/40 shadow-[0_4px_30px_rgba(0,0,0,0.5)]"
+      <motion.div
+        initial={{ opacity: 0, y: 32 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 + index * 0.12, ease: 'easeOut' }}
+        className="relative group flex flex-col h-full"
+        style={{ zIndex: 1 }}
       >
-        {/* Top header row: Icon badge & Editorial index */}
-        <div className="flex items-center justify-between gap-4">
-          <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center bg-zinc-800/90 border border-zinc-700/60 text-zinc-200 group-hover:text-zinc-100 group-hover:border-zinc-500/40 group-hover:bg-zinc-700/40 transition-all duration-300 shadow-md shrink-0"
-          >
-            <Icon size={22} strokeWidth={1.9} />
+        {/* Subtle silver radiance on hover */}
+        <div className="absolute -inset-0.5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl pointer-events-none bg-zinc-400/10" />
+
+        {/* Card body */}
+        <div className="relative flex flex-col h-full rounded-2xl p-7 gap-5 transition-all duration-300 group-hover:-translate-y-1 bg-zinc-900/65 backdrop-blur-xl border border-zinc-800/80 group-hover:border-zinc-500/40 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+          {/* Top header row: Icon badge & Editorial index */}
+          <div className="flex items-center justify-between gap-4">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-zinc-800/90 border border-zinc-700/60 text-zinc-200 group-hover:text-zinc-100 group-hover:border-zinc-500/40 group-hover:bg-zinc-700/40 transition-all duration-300 shadow-md shrink-0">
+              <Icon size={22} strokeWidth={1.9} />
+            </div>
+            <span className="text-xs font-mono text-zinc-500 font-semibold tracking-widest">
+              {app.indexLabel}
+            </span>
           </div>
-          <span className="text-xs font-mono text-zinc-500 font-semibold tracking-widest">
-            {app.indexLabel}
-          </span>
-        </div>
 
-        {/* Text */}
-        <div className="flex flex-col gap-2 flex-1">
-          <h2 className="text-xl font-bold text-zinc-100 tracking-tight group-hover:text-white transition-colors">
-            {app.label}
-          </h2>
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 leading-snug">
-            {app.tagline}
-          </p>
-          <p className="text-sm text-zinc-400 leading-relaxed mt-1">
-            {app.description}
-          </p>
+          {/* Text */}
+          <div className="flex flex-col gap-2 flex-1">
+            <h2 className="text-xl font-bold text-zinc-100 tracking-tight group-hover:text-white transition-colors">
+              {app.label}
+            </h2>
+            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 leading-snug">
+              {app.tagline}
+            </p>
+            <p className="text-sm text-zinc-400 leading-relaxed mt-1">
+              {app.description}
+            </p>
+          </div>
         </div>
-
-        {/* CTA: Monochromatic Obsidian button */}
-        <Link
-          to={app.to}
-          className="mt-3 group/btn inline-flex items-center justify-between gap-2 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider text-zinc-100 hover:text-white bg-zinc-800 hover:bg-zinc-700 active:scale-[0.98] border border-zinc-700/80 hover:border-zinc-500/60 transition-all duration-150 shadow-[0_4px_14px_rgba(0,0,0,0.4)] hover:shadow-[0_0_15px_rgba(255,255,255,0.06)] cursor-pointer"
-        >
-          <span>Open app</span>
-          <ArrowRight size={14} strokeWidth={2.4} className="text-zinc-400 group-hover/btn:text-white transition-all duration-200 group-hover/btn:translate-x-0.5" />
-        </Link>
-      </div>
-    </motion.div>
+      </motion.div>
+    </Link>
   );
 }
 
@@ -216,7 +206,7 @@ export default function LandingPage() {
           style={{ zIndex: 1 }}
         >
           {/* Obsidian Stepping Stones */}
-          <div className="relative mb-2 flex justify-center w-full">
+          <div className="relative mb-2 md:-mt-5 flex justify-center w-full">
             <img
               src="/landing/obsidian.svg"
               alt="Stepping Stones obsidian"
@@ -237,7 +227,7 @@ export default function LandingPage() {
 
         {/* ── App cards grid ── */}
         <div
-          className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full"
+          className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full"
           style={{ zIndex: 1 }}
         >
           {APPS.map((app, i) => (
