@@ -29,11 +29,9 @@ service cloud.firestore {
 
     // Entity validator: User
     function isValidUser(data, userId) {
-      return data.keys().hasAll(['userId', 'email', 'activeCategory']) 
-        && data.userId == userId
-        && data.email is string
-        && data.activeCategory is string
-        && (data.activeCategory == 'faster' || data.activeCategory == 'slower' || data.activeCategory == 'strategy');
+      return (!('userId' in data) || data.userId == userId)
+        && (!('email' in data) || data.email is string)
+        && (!('activeCategory' in data) || (data.activeCategory is string && (data.activeCategory == 'faster' || data.activeCategory == 'slower' || data.activeCategory == 'strategy')));
     }
 
     // Entity validator: StrategyCard
@@ -59,7 +57,7 @@ service cloud.firestore {
     function isValidPlankDoc(data, userId) {
       return data.keys().hasAll(['planks', 'soundEnabled'])
         && data.planks is list
-        && data.planks.size() <= 7
+        && data.planks.size() <= 20
         && data.soundEnabled is bool
         && (!('userId' in data) || data.userId == userId);
     }
@@ -68,10 +66,10 @@ service cloud.firestore {
     function isValidExpandingEdgeDoc(data, userId) {
       return data.keys().hasAll(['coreLabel', 'steps', 'isAudioEnabled'])
         && data.coreLabel is string
-        && data.coreLabel.size() <= 100
-        && (!('coreDescription' in data) || (data.coreDescription is string && data.coreDescription.size() <= 200))
+        && data.coreLabel.size() <= 200
+        && (!('coreDescription' in data) || (data.coreDescription is string && data.coreDescription.size() <= 2000))
         && data.steps is list
-        && data.steps.size() <= 25
+        && data.steps.size() <= 35
         && data.isAudioEnabled is bool
         && (!('userId' in data) || data.userId == userId);
     }

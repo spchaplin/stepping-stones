@@ -55,6 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Suppress standard popup-closed-by-user error from spamming UI
       if (!msg.includes('popup-closed-by-user')) {
         setError(msg);
+        throw err;
       }
       return null;
     }
@@ -101,13 +102,18 @@ interface AuthWidgetProps {
 }
 
 export function AuthWidget({ className = '', compact = false }: AuthWidgetProps) {
-  const { user, loading, signInWithGoogle, signOutUser } = useAuth();
+  const { user, loading, signInWithGoogle, signOutUser, error } = useAuth();
   const [isSigningIn, setIsSigningIn] = useState(false);
 
   const handleSignIn = async () => {
     setIsSigningIn(true);
-    await signInWithGoogle();
-    setIsSigningIn(false);
+    try {
+      await signInWithGoogle();
+    } catch {
+      // Handled and stored in auth error state
+    } finally {
+      setIsSigningIn(false);
+    }
   };
 
   if (loading) {
@@ -159,7 +165,7 @@ export function AuthWidget({ className = '', compact = false }: AuthWidgetProps)
           {displayName}
         </span>
         <span title="Cloud Synced" className="flex items-center">
-          <Cloud className="w-3 h-3 text-emerald-400 shrink-0" />
+          <Cloud className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
         </span>
       </div>
 

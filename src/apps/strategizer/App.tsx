@@ -7,7 +7,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { RotateCcw, Lock, AlertTriangle, ExternalLink, Copy, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { signInWithPopup, signOut, onAuthStateChanged, User } from 'firebase/auth';
+import { User } from 'firebase/auth';
 import { 
   collection, 
   query, 
@@ -27,6 +27,7 @@ import { StrategyColumn } from './components/StrategyColumn.tsx';
 import { ResetConfirmModal } from './components/ResetConfirmModal.tsx';
 import { PaceCard, StrategyCard } from './types.ts';
 import { auth, db, googleProvider, handleFirestoreError, OperationType } from './firebase.ts';
+import { useAuth } from '../../firebase/AuthContext';
 import { checkGoalThreshold } from './utils/goalThreshold.ts';
 
 // Local storage keys for guest/offline resilience
@@ -98,9 +99,8 @@ export default function App() {
   const [strategyCards, setStrategyCards] = useState<StrategyCard[]>(getInitialStrategyCards);
   const [cards, setCards] = useState<PaceCard[]>(getInitialCards);
 
-  // Authentication State
-  const [user, setUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  // Authentication State from Universal AuthContext
+  const { user, loading: authLoading, signInWithGoogle, signOutUser } = useAuth();
   const [isGuestMode, setIsGuestMode] = useState<boolean>(() => {
     try {
       return localStorage.getItem(LOCAL_STORAGE_GUEST_KEY) === 'true';
@@ -202,25 +202,20 @@ export default function App() {
     latestActiveCategoryRef.current = activeCategory;
   }, [activeCategory]);
 
-  // Track Auth state changes
+  // Track universal Auth state changes
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-      setAuthLoading(false);
-      setCardsInitialized(false);
-      setStrategyInitialized(false);
-      isBoardInitializedRef.current = false;
-      prevGoalsMetRef.current = null;
-      if (firebaseUser) {
-        setAuthError(null);
-        setIsGuestMode(false);
-        try {
-          localStorage.removeItem(LOCAL_STORAGE_GUEST_KEY);
-        } catch {}
-      }
-    });
-    return () => unsubscribe();
-  }, []);
+    setCardsInitialized(false);
+    setStrategyInitialized(false);
+    isBoardInitializedRef.current = false;
+    prevGoalsMetRef.current = null;
+    if (user) {
+      setAuthError(null);
+      setIsGuestMode(false);
+      try {
+        localStorage.removeItem(LOCAL_STORAGE_GUEST_KEY);
+      } catch {}
+    }
+  }, [user]);
 
   // Persist guest data locally when not logged in
   useEffect(() => {
@@ -255,20 +250,26 @@ export default function App() {
     const q = query(cardsRef, orderBy('order', 'asc'));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedCards: PaceCard[] = [];
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        if (data.id && data.name !== undefined && data.stage && data.type) {
-          fetchedCards.push({
-            id: data.id,
-            name: data.name,
-            stage: data.stage,
-            type: data.type as 'faster' | 'slower',
-          });
-        }
-      });
-
-      setCards(fetchedCards);
+      if (snapshot.empty) {
+        // If Firestore has no cards yet for this user, seed with existing local/default cards
+        const existingCards = latestCardsRef.current.length > 0 ? latestCardsRef.current : getInitialCards();
+        setCards(existingCards);
+        saveExistingToFirestore(user.uid, existingCards);
+      } else {
+        const fetchedCards: PaceCard[] = [];
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          if (data.id && data.name !== undefined && data.stage && data.type) {
+            fetchedCards.push({
+              id: data.id,
+              name: data.name,
+              stage: data.stage,
+              type: data.type as 'faster' | 'slower',
+            });
+          }
+        });
+        setCards(fetchedCards);
+      }
       setCardsInitialized(true);
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, `users/${user.uid}/cards`);
@@ -292,17 +293,11 @@ export default function App() {
       } else {
         // Create user profile document on first login
         const initialCategory = latestActiveCategoryRef.current;
-        const initialCards = latestCardsRef.current;
-        const initialStrategyCards = latestStrategyCardsRef.current;
-
         setDoc(userRef, {
           userId: user.uid,
           email: user.email || '',
           lastLogin: serverTimestamp(),
           activeCategory: initialCategory,
-        }).then(() => {
-          saveExistingToFirestore(user.uid, initialCards);
-          saveExistingStrategyToFirestore(user.uid, initialStrategyCards);
         }).catch((err) => {
           handleFirestoreError(err, OperationType.CREATE, `users/${user.uid}`);
         });
@@ -322,18 +317,24 @@ export default function App() {
     const q = query(stratRef, orderBy('order', 'asc'));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedCards: StrategyCard[] = [];
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        if (data.id && data.name !== undefined) {
-          fetchedCards.push({
-            id: data.id,
-            name: data.name,
-          });
-        }
-      });
-
-      setStrategyCards(fetchedCards);
+      if (snapshot.empty) {
+        // If Firestore has no strategy cards yet, seed with existing local/default strategy cards
+        const existingStrategy = latestStrategyCardsRef.current.length > 0 ? latestStrategyCardsRef.current : getInitialStrategyCards();
+        setStrategyCards(existingStrategy);
+        saveExistingStrategyToFirestore(user.uid, existingStrategy);
+      } else {
+        const fetchedCards: StrategyCard[] = [];
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          if (data.id && data.name !== undefined) {
+            fetchedCards.push({
+              id: data.id,
+              name: data.name,
+            });
+          }
+        });
+        setStrategyCards(fetchedCards);
+      }
       setStrategyInitialized(true);
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, `users/${user.uid}/strategyCards`);
@@ -390,7 +391,7 @@ export default function App() {
   const handleLogin = async () => {
     setAuthError(null);
     try {
-      await signInWithPopup(auth, googleProvider);
+      await signInWithGoogle();
     } catch (e: any) {
       const code = e?.code || '';
       const message = e?.message || '';
@@ -464,7 +465,7 @@ export default function App() {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await signOutUser();
       setCards(getInitialCards());
       setStrategyCards(getInitialStrategyCards());
       setActiveCategory('faster');
