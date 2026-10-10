@@ -57,12 +57,20 @@ export default function ExpandingEdgeAuthWidget({ className = '' }: ExpandingEdg
       className={`h-8 flex items-center gap-2 px-2.5 rounded-lg bg-slate-900/90 border border-white/10 text-xs font-mono shrink-0 shadow-sm ${className}`}
     >
       {user.photoURL ? (
-        <img
-          src={user.photoURL}
-          alt={displayName}
-          referrerPolicy="no-referrer"
-          className="w-5 h-5 rounded-full object-cover border border-white/10 shrink-0 filter grayscale contrast-110 brightness-90"
-        />
+        <div className="relative w-5 h-5 rounded-full overflow-hidden border border-white/10 shrink-0 bg-slate-900 shadow-xs">
+          <img
+            src={user.photoURL}
+            alt={displayName}
+            referrerPolicy="no-referrer"
+            className="w-full h-full object-cover"
+            style={{
+              filter: 'grayscale(100%) sepia(60%) hue-rotate(180deg) saturate(180%) contrast(110%) brightness(88%)'
+            }}
+          />
+          {/* Subtle slate blend layer matching the exact slate tone and depth of the buttons */}
+          <div className="absolute inset-0 bg-slate-800/40 mix-blend-color pointer-events-none" />
+          <div className="absolute inset-0 bg-slate-400/10 mix-blend-screen pointer-events-none" />
+        </div>
       ) : (
         <div className="w-5 h-5 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-[10px] font-mono font-bold text-slate-300 shrink-0">
           {displayName.charAt(0).toUpperCase()}

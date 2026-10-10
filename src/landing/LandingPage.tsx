@@ -4,7 +4,7 @@ import { motion } from 'motion/react';
 import { Footprints, Layers, Globe, ArrowRight } from 'lucide-react';
 import { stopPlankAudio } from '../apps/plank/App';
 import { CosmicAudio } from '../apps/expanding-edge/components/CosmicAudio';
-import { AuthWidget } from '../firebase/AuthContext';
+import LandingAuthWidget from './components/LandingAuthWidget';
 
 /* ─────────────────────────────────────────────
    App card data
@@ -190,12 +190,13 @@ export default function LandingPage() {
     >
       <StarCanvas />
 
+      {/* ── Top Bar Auth: Anchored vertically to the top of the visible screen ── */}
+      <div className="fixed top-4 right-4 sm:top-6 sm:right-6 md:right-8 z-50">
+        <LandingAuthWidget />
+      </div>
+
       {/* ── Main Content Container ── */}
       <div className="relative flex flex-col items-center w-full max-w-5xl my-auto">
-        {/* ── Top Bar Auth ── */}
-        <div className="w-full flex justify-end mb-4 sm:mb-6" style={{ zIndex: 1 }}>
-          <AuthWidget />
-        </div>
 
         {/* ── Hero ── */}
         <motion.div

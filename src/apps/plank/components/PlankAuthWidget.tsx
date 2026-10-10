@@ -57,12 +57,18 @@ export default function PlankAuthWidget({ className = '' }: PlankAuthWidgetProps
       className={`h-8 flex items-center gap-2 px-2.5 bg-white border border-stone-200 rounded-xl text-xs font-bold text-stone-700 shadow-2xs shrink-0 ${className}`}
     >
       {user.photoURL ? (
-        <img
-          src={user.photoURL}
-          alt={displayName}
-          referrerPolicy="no-referrer"
-          className="w-5 h-5 rounded-full object-cover border border-stone-300 shrink-0 filter grayscale contrast-110 brightness-95"
-        />
+        <div className="relative w-5 h-5 rounded-full overflow-hidden border border-stone-300 shrink-0 bg-stone-200">
+          <img
+            src={user.photoURL}
+            alt={displayName}
+            referrerPolicy="no-referrer"
+            className="w-full h-full object-cover"
+            style={{
+              filter: 'grayscale(100%) sepia(22%) contrast(108%) brightness(96%)'
+            }}
+          />
+          <div className="absolute inset-0 bg-stone-700/10 mix-blend-color pointer-events-none" />
+        </div>
       ) : (
         <div className="w-5 h-5 rounded-full bg-stone-200 border border-stone-300 flex items-center justify-center text-[10px] font-bold text-stone-700 shrink-0">
           {displayName.charAt(0).toUpperCase()}
