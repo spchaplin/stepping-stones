@@ -114,15 +114,19 @@ function StarCanvas() {
   );
 }
 
+// Track whether the landing page has already performed its entrance animation in this session
+let hasAnimatedLanding = false;
+
 /* ─────────────────────────────────────────────
    App card component (Monolithic Obsidian & Silver)
 ───────────────────────────────────────────── */
 interface AppCardProps {
   app: (typeof APPS)[number];
   index: number;
+  animateOnMount?: boolean;
 }
 
-function AppCard({ app, index }: AppCardProps) {
+function AppCard({ app, index, animateOnMount = true }: AppCardProps) {
   const Icon = app.icon;
 
   return (
@@ -131,9 +135,13 @@ function AppCard({ app, index }: AppCardProps) {
       className="relative block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
     >
       <motion.div
-        initial={{ opacity: 0, y: 32 }}
+        initial={animateOnMount ? { opacity: 0, y: 32 } : false}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 + index * 0.12, ease: 'easeOut' }}
+        transition={
+          animateOnMount
+            ? { duration: 0.5, delay: 0.2 + index * 0.12, ease: 'easeOut' }
+            : { duration: 0 }
+        }
         className="relative group flex flex-col h-full"
         style={{ zIndex: 1 }}
       >
@@ -174,11 +182,16 @@ function AppCard({ app, index }: AppCardProps) {
    Landing page
 ───────────────────────────────────────────── */
 export default function LandingPage() {
+  const isFirstVisit = useRef(!hasAnimatedLanding);
+
   // Ensure other sub-app background music is stopped when visiting the landing page
   useEffect(() => {
+    hasAnimatedLanding = true;
     stopPlankAudio();
     CosmicAudio.stopBackgroundMusic();
   }, []);
+
+  const shouldAnimate = isFirstVisit.current;
 
   return (
     <div
@@ -200,9 +213,9 @@ export default function LandingPage() {
         {/* ── Hero ── */}
         <motion.div
           className="relative flex flex-col items-center text-center gap-4 mb-14 max-w-2xl"
-          initial={{ opacity: 0, y: -16 }}
+          initial={shouldAnimate ? { opacity: 0, y: -16 } : false}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
+          transition={shouldAnimate ? { duration: 0.5, ease: 'easeOut' } : { duration: 0 }}
           style={{ zIndex: 1 }}
         >
           {/* Obsidian Stepping Stones */}
@@ -231,7 +244,7 @@ export default function LandingPage() {
           style={{ zIndex: 1 }}
         >
           {APPS.map((app, i) => (
-            <AppCard key={app.to} app={app} index={i} />
+            <AppCard key={app.to} app={app} index={i} animateOnMount={shouldAnimate} />
           ))}
         </div>
       </div>
@@ -239,9 +252,9 @@ export default function LandingPage() {
       {/* ── Quiet Footer ── */}
       <motion.footer
         className="relative mt-12 w-full max-w-5xl pt-6 border-t border-zinc-900/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-500 tracking-wide select-none"
-        initial={{ opacity: 0 }}
+        initial={shouldAnimate ? { opacity: 0 } : false}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.8, duration: 0.5 }}
+        transition={shouldAnimate ? { delay: 0.8, duration: 0.5 } : { duration: 0 }}
         style={{ zIndex: 1 }}
       >
         <span className="font-semibold text-zinc-400">Stepping Stones Suite</span>
@@ -258,3 +271,4 @@ export default function LandingPage() {
     </div>
   );
 }
+
