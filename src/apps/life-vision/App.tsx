@@ -335,7 +335,7 @@ export default function App() {
               </div>
               <div className="w-36 sm:w-44 h-2 bg-[#e9e1d6] rounded-full overflow-hidden border border-[#e1d6c9]">
                 <div
-                  className="h-full bg-gradient-to-r from-[#b9684f] via-[#c88b67] to-[#829071] transition-all duration-500 rounded-full"
+                  className="h-full bg-[#8a5a3b] transition-all duration-500 rounded-full"
                   style={{ width: `${(completedDomainsCount / 8) * 100}%` }}
                 />
               </div>
@@ -370,10 +370,9 @@ export default function App() {
         </div>
 
         {/* ── Domains Domain Pill Strip ── */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none print:hidden">
+        <div className="flex flex-wrap items-center gap-2 pb-1 print:hidden">
           {LIFE_DOMAINS.map((domain) => {
             const hasVision = data.domains[domain.id]?.vision?.trim().length > 0;
-            const priority = data.domains[domain.id]?.priority;
             return (
               <a
                 key={domain.id}
@@ -386,11 +385,6 @@ export default function App() {
               >
                 <img src={domain.iconPath} alt="" className="w-5 h-5 object-contain" />
                 <span className="font-medium">{domain.label}</span>
-                {priority && (
-                  <span className="text-[10px] font-mono font-bold text-[#8a6445] bg-[#f0e8dd] px-1.5 py-0.2 rounded">
-                    #{priority}
-                  </span>
-                )}
                 {hasVision && <CheckCircle size={12} className="text-[#728261] shrink-0" />}
               </a>
             );
@@ -401,7 +395,7 @@ export default function App() {
         {viewMode === 'cards' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 print:hidden">
             {LIFE_DOMAINS.map((domain, idx) => (
-              <div key={domain.id} id={`domain-${domain.id}`}>
+              <div key={domain.id} id={`domain-${domain.id}`} className="scroll-mt-16">
                 <DomainCard
                   domain={domain}
                   data={data.domains[domain.id] || { vision: '', priority: '' }}
@@ -444,6 +438,11 @@ export default function App() {
 
               {/* Matrix List sorted by priority */}
               <div className="divide-y divide-[#ebe3d9] print:divide-slate-200 mt-4">
+                <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:grid-cols-[14rem_3rem_minmax(0,1fr)] items-end gap-4 sm:gap-6 border-b border-[#ebe3d9] pb-2 text-xs font-bold tracking-wide text-[#82766a] print:border-slate-300 print:text-slate-600">
+                  <span>Life Domain</span>
+                  <span className="text-center">Priority</span>
+                  <span>My Vision for My Future</span>
+                </div>
                 {LIFE_DOMAINS.map((domain, idx) => {
                   const dData = data.domains[domain.id] || { vision: '', priority: '' };
                   const hasText = dData.vision?.trim().length > 0;
@@ -451,11 +450,11 @@ export default function App() {
                   return (
                     <div
                       key={domain.id}
-                      className="py-5 flex flex-col sm:flex-row items-start gap-4 sm:gap-6 print:py-4"
+                      className="py-5 flex flex-col sm:grid sm:grid-cols-[14rem_3rem_minmax(0,1fr)] items-start gap-4 sm:gap-6 print:py-4"
                     >
-                      {/* Domain badge & priority */}
-                      <div className="w-full sm:w-56 shrink-0 flex items-center justify-between sm:justify-start gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-[#f1e8de] flex items-center justify-center shrink-0">
+                      {/* Domain */}
+                      <div className="w-full sm:w-auto shrink-0 flex items-center justify-between sm:justify-start gap-3">
+                        <div className="w-10 h-10 flex items-center justify-center shrink-0">
                           <img src={domain.iconPath} alt="" className="w-9 h-9 object-contain" />
                         </div>
                         <div>
@@ -466,9 +465,13 @@ export default function App() {
                             {domain.label}
                           </h4>
                         </div>
+                      </div>
+
+                      {/* Priority */}
+                      <div className="sm:justify-self-center">
                         {dData.priority && (
-                          <span className="sm:ml-auto px-2 py-0.5 rounded text-xs font-bold bg-[#f3e8d4] text-[#866843] border border-[#e8d6b9] print:text-black print:border-slate-400">
-                            Rank #{dData.priority}
+                          <span className="px-2 py-0.5 rounded text-xs font-bold bg-[#f3e8d4] text-[#866843] border border-[#e8d6b9] print:text-black print:border-slate-400">
+                            {dData.priority}
                           </span>
                         )}
                       </div>

@@ -56,13 +56,13 @@ export default function DomainCard({ domain, data, onChange, index }: DomainCard
           : 'border-[#e5dbcf] bg-[#fbf9f5] hover:border-[#d3c2af] shadow-[0_6px_20px_rgba(70,52,34,0.045)]'
       }`}
     >
-      <div className="h-1 w-full bg-gradient-to-r from-[#b9684f] via-[#c48c68] to-[#879273]" />
+      <div className="h-1 w-full bg-[#b9684f]" />
 
       <div className="p-5 sm:p-6 flex flex-col flex-1 gap-4">
         {/* Header row */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-xl bg-[#f2e9df] border border-[#e7dbcd] flex items-center justify-center shrink-0 p-1">
+            <div className="w-12 h-12 flex items-center justify-center shrink-0 p-1">
               <img src={domain.iconPath} alt="" className="w-full h-full object-contain" />
             </div>
 
@@ -88,10 +88,10 @@ export default function DomainCard({ domain, data, onChange, index }: DomainCard
           {currentPriority && (
             <div
               className="flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs font-bold shrink-0 bg-[#f3eadb] border-[#e7d7bc] text-[#866843] shadow-sm"
-              title={`Ranked Priority ${currentPriority}`}
+              title={`Priority: ${currentPriority}`}
             >
-              <span className="text-[10px] uppercase text-[#978777] font-medium">Rank</span>
-              <span>#{currentPriority}</span>
+              <span className="text-[10px] uppercase text-[#978777] font-medium">Priority:</span>
+              <span>{currentPriority}</span>
             </div>
           )}
         </div>
