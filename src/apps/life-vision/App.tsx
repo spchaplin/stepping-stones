@@ -230,7 +230,7 @@ export default function App() {
               title="Return to Stepping Stones suite"
             >
               <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
-              <span className="hidden sm:inline">Suite</span>
+              <span className="hidden sm:inline">Stepping Stones</span>
             </Link>
 
             <div className="h-4 w-[1px] bg-[#e4d9cc] hidden sm:block" />

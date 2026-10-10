@@ -62,7 +62,7 @@ export default function LifeVisionAuthWidget({ className = '' }: LifeVisionAuthW
             alt={displayName}
             referrerPolicy="no-referrer"
             className="w-full h-full object-cover"
-            style={{ filter: 'saturate(0.85)' }}
+            style={{ filter: 'sepia(1) saturate(0.9)' }}
           />
         </div>
       ) : (
@@ -80,7 +80,7 @@ export default function LifeVisionAuthWidget({ className = '' }: LifeVisionAuthW
         >
           {displayName}
         </span>
-        <Cloud className="w-3.5 h-3.5 fill-[#879273] text-[#879273] shrink-0" />
+        <Cloud className="w-3.5 h-3.5 fill-[#8a5a3b] text-[#8a5a3b] shrink-0" />
       </div>
       <button
         onClick={() => signOutUser()}
