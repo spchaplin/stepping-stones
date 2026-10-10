@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { LifeDomain, DomainVision } from '../types';
 import { lifeVisionAudio } from './LifeVisionAudio';
 import { CheckCircle2, Sparkles, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
@@ -15,7 +15,6 @@ const PRIORITY_OPTIONS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
 export default function DomainCard({ domain, data, onChange, index }: DomainCardProps) {
   const [showPrompts, setShowPrompts] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const visionText = data?.vision || '';
   const currentPriority = data?.priority || '';
@@ -30,7 +29,7 @@ export default function DomainCard({ domain, data, onChange, index }: DomainCard
   };
 
   const handlePrioritySelect = (p: string) => {
-    lifeVisionAudio.playClick();
+    lifeVisionAudio.playAction();
     const newPriority = currentPriority === p ? '' : p;
     onChange(domain.id, {
       ...data,
@@ -41,69 +40,45 @@ export default function DomainCard({ domain, data, onChange, index }: DomainCard
 
   const handleFocus = () => {
     setIsFocused(true);
-    lifeVisionAudio.playOpen();
   };
 
   const handleBlur = () => {
     setIsFocused(false);
-    if (isCompleted) {
-      lifeVisionAudio.playSave();
-    }
   };
 
   return (
     <div
       className={`relative flex flex-col rounded-2xl border transition-all duration-300 overflow-hidden ${
         isFocused
-          ? 'border-indigo-400/50 shadow-[0_8px_32px_rgba(99,102,241,0.15)] ring-1 ring-indigo-400/30 -translate-y-0.5'
+          ? 'border-[#ba8164] shadow-[0_8px_28px_rgba(112,72,49,0.10)] ring-1 ring-[#d5b49e] -translate-y-0.5'
           : isCompleted
-          ? 'border-white/15 bg-slate-900/70 hover:border-white/25 shadow-lg'
-          : 'border-white/8 bg-slate-900/40 hover:border-white/15 shadow-md'
+          ? 'border-[#d8c8b7] bg-[#fffdfa] hover:border-[#c7ad96] shadow-[0_8px_24px_rgba(70,52,34,0.06)]'
+          : 'border-[#e5dbcf] bg-[#fbf9f5] hover:border-[#d3c2af] shadow-[0_6px_20px_rgba(70,52,34,0.045)]'
       }`}
-      style={{
-        backdropFilter: 'blur(16px)',
-      }}
     >
-      {/* Top ambient color glow accent */}
-      <div
-        className={`h-1.5 w-full bg-gradient-to-r ${domain.color} ${domain.colorTo} opacity-80`}
-      />
+      <div className="h-1 w-full bg-gradient-to-r from-[#b9684f] via-[#c48c68] to-[#879273]" />
 
       <div className="p-5 sm:p-6 flex flex-col flex-1 gap-4">
         {/* Header row */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3.5">
-            {/* Domain SVG / Emoji badge */}
-            <div
-              className={`w-11 h-11 rounded-xl flex items-center justify-center bg-gradient-to-br ${domain.color} ${domain.colorTo} text-slate-950 shadow-md shrink-0 p-2 font-bold`}
-              style={{
-                boxShadow: `0 0 16px ${domain.glowColor}`,
-              }}
-            >
-              {domain.svgIcon ? (
-                <svg
-                  viewBox="0 0 48 48"
-                  className="w-full h-full text-slate-950"
-                  dangerouslySetInnerHTML={{ __html: domain.svgIcon }}
-                />
-              ) : (
-                <span className="text-xl">{domain.emoji}</span>
-              )}
+            <div className="w-12 h-12 rounded-xl bg-[#f2e9df] border border-[#e7dbcd] flex items-center justify-center shrink-0 p-1">
+              <img src={domain.iconPath} alt="" className="w-full h-full object-contain" />
             </div>
 
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-mono font-bold text-slate-500 uppercase tracking-widest">
+                <span className="text-[11px] font-semibold text-[#918477] uppercase tracking-widest">
                   Domain {index + 1}
                 </span>
                 {isCompleted && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#62734f] bg-[#edf0e7] px-2 py-0.5 rounded-full border border-[#d7dfca]">
                     <CheckCircle2 size={11} />
                     <span>Defined</span>
                   </span>
                 )}
               </div>
-              <h3 className="text-lg font-bold text-white tracking-tight leading-snug">
+              <h3 className="text-lg font-semibold text-[#392f27] tracking-tight leading-snug">
                 {domain.label}
               </h3>
             </div>
@@ -112,17 +87,17 @@ export default function DomainCard({ domain, data, onChange, index }: DomainCard
           {/* Current Priority Indicator Pill */}
           {currentPriority && (
             <div
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs font-bold shrink-0 bg-white/5 border-white/10 text-amber-300 shadow-sm"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs font-bold shrink-0 bg-[#f3eadb] border-[#e7d7bc] text-[#866843] shadow-sm"
               title={`Ranked Priority ${currentPriority}`}
             >
-              <span className="text-[10px] uppercase text-slate-400 font-medium">Rank</span>
+              <span className="text-[10px] uppercase text-[#978777] font-medium">Rank</span>
               <span>#{currentPriority}</span>
             </div>
           )}
         </div>
 
         {/* Short description */}
-        <p className="text-xs text-slate-300/85 leading-relaxed">
+        <p className="text-xs text-[#74695e] leading-relaxed">
           {domain.description}
         </p>
 
@@ -131,17 +106,17 @@ export default function DomainCard({ domain, data, onChange, index }: DomainCard
           <button
             type="button"
             onClick={() => setShowPrompts(!showPrompts)}
-            className="flex items-center gap-1.5 text-xs text-indigo-300/80 hover:text-indigo-200 transition-colors py-0.5 cursor-pointer select-none"
+            className="flex items-center gap-1.5 text-xs text-[#98664f] hover:text-[#7e4f3a] transition-colors py-0.5 cursor-pointer select-none"
           >
-            <HelpCircle size={13} className="text-indigo-400" />
-            <span>{showPrompts ? 'Hide guiding spark' : 'Guiding question'}</span>
+            <HelpCircle size={13} className="text-[#b5795b]" />
+            <span>{showPrompts ? 'Hide guiding question' : 'Guiding question'}</span>
             {showPrompts ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
           </button>
 
           {showPrompts && (
-            <div className="mt-2 p-3 rounded-xl bg-indigo-950/30 border border-indigo-500/20 text-xs text-indigo-200/90 leading-relaxed animate-in fade-in duration-200">
+            <div className="mt-2 p-3 rounded-xl bg-[#f4ede4] border border-[#e6d8c9] text-xs text-[#665548] leading-relaxed animate-in fade-in duration-200">
               <div className="flex items-start gap-2">
-                <Sparkles size={14} className="text-amber-400 shrink-0 mt-0.5" />
+                <Sparkles size={14} className="text-[#b4864f] shrink-0 mt-0.5" />
                 <p>{domain.prompt}</p>
               </div>
             </div>
@@ -152,37 +127,36 @@ export default function DomainCard({ domain, data, onChange, index }: DomainCard
         <div className="flex flex-col gap-1.5 flex-1 mt-1">
           <label
             htmlFor={`vision-${domain.id}`}
-            className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center justify-between"
+            className="text-xs font-semibold uppercase tracking-wider text-[#817568] flex items-center justify-between"
           >
             <span>My Vision For A Good Life</span>
-            <span className="text-[10px] font-mono text-slate-500">
+            <span className="text-[10px] text-[#a09385]">
               {visionText.length > 0 ? `${visionText.length} chars` : 'Optional'}
             </span>
           </label>
           <textarea
             id={`vision-${domain.id}`}
-            ref={textareaRef}
             rows={4}
             value={visionText}
             onChange={handleVisionChange}
             onFocus={handleFocus}
             onBlur={handleBlur}
             placeholder={domain.prompt}
-            className="w-full rounded-xl bg-slate-950/60 border border-white/10 hover:border-white/20 focus:border-indigo-400/70 focus:bg-slate-950/90 p-3.5 text-sm text-slate-100 placeholder:text-slate-500/70 focus:outline-none focus:ring-1 focus:ring-indigo-400/40 transition-all resize-y leading-relaxed font-sans"
+            className="w-full rounded-xl bg-[#f8f5ef] border border-[#e6dbce] hover:border-[#d2beaa] focus:border-[#b9684f] focus:bg-white p-3.5 text-sm text-[#40372f] placeholder:text-[#a89b8d] focus:outline-none focus:ring-1 focus:ring-[#d5b49e] transition-all resize-y leading-relaxed font-sans"
           />
         </div>
 
         {/* Priority ranking buttons (1 to 10) */}
-        <div className="flex flex-col gap-1.5 pt-2 border-t border-white/5">
+        <div className="flex flex-col gap-1.5 pt-2 border-t border-[#eee6dc]">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+            <span className="text-[11px] font-semibold text-[#817568] uppercase tracking-wider">
               Priority Ranking (1 = Highest)
             </span>
             {currentPriority && (
               <button
                 type="button"
                 onClick={() => handlePrioritySelect(currentPriority)}
-                className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
+                className="text-[10px] text-[#9b8d7e] hover:text-[#5c4f44] transition-colors cursor-pointer"
               >
                 Clear rank
               </button>
@@ -199,8 +173,8 @@ export default function DomainCard({ domain, data, onChange, index }: DomainCard
                   title={`Set priority to ${p}`}
                   className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
                     isSelected
-                      ? `bg-gradient-to-r ${domain.color} ${domain.colorTo} text-slate-950 shadow-md scale-105 font-extrabold ring-1 ring-white/40`
-                      : 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 border border-white/5'
+                      ? 'bg-[#b9684f] text-white shadow-md scale-105 font-extrabold ring-1 ring-[#d9b5a1]'
+                      : 'bg-[#f4efe8] hover:bg-[#ece2d7] text-[#76695d] hover:text-[#42372e] border border-[#e6dbce]'
                   }`}
                 >
                   {p}
@@ -213,4 +187,3 @@ export default function DomainCard({ domain, data, onChange, index }: DomainCard
     </div>
   );
 }
-

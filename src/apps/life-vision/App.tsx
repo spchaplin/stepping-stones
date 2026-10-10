@@ -3,24 +3,19 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowLeft,
-  Volume2,
-  VolumeX,
   Info,
   Sparkles,
   RotateCcw,
   Printer,
   Compass,
   CheckCircle,
-  Eye,
   LayoutGrid,
   FileText,
   User,
-  Share2,
 } from 'lucide-react';
 import { LIFE_DOMAINS } from './domains';
 import { LifeVisionData, DomainVision } from './types';
 import DomainCard from './components/DomainCard';
-import ParticleField from './components/ParticleField';
 import AboutModal from './components/AboutModal';
 import LifeVisionAuthWidget from './components/LifeVisionAuthWidget';
 import { lifeVisionAudio } from './components/LifeVisionAudio';
@@ -32,7 +27,6 @@ const LOCAL_STORAGE_KEY = 'life_vision_state';
 
 const DEMO_VISION_DATA: LifeVisionData = {
   myName: 'Alex Morgan',
-  isSoundEnabled: true,
   domains: {
     'healthy-living': {
       vision:
@@ -89,7 +83,6 @@ export default function App() {
         return {
           myName: parsed.myName || '',
           domains: parsed.domains || {},
-          isSoundEnabled: parsed.isSoundEnabled !== undefined ? parsed.isSoundEnabled : true,
         };
       }
     } catch (e) {
@@ -98,7 +91,6 @@ export default function App() {
     return {
       myName: '',
       domains: {},
-      isSoundEnabled: true,
     };
   });
 
@@ -119,8 +111,6 @@ export default function App() {
           setData({
             myName: cloudData.myName || '',
             domains: cloudData.domains || {},
-            isSoundEnabled:
-              cloudData.isSoundEnabled !== undefined ? cloudData.isSoundEnabled : true,
           });
           setTimeout(() => {
             isSyncingFromCloud.current = false;
@@ -132,7 +122,6 @@ export default function App() {
               userId: user.uid,
               myName: data.myName,
               domains: data.domains,
-              isSoundEnabled: data.isSoundEnabled,
               updatedAt: new Date().toISOString(),
             }).catch((err) => {
               handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/lifeVision/current`);
@@ -164,7 +153,6 @@ export default function App() {
         userId: user.uid,
         myName: data.myName,
         domains: data.domains,
-        isSoundEnabled: data.isSoundEnabled,
         updatedAt: new Date().toISOString(),
       }).catch((err) => {
         handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/lifeVision/current`);
@@ -173,40 +161,6 @@ export default function App() {
 
     return () => clearTimeout(timer);
   }, [data, user]);
-
-  // Audio system state sync
-  useEffect(() => {
-    lifeVisionAudio.setEnabled(data.isSoundEnabled);
-    if (data.isSoundEnabled) {
-      lifeVisionAudio.startAmbient();
-    } else {
-      lifeVisionAudio.stopAmbient();
-    }
-    return () => {
-      lifeVisionAudio.stopAmbient();
-    };
-  }, [data.isSoundEnabled]);
-
-  // Handle first user interaction to unlock web audio autoplay
-  useEffect(() => {
-    if (data.isSoundEnabled) {
-      const unlockAudio = () => {
-        if (data.isSoundEnabled) {
-          lifeVisionAudio.startAmbient();
-        }
-      };
-      const events = ['click', 'keydown', 'touchstart'];
-      events.forEach((evt) => window.addEventListener(evt, unlockAudio, { once: true, capture: true }));
-      return () => {
-        events.forEach((evt) => window.removeEventListener(evt, unlockAudio, { capture: true }));
-      };
-    }
-  }, [data.isSoundEnabled]);
-
-  const toggleSound = () => {
-    const next = !data.isSoundEnabled;
-    setData((prev) => ({ ...prev, isSoundEnabled: next }));
-  };
 
   const handleDomainChange = (domainId: string, updated: DomainVision) => {
     setData((prev) => ({
@@ -219,7 +173,7 @@ export default function App() {
   };
 
   const handleLoadDemo = () => {
-    lifeVisionAudio.playSave();
+    lifeVisionAudio.playConfirmation();
     setData(DEMO_VISION_DATA);
   };
 
@@ -227,14 +181,13 @@ export default function App() {
     setData({
       myName: '',
       domains: {},
-      isSoundEnabled: data.isSoundEnabled,
     });
     setShowResetConfirm(false);
-    lifeVisionAudio.playClick();
+    lifeVisionAudio.playConfirmation();
   };
 
   const handlePrint = () => {
-    lifeVisionAudio.playClick();
+    lifeVisionAudio.playAction();
     window.print();
   };
 
@@ -246,53 +199,39 @@ export default function App() {
     (d) => !!data.domains[d.id]?.priority
   ).length;
 
-  const sortedRankedDomains = [...LIFE_DOMAINS]
-    .map((d) => ({
-      domain: d,
-      visionData: data.domains[d.id] || { vision: '', priority: '' },
-    }))
-    .filter((item) => item.visionData.vision.trim().length > 0 || item.visionData.priority)
-    .sort((a, b) => {
-      const pA = parseInt(a.visionData.priority, 10) || 999;
-      const pB = parseInt(b.visionData.priority, 10) || 999;
-      return pA - pB;
-    });
-
   return (
-    <div className="relative min-h-screen bg-[#060812] text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
-      {/* Meditative particles background */}
-      <ParticleField />
+    <div className="life-vision relative min-h-screen bg-[#f5f1e9] text-[#382f28] flex flex-col font-sans selection:bg-[#d8b59a] selection:text-[#35271f]">
 
       {/* ── Top Navigation Bar ── */}
-      <header className="sticky top-0 z-40 w-full border-b border-white/8 bg-slate-950/80 backdrop-blur-xl px-4 sm:px-6 py-3 print:hidden">
+      <header className="sticky top-0 z-40 w-full border-b border-[#e5dbce] bg-[#fbf9f5]/95 backdrop-blur-xl px-4 sm:px-6 py-3 print:hidden">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           {/* Left: Back link & Title */}
           <div className="flex items-center gap-3 sm:gap-4">
             <Link
               to="/"
-              className="group flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/10 hover:border-white/25 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-xs font-semibold transition-all cursor-pointer shadow-sm"
+              className="group flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#e4d9cc] hover:border-[#c9b9a7] bg-white/70 hover:bg-white text-[#6f6257] hover:text-[#342b24] text-xs font-semibold transition-all cursor-pointer shadow-sm"
               title="Return to Stepping Stones suite"
             >
               <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
               <span className="hidden sm:inline">Suite</span>
             </Link>
 
-            <div className="h-4 w-[1px] bg-white/10 hidden sm:block" />
+            <div className="h-4 w-[1px] bg-[#e4d9cc] hidden sm:block" />
 
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+              <div className="w-8 h-8 rounded-lg bg-[#b9684f] flex items-center justify-center text-white shadow-md shadow-[#b9684f]/20">
                 <Compass size={17} />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-sm sm:text-base font-black tracking-tight text-white">
+                  <h1 className="text-sm sm:text-base font-bold tracking-tight text-[#342b24]">
                     Life Vision
                   </h1>
-                  <span className="text-[10px] uppercase font-mono tracking-widest px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 hidden md:inline-block">
+                  <span className="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full bg-[#e9ddd1] text-[#805b48] border border-[#decdbd] hidden md:inline-block">
                     LifeCourse
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-400 hidden sm:block">
+                <p className="text-[11px] text-[#82766a] hidden sm:block">
                   Chart your good life across 8 core domains
                 </p>
               </div>
@@ -302,13 +241,13 @@ export default function App() {
           {/* Right Controls */}
           <div className="flex items-center gap-2 sm:gap-2.5">
             {/* View Mode Toggle */}
-            <div className="flex items-center bg-slate-900/90 border border-white/10 rounded-xl p-0.5 text-xs">
+            <div className="flex items-center bg-[#f2ede5] border border-[#e5dbcf] rounded-xl p-0.5 text-xs">
               <button
                 onClick={() => setViewMode('cards')}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer ${
                   viewMode === 'cards'
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-[#b9684f] text-white shadow-sm'
+                    : 'text-[#82766a] hover:text-[#43382f]'
                 }`}
                 title="Cards Grid View"
               >
@@ -319,8 +258,8 @@ export default function App() {
                 onClick={() => setViewMode('summary')}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer ${
                   viewMode === 'summary'
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-[#b9684f] text-white shadow-sm'
+                    : 'text-[#82766a] hover:text-[#43382f]'
                 }`}
                 title="Summary / Compass View"
               >
@@ -332,29 +271,16 @@ export default function App() {
             {/* Print / Export */}
             <button
               onClick={handlePrint}
-              className="p-2 rounded-xl border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-all cursor-pointer"
+              className="p-2 rounded-xl border border-[#e4d9cc] hover:border-[#c9b9a7] bg-white/70 hover:bg-white text-[#6f6257] hover:text-[#342b24] transition-all cursor-pointer"
               title="Print or Save as PDF"
             >
               <Printer size={15} />
             </button>
 
-            {/* Audio Toggle */}
-            <button
-              onClick={toggleSound}
-              className={`p-2 rounded-xl border transition-all cursor-pointer ${
-                data.isSoundEnabled
-                  ? 'border-indigo-500/40 bg-indigo-500/15 text-indigo-300 shadow-[0_0_12px_rgba(99,102,241,0.2)]'
-                  : 'border-white/10 bg-white/5 text-slate-500 hover:text-slate-300'
-              }`}
-              title={data.isSoundEnabled ? 'Mute ambient sound' : 'Unmute ambient sound'}
-            >
-              {data.isSoundEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}
-            </button>
-
             {/* About Modal Trigger */}
             <button
               onClick={() => setShowAbout(true)}
-              className="p-2 rounded-xl border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-all cursor-pointer"
+              className="p-2 rounded-xl border border-[#e4d9cc] hover:border-[#c9b9a7] bg-white/70 hover:bg-white text-[#6f6257] hover:text-[#342b24] transition-all cursor-pointer"
               title="About Life Vision"
             >
               <Info size={15} />
@@ -370,16 +296,16 @@ export default function App() {
       <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 flex flex-col gap-6">
         
         {/* ── Top Hero & Profile Banner ── */}
-        <div className="relative rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur-xl p-5 sm:p-6 shadow-xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-5 print:border-none print:bg-white print:text-black">
+        <div className="relative rounded-2xl border border-[#e6dbce] bg-[#fbf9f5] p-5 sm:p-6 shadow-[0_14px_40px_rgba(70,52,34,0.07)] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-5 print:border-none print:bg-white print:text-black">
           {/* Left: Name input and vision compass metadata */}
           <div className="flex-1 flex flex-col gap-3">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-400 print:text-slate-700">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#9b674f] print:text-slate-700">
               <Sparkles size={14} />
               <span>Personal Vision Statement</span>
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-300 shrink-0 print:border-slate-300 print:text-slate-800">
+              <div className="w-10 h-10 rounded-xl bg-[#f2e9df] border border-[#e7dbcd] flex items-center justify-center text-[#826552] shrink-0 print:border-slate-300 print:text-slate-800">
                 <User size={20} />
               </div>
               <div className="flex-1 max-w-md">
@@ -388,9 +314,9 @@ export default function App() {
                   value={data.myName}
                   onChange={(e) => setData({ ...data, myName: e.target.value })}
                   placeholder="Enter your name (e.g. Alex Morgan)"
-                  className="w-full text-lg sm:text-xl font-bold text-white placeholder:text-slate-500 bg-transparent border-b border-white/15 focus:border-indigo-400 focus:outline-none pb-1 transition-colors print:text-black print:border-black"
+                  className="w-full text-lg sm:text-xl font-serif font-semibold text-[#342b24] placeholder:text-[#a99c8e] bg-transparent border-b border-[#dfd3c5] focus:border-[#b9684f] focus:outline-none pb-1 transition-colors print:text-black print:border-black"
                 />
-                <p className="text-[11px] text-slate-400 mt-1">
+                <p className="text-[11px] text-[#82766a] mt-1">
                   Life Vision Portfolio · Charting the LifeCourse
                 </p>
               </div>
@@ -398,22 +324,22 @@ export default function App() {
           </div>
 
           {/* Right: Progress & Action Quick Bar */}
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4 border-t md:border-t-0 md:border-l border-white/10 pt-4 md:pt-0 md:pl-6 print:hidden">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 border-t md:border-t-0 md:border-l border-[#e5dbcf] pt-4 md:pt-0 md:pl-6 print:hidden">
             {/* Completion Counter */}
             <div className="flex flex-col gap-1">
               <div className="flex items-center justify-between gap-3 text-xs">
-                <span className="text-slate-400 font-medium">Vision Progress</span>
-                <span className="font-mono font-bold text-indigo-300">
+                <span className="text-[#75695d] font-medium">Vision Progress</span>
+                <span className="font-mono font-bold text-[#9a674f]">
                   {completedDomainsCount} / 8
                 </span>
               </div>
-              <div className="w-36 sm:w-44 h-2 bg-slate-950 rounded-full overflow-hidden border border-white/10">
+              <div className="w-36 sm:w-44 h-2 bg-[#e9e1d6] rounded-full overflow-hidden border border-[#e1d6c9]">
                 <div
-                  className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400 transition-all duration-500 rounded-full"
+                  className="h-full bg-gradient-to-r from-[#b9684f] via-[#c88b67] to-[#829071] transition-all duration-500 rounded-full"
                   style={{ width: `${(completedDomainsCount / 8) * 100}%` }}
                 />
               </div>
-              <div className="flex items-center justify-between text-[10px] text-slate-500">
+              <div className="flex items-center justify-between text-[10px] text-[#887c70]">
                 <span>{rankedDomainsCount} ranked</span>
                 <span>{Math.round((completedDomainsCount / 8) * 100)}% complete</span>
               </div>
@@ -424,17 +350,17 @@ export default function App() {
               <button
                 type="button"
                 onClick={handleLoadDemo}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-indigo-200 text-xs font-semibold transition-all cursor-pointer hover:border-indigo-500/50"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#efe4d8] hover:bg-[#e8d6c6] border border-[#dfcdbb] text-[#78513e] text-xs font-semibold transition-all cursor-pointer hover:border-[#cdb39c]"
                 title="Load sample inspiring life visions"
               >
-                <Sparkles size={13} className="text-amber-400" />
+                <Sparkles size={13} className="text-[#b4864f]" />
                 <span className="hidden sm:inline">Load Sample</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setShowResetConfirm(true)}
-                className="p-2 rounded-xl bg-white/5 hover:bg-red-500/20 border border-white/10 hover:border-red-500/30 text-slate-400 hover:text-red-300 transition-all cursor-pointer"
+                className="p-2 rounded-xl bg-white/70 hover:bg-[#f5e6df] border border-[#e4d9cc] hover:border-[#d5b9a9] text-[#82766a] hover:text-[#a5533f] transition-all cursor-pointer"
                 title="Clear all vision entries"
               >
                 <RotateCcw size={14} />
@@ -445,7 +371,7 @@ export default function App() {
 
         {/* ── Domains Domain Pill Strip ── */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none print:hidden">
-          {LIFE_DOMAINS.map((domain, idx) => {
+          {LIFE_DOMAINS.map((domain) => {
             const hasVision = data.domains[domain.id]?.vision?.trim().length > 0;
             const priority = data.domains[domain.id]?.priority;
             return (
@@ -454,20 +380,18 @@ export default function App() {
                 href={`#domain-${domain.id}`}
                 className={`group flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs whitespace-nowrap transition-all ${
                   hasVision
-                    ? 'border-white/15 bg-slate-900/80 text-white hover:border-indigo-400/40'
-                    : 'border-white/5 bg-slate-900/40 text-slate-400 hover:border-white/10 hover:text-slate-200'
+                    ? 'border-[#d5b8a4] bg-[#fffdfa] text-[#3d342c] hover:border-[#b9684f]'
+                    : 'border-[#e5dbcf] bg-[#f8f5ef] text-[#75695d] hover:border-[#cdbca9] hover:text-[#41372e]'
                 }`}
               >
-                <span
-                  className={`w-2 h-2 rounded-full bg-gradient-to-r ${domain.color} ${domain.colorTo}`}
-                />
+                <img src={domain.iconPath} alt="" className="w-5 h-5 object-contain" />
                 <span className="font-medium">{domain.label}</span>
                 {priority && (
-                  <span className="text-[10px] font-mono font-bold text-amber-300 bg-white/5 px-1.5 py-0.2 rounded">
+                  <span className="text-[10px] font-mono font-bold text-[#8a6445] bg-[#f0e8dd] px-1.5 py-0.2 rounded">
                     #{priority}
                   </span>
                 )}
-                {hasVision && <CheckCircle size={12} className="text-emerald-400 shrink-0" />}
+                {hasVision && <CheckCircle size={12} className="text-[#728261] shrink-0" />}
               </a>
             );
           })}
@@ -497,20 +421,20 @@ export default function App() {
             }`}
           >
             {/* Header for print / summary */}
-            <div className="rounded-2xl border border-white/10 bg-slate-900/80 backdrop-blur-xl p-6 sm:p-8 shadow-xl print:bg-white print:border print:border-slate-300 print:text-black">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-6 print:border-slate-300">
+            <div className="rounded-2xl border border-[#e6dbce] bg-[#fbf9f5] p-6 sm:p-8 shadow-[0_14px_40px_rgba(70,52,34,0.07)] print:bg-white print:border print:border-slate-300 print:text-black">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#e6dbce] pb-6 print:border-slate-300">
                 <div>
-                  <h2 className="text-2xl font-black tracking-tight text-white print:text-black">
+                  <h2 className="text-2xl font-serif font-semibold tracking-tight text-[#342b24] print:text-black">
                     {data.myName ? `${data.myName}’s Life Vision` : 'My Life Vision Matrix'}
                   </h2>
-                  <p className="text-xs text-slate-400 print:text-slate-600 mt-1">
+                  <p className="text-xs text-[#82766a] print:text-slate-600 mt-1">
                     Holistic blueprint across the 8 Charting the LifeCourse domains
                   </p>
                 </div>
                 <div className="flex items-center gap-3 print:hidden">
                   <button
                     onClick={handlePrint}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-600/25 cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#b9684f] hover:bg-[#a95c44] text-white text-xs font-bold transition-all shadow-lg shadow-[#b9684f]/20 cursor-pointer"
                   >
                     <Printer size={14} />
                     <span>Print Life Vision Compass</span>
@@ -519,7 +443,7 @@ export default function App() {
               </div>
 
               {/* Matrix List sorted by priority */}
-              <div className="divide-y divide-white/5 print:divide-slate-200 mt-4">
+              <div className="divide-y divide-[#ebe3d9] print:divide-slate-200 mt-4">
                 {LIFE_DOMAINS.map((domain, idx) => {
                   const dData = data.domains[domain.id] || { vision: '', priority: '' };
                   const hasText = dData.vision?.trim().length > 0;
@@ -531,21 +455,19 @@ export default function App() {
                     >
                       {/* Domain badge & priority */}
                       <div className="w-full sm:w-56 shrink-0 flex items-center justify-between sm:justify-start gap-3">
-                        <div
-                          className={`w-9 h-9 rounded-xl flex items-center justify-center bg-gradient-to-br ${domain.color} ${domain.colorTo} text-slate-950 shadow shrink-0 font-bold`}
-                        >
-                          <span className="text-base">{domain.emoji}</span>
+                        <div className="w-10 h-10 rounded-xl bg-[#f1e8de] flex items-center justify-center shrink-0">
+                          <img src={domain.iconPath} alt="" className="w-9 h-9 object-contain" />
                         </div>
                         <div>
-                          <p className="text-xs font-mono text-slate-500 uppercase print:text-slate-500">
+                          <p className="text-xs font-mono text-[#918477] uppercase print:text-slate-500">
                             Domain {idx + 1}
                           </p>
-                          <h4 className="text-sm font-bold text-white print:text-black">
+                          <h4 className="text-sm font-bold text-[#40362e] print:text-black">
                             {domain.label}
                           </h4>
                         </div>
                         {dData.priority && (
-                          <span className="sm:ml-auto px-2 py-0.5 rounded text-xs font-bold bg-amber-400/10 text-amber-300 border border-amber-400/20 print:text-black print:border-slate-400">
+                          <span className="sm:ml-auto px-2 py-0.5 rounded text-xs font-bold bg-[#f3e8d4] text-[#866843] border border-[#e8d6b9] print:text-black print:border-slate-400">
                             Rank #{dData.priority}
                           </span>
                         )}
@@ -554,11 +476,11 @@ export default function App() {
                       {/* Vision Statement Body */}
                       <div className="flex-1 w-full">
                         {hasText ? (
-                          <p className="text-sm text-slate-200 print:text-slate-800 leading-relaxed whitespace-pre-wrap font-sans">
+                          <p className="text-sm text-[#554a40] print:text-slate-800 leading-relaxed whitespace-pre-wrap font-sans">
                             {dData.vision}
                           </p>
                         ) : (
-                          <p className="text-xs italic text-slate-500 print:text-slate-400">
+                          <p className="text-xs italic text-[#96897c] print:text-slate-400">
                             No vision statement defined yet.
                           </p>
                         )}
@@ -573,14 +495,14 @@ export default function App() {
       </main>
 
       {/* ── Footer ── */}
-      <footer className="relative z-10 w-full border-t border-white/8 bg-slate-950/60 backdrop-blur-md py-6 px-4 sm:px-6 text-center text-xs text-slate-500 mt-12 print:hidden">
+      <footer className="relative z-10 w-full border-t border-[#e5dbcf] bg-[#fbf9f5] py-6 px-4 sm:px-6 text-center text-xs text-[#82766a] mt-12 print:hidden">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="flex items-center gap-1.5">
             <span>Stepping Stones</span>
-            <span className="text-slate-700">·</span>
-            <span className="text-slate-400">Life Vision</span>
+            <span className="text-[#b2a496]">·</span>
+            <span className="text-[#62564c]">Life Vision</span>
           </p>
-          <p className="text-[11px] text-slate-600">
+          <p className="text-[11px] text-[#918477]">
             Based on Charting the LifeCourse™ · LifeCourse Nexus
           </p>
         </div>
@@ -596,21 +518,21 @@ export default function App() {
         {showResetConfirm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div
-              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              className="absolute inset-0 bg-[#302820]/45 backdrop-blur-sm"
               onClick={() => setShowResetConfirm(false)}
             />
             <motion.div
               initial={{ scale: 0.92, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.92, opacity: 0 }}
-              className="relative w-full max-w-sm rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl flex flex-col gap-4 text-center"
+              className="relative w-full max-w-sm rounded-2xl border border-[#e5dbcf] bg-[#fbf9f5] p-6 shadow-2xl flex flex-col gap-4 text-center"
             >
-              <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center mx-auto">
+              <div className="w-12 h-12 rounded-2xl bg-[#f4e7df] border border-[#e8d2c4] text-[#a45540] flex items-center justify-center mx-auto">
                 <RotateCcw size={22} />
               </div>
               <div>
-                <h3 className="text-base font-bold text-white">Reset Life Vision?</h3>
-                <p className="text-xs text-slate-400 mt-1">
+                <h3 className="text-base font-bold text-[#342b24]">Reset Life Vision?</h3>
+                <p className="text-xs text-[#82766a] mt-1">
                   This will clear all 8 domain vision statements and priorities on this device.
                 </p>
               </div>
@@ -618,14 +540,14 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setShowResetConfirm(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-semibold text-slate-300 transition-all cursor-pointer"
+                  className="flex-1 py-2.5 rounded-xl border border-[#e3d8cb] bg-white/70 hover:bg-white text-xs font-semibold text-[#6f6257] transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-xs font-bold text-white transition-all shadow-md shadow-red-600/30 cursor-pointer"
+                  className="flex-1 py-2.5 rounded-xl bg-[#a95540] hover:bg-[#954a38] text-xs font-bold text-white transition-all shadow-md shadow-[#a95540]/20 cursor-pointer"
                 >
                   Reset All
                 </button>
@@ -637,4 +559,3 @@ export default function App() {
     </div>
   );
 }
-

@@ -4,7 +4,6 @@ import { motion } from 'motion/react';
 import { Footprints, Layers, Globe, ArrowRight, Compass } from 'lucide-react';
 import { stopPlankAudio } from '../apps/plank/App';
 import { CosmicAudio } from '../apps/expanding-edge/components/CosmicAudio';
-import { lifeVisionAudio } from '../apps/life-vision/components/LifeVisionAudio';
 import LandingAuthWidget from './components/LandingAuthWidget';
 
 /* ─────────────────────────────────────────────
@@ -185,11 +184,10 @@ function AppCard({ app, index }: AppCardProps) {
    Landing page
 ───────────────────────────────────────────── */
 export default function LandingPage() {
-  // Ensure all sub-app background music is stopped when visiting the landing page
+  // Ensure other sub-app background music is stopped when visiting the landing page
   useEffect(() => {
     stopPlankAudio();
     CosmicAudio.stopBackgroundMusic();
-    lifeVisionAudio.stopAmbient();
   }, []);
 
   return (

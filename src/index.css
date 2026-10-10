@@ -78,3 +78,7 @@
 .animate-slow-gentle-pulse {
   animation: slow-gentle-pulse 5s ease-in-out infinite;
 }
+
+.life-vision .font-serif {
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+}
