@@ -1,6 +1,6 @@
 {
-  "summary":  "Architectural plan to expand Firestore persistence and unified Google Authentication across Plank and The Expanding Edge while preserving existing Strategizer data without disruption. Includes schema design, security rules, offline fallback, and shared auth UI.",
-  "updatedAt":  "2026-10-09T00:29:23.452977967Z",
+  "summary":  "Comprehensive architectural plan to eliminate jarring card jumps during initial load in the Strategizer app. Implements a synchronized hydration gate with a 'Loading card history' indicator, smooth fade-in and upward slide transitions, and a 3-second offline fallback timer.",
+  "updatedAt":  "2026-10-10T01:22:39.066555584Z",
   "requestFeedback":  true,
   "userFacing":  true
 }

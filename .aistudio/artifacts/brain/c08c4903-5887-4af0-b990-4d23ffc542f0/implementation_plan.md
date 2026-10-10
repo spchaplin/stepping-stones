@@ -1,25 +1,25 @@
-# Unified Firestore Persistence & Auth Architecture for Stepping Stones
+# Smooth Board Hydration & Anti-Jump Loading Strategy for Strategizer
 
-Expand cloud data persistence across all three Stepping Stones instruments (**Strategizer**, **Plank**, and **The Expanding Edge**) using Google Firebase Firestore and Google Authentication, eliminating data loss and enabling seamless cross-device synchronization with zero backend maintenance.
+Eliminate jarring layout shifts and card jumping during initial page load in the Strategizer shopping application by synchronizing board hydration with a polished "Loading card history" indicator, smooth upward fade-in transitions, and a 3-second offline fallback.
 
 ---
 
 ## User Review & Critical Decisions
 
 > [!IMPORTANT]
-> The architectural direction has been confirmed based on the cost/benefit analysis:
+> The following decisions were confirmed during the interactive clarification phase:
 
-- **Confirmed Decision 1 (Database Strategy)**: Firestore remains the database for the entire suite. We will not migrate to Cloud SQL (PostgreSQL), avoiding ongoing cloud compute charges ($10–$50+/mo), backend server maintenance, and ORM proxy plumbing.
-- **Confirmed Decision 2 (Authentication Strategy)**: Unified Google Sign-In (`signInWithPopup`) shared across all three apps and the landing portal, paired with local storage fallback for guest/offline resilience.
-- **Confirmed Decision 3 (Data Migration)**: Existing Strategizer pacing cards and strategy collections under `/users/{userId}/cards` and `/users/{userId}/strategyCards` are strictly preserved without disruption.
+- **Confirmed Decision 1 (Loading Presentation)**: While the initial Firebase sync is in progress, the workspace will display a clean loading indicator featuring the message `"Loading card history"` instead of rendering premature local storage cards.
+- **Confirmed Decision 2 (Motion & Entry Transition)**: Once card data resolves (from Firestore or fallback), the board and cards will transition in with a smooth fade-in and subtle upward slide (`opacity-0 translate-y-2` to `opacity-100 translate-y-0` within 300ms).
+- **Confirmed Decision 3 (Offline / Slow Network Timeout)**: If Firestore does not return within 3 seconds (or if the user is offline), the app will automatically release the cached local storage cards and display a quiet "Local Cache Active" notification so the user is never blocked.
+- **Confirmed Decision 4 (Scope Isolation)**: All hydration changes are strictly scoped to the Strategizer app (`src/apps/strategizer/`), preserving existing behavior in Plank and The Expanding Edge.
 
 ---
 
 ## 1. Overview & Core Concept
 
-- **What It Does**: Provides real-time cloud data persistence for all three personal growth tools. Plank bridges (7 custom steps) and The Expanding Edge solar systems (life core anchor + milestone planets) will automatically sync to Firestore when signed in, while falling back gracefully to local browser storage for guest exploration.
-- **Target Audience**: Individuals tracking personal goals, runners managing pacing strategies, and students/professionals planning long-term life milestones across phones, laptops, and tablets.
-- **Key Value**: Never lose progress when clearing browser data or changing devices. Users log in once and immediately have their goals, pace strategies, and orbital life journeys live and synchronized everywhere.
+- **Problem**: When Strategizer mounts, `useState` immediately renders default presets or previously cached `localStorage` cards to the screen. Fractions of a second to a few seconds later, the asynchronous Firebase Firestore `onSnapshot` listener fires, updating state with the user's remote cloud cards. Because the remote cards differ in IDs, order, stages, or count, the board visually flickers and cards abruptly jump into new positions.
+- **Solution**: A **Hydration Gate Pattern**. Strategizer holds the workspace in a dedicated initial sync state while verifying cloud data. The board is only revealed once the true state of truth is known (or when the 3-second fallback timer expires). The revealed cards enter with an intentional, fluid fade-and-slide animation that feels polished and deliberate.
 
 ---
 
@@ -27,148 +27,133 @@ Expand cloud data persistence across all three Stepping Stones instruments (**St
 
 ### Key User Flows
 
-1. **Guest Exploration Flow**:
-   - A new or signed-out user opens Plank or The Expanding Edge.
-   - The app loads their local draft or default presets.
-   - A quiet, non-intrusive status pill in the top header indicates: `Guest Mode (Local Only)` alongside a `Sign in with Google` button.
-2. **One-Click Cloud Sync Flow**:
-   - User clicks `Sign in with Google`.
-   - Google popup authenticates the user.
-   - If cloud data exists, it seamlessly loads with real-time listeners (`onSnapshot`). If no cloud data exists yet, their current local draft is automatically migrated to Firestore so no work is lost.
-   - Status transitions to a subtle indicator: `Synced to Cloud` with user avatar/email and a `Sign Out` action.
-3. **Multi-Device Live Update Flow**:
-   - Updates made on one device (e.g. adding a new orbital milestone or checking off a plank) instantly reflect across any other open browser tabs or devices via Firestore's real-time document listeners.
+1. **Authenticated Launch Flow (Standard)**:
+   - User navigates to `/strategizer`.
+   - The top header renders cleanly with user profile info, pacing summary, and category switchers.
+   - The workspace canvas displays a centered, subdued loading indicator: a minimalist circular spinner or breathing pulse ring paired with the caption:
+     $$\text{"Loading card history..."}$$
+   - When Firestore `onSnapshot` returns data for both pacing cards and strategy cards:
+     - The loading state clears.
+     - The workspace columns smoothly fade in and glide up 8px over 250–300ms.
+     - Zero card jumping or rearrangement is visible.
+
+2. **Offline / Slow Network Fallback Flow**:
+   - If the user has high latency, an unstable network connection, or is offline:
+     - The `"Loading card history..."` indicator runs for up to 3.0 seconds.
+     - At the 3-second mark, the timer expires and releases the locally cached board state immediately.
+     - A quiet, non-intrusive status pill appears in the workspace footer or bottom bar: `Using local offline cards · Will sync when connected`.
+     - When Firebase eventually connects in the background, updates merge smoothly without resetting the user's active inputs.
+
+3. **Guest / First-Time User Flow**:
+   - For users browsing in guest mode (or logged out before authentication resolves), the board reveals without unnecessary delay once authentication status is determined, fading in preset defaults cleanly.
 
 ### Visual Identity & Theme Integration
 
-- **Design System Alignment**: Follows the established monochromatic obsidian & silver aesthetic (`#09090b` canvas, `#18181b` surface, `#27272a` borders, and `#f4f4f5` silver typography).
-- **Header Auth Controls**:
-  - Compact single-line user pill: clean 28px circular Google avatar or letter monogram, user email, and a quiet dropdown/button for sign out.
-  - Matches the 3-zone Top Bar contract without cluttering the screen or shifting existing toolbars.
-- **No Intrusive Modals**: Authentication is completely opt-in and never blocks app functionality.
+- **Color Palette**: Dark obsidian background (`bg-slate-950`), subtle borders (`border-slate-800`), muted silver typography (`text-slate-400`), and clean high-contrast text (`text-slate-200`).
+- **Loading Element**:
+  - Compact container with backdrop blur, zero garish candy badges, and no fake telemetry.
+  - Quiet Lucide loader icon (`Loader2` rotating smoothly at 1 turn per second) or minimal pulse ring.
+  - Caption: `Loading card history` (13px, font-medium, `text-slate-400`).
+- **Motion Parameters**:
+  - `transition: opacity 300ms cubic-bezier(0.16, 1, 0.3, 1), transform 300ms cubic-bezier(0.16, 1, 0.3, 1)`
+  - Respects `prefers-reduced-motion` by reducing transform offsets to 0.
 
 ---
 
 ## 3. Key Product Decisions & Trade-Offs
 
-### Decision 1: Shared Core Firebase Service Module
-- *Chosen Approach*: Move core Firebase configuration and auth state management from `src/apps/strategizer/firebase.ts` into a centralized `src/firebase/` directory (`src/firebase/firebase.ts` and `src/firebase/AuthContext.tsx`).
-- *Why*: Prevents code duplication and avoids initializing duplicate Firebase app instances in the same browser tab.
-- *Alternatives Considered*: Importing from `strategizer` into `plank` (rejected: creates brittle circular cross-app dependencies).
+### Decision 1: Hydration Gate vs. Optimistic Placeholder Skeletons
+- *Chosen Approach*: Hydration Gate with loading indicator.
+- *Why*: Pacing cards vary dynamically in text length, stages (1–5), categories (Faster vs. Slower), and card count (0 to 20+). Rendering generic skeleton cards still produces layout shifts when the real cards arrive. An intentional loading indicator keeps the canvas calm and delivers a single, stable reveal.
+- *Alternatives Considered*: Skeleton cards (rejected: causes sudden geometric jumps when cards have different heights or counts).
 
-### Decision 2: Document Model vs. Subcollection Model for New Apps
-- *Chosen Approach*:
-  - **Plank**: Store user state as a single consolidated document at `/users/{userId}/plank/current`. Planks are strictly capped at 7 items with lightweight text; a single document ensures atomic saves and zero multiple-read overhead.
-  - **The Expanding Edge**: Store user voyage as a single consolidated document at `/users/{userId}/expandingEdge/current`. The core anchor and array of 1–15 orbiting planets save atomically.
-  - **Strategizer**: Keep existing subcollections (`/users/{userId}/cards/{cardId}` and `/users/{userId}/strategyCards/{cardId}`) unchanged to guarantee 100% backward compatibility.
-- *Why*: Minimizes Firestore read/write operations (1 write per snapshot save), staying well within the free tier.
+### Decision 2: 3-Second Fail-Safe Timer
+- *Chosen Approach*: A 3000ms safety timeout that forces hydration completion if Firestore is slow or blocked.
+- *Why*: Prevents infinite loading loops if Firebase Auth or Firestore encounters transient network drops, ad-blocker interference, or latency spikes.
+- *Alternatives Considered*: Indefinite loading with manual retry (rejected: adds user friction and interrupts quick task logging).
+
+### Decision 3: Local Storage Role as Secondary Seed
+- *Chosen Approach*: Keep local storage read as the fallback seed in memory, but defer rendering until Firestore confirms whether remote documents exist. If Firestore is empty, remote is seeded from local cache without flashing. If Firestore has records, remote replaces local cache cleanly before first paint.
 
 ---
 
 ## 4. Technical Architecture & Data Strategy
 
-### System Architecture Diagram
+### System Hydration Flow Diagram
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                           STEPPING STONES SUITE                                  │
-│                                                                                 │
-│   ┌────────────────────┐   ┌────────────────────┐   ┌────────────────────────┐  │
-│   │    PLANK APP       │   │  STRATEGIZER APP   │   │  EXPANDING EDGE APP    │  │
-│   │ (7-step bridge)    │   │ (Pacing splits)    │   │ (Solar orbit model)    │  │
-│   └─────────┬──────────┘   └─────────┬──────────┘   └───────────┬────────────┘  │
-│             │                        │                          │               │
-│             └────────────────────────┼──────────────────────────┘               │
-│                                      ▼                                          │
-│                    ┌───────────────────────────────────┐                        │
-│                    │     SHARED AUTH CONTEXT & SDK     │                        │
-│                    │     (src/firebase/AuthContext)    │                        │
-│                    │  • onAuthStateChanged             │                        │
-│                    │  • signInWithPopup (Google)       │                        │
-│                    │  • handleFirestoreError           │                        │
-│                    └─────────────────┬─────────────────┘                        │
-│                                      │                                          │
-└──────────────────────────────────────┼──────────────────────────────────────────┘
-                                       ▼
-                   ┌───────────────────────────────────────┐
-                   │          FIRESTORE CLOUD DB           │
-                   │                                       │
-                   │  /users/{userId}                      │
-                   │    ├── cards/{cardId}                 │ (Strategizer splits)
-                   │    ├── strategyCards/{cardId}         │ (Strategizer notes)
-                   │    ├── plank/current                  │ (Plank 7-step state)
-                   │    └── expandingEdge/current          │ (Expanding Edge state)
-                   └───────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│                        STRATEGIZER MOUNT                               │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+                  ┌─────────────────┴─────────────────┐
+                  ▼                                   ▼
+          [Auth Initializing]                [Local Cache Stored]
+                  │                           (held in memory)
+                  ▼                                   │
+      Is User Authenticated?                          │
+       ├──────────────┴──────────────┐                │
+       ▼ (Yes)                       ▼ (No / Guest)   │
+┌──────────────────────────┐   ┌──────────────────────┴────────┐
+│ Start Firestore Listener │   │ Release Local / Preset Cards   │
+│ • cards                  │   │ • Reveal Workspace Immediately │
+│ • strategyCards          │   └───────────────────────────────┘
+│ Start 3s Fallback Timer  │
+└──────────────┬───────────┘
+               │
+        First Snapshot 
+       Received < 3.0s?
+       ├──────────────┴──────────────┐
+       ▼ (Yes)                       ▼ (No - Timeout Fired)
+┌──────────────────────────┐   ┌───────────────────────────────┐
+│ Set Cards from Snapshot  │   │ Release Local Cache Cards     │
+│ Mark `isHydrated = true` │   │ Set `isOfflineFallback = true`│
+│ Clear Timeout            │   │ Mark `isHydrated = true`      │
+└──────────────┬───────────┘   └───────────────┬───────────────┘
+               │                               │
+               └───────────────┬───────────────┘
+                               ▼
+               ┌───────────────────────────────┐
+               │    Smooth Fade-In Reveal      │
+               │  opacity: 0 -> 1              │
+               │  translate-y: 8px -> 0px      │
+               └───────────────────────────────┘
 ```
 
-### Data Schema Definitions
+### Component State Mapping in `src/apps/strategizer/App.tsx`
 
-#### 1. Plank Document (`/users/{userId}/plank/current`)
-```typescript
-interface PlankDocument {
-  userId: string;
-  planks: {
-    id: string;
-    text: string;
-  }[];
-  soundEnabled: boolean;
-  updatedAt: string; // ISO-8601 string or serverTimestamp
-}
-```
+| State Variable | Type | Purpose |
+| :--- | :--- | :--- |
+| `isHydrated` | `boolean` | Master gate indicating whether initial sync or timeout has completed. |
+| `isTimedOut` | `boolean` | Set to true if the 3-second fallback triggered before Firestore returned. |
+| `showBoardAnimation` | `boolean` | Toggled to true once `isHydrated` turns true to drive CSS transition. |
 
-#### 2. The Expanding Edge Document (`/users/{userId}/expandingEdge/current`)
-```typescript
-interface ExpandingEdgeDocument {
-  userId: string;
-  coreLabel: string;
-  coreDescription: string;
-  steps: {
-    id: string;
-    index: number;
-    label: string;
-    description: string;
-    risk: string;
-    skill: string;
-    planetType: string;
-    planetName: string;
-    color: string;
-    orbitSpeed: number;
-    orbitRadius: number;
-    unlockedAt: string;
-    isCustomized: boolean;
-  }[];
-  isAudioEnabled: boolean;
-  updatedAt: string;
-}
-```
+### Handlers & State Transitions
 
-### Security Rules Hardening (`firestore.rules`)
-- Add strict validation functions:
-  - `isValidPlankDoc(data, userId)`: verifies `planks` array length $\le 7$, each plank has `id` and `text` $\le 300$ chars, `userId` matches `request.auth.uid`.
-  - `isValidExpandingEdgeDoc(data, userId)`: verifies `coreLabel` $\le 100$ chars, `coreDescription` $\le 100$ chars, `steps` array $\le 20$ planets, each step adheres to schema, `userId` matches `request.auth.uid`.
-- Restrict read/write strictly to `isOwner(userId)`. Default-deny catch-all remains active.
+1. **Mount Hook**:
+   - If `user` is authenticated: initialize a `3000ms` timeout ref.
+   - When both `cardsInitialized` and `strategyInitialized` reach `true`: cancel timeout, set `isHydrated(true)`.
+   - If timeout triggers first: log subtle warning, set `isTimedOut(true)` and `isHydrated(true)` with cached data.
+2. **Workspace Render Condition**:
+   - While `!isHydrated && user`: render `<LoadingWorkspace message="Loading card history" />` in place of the card columns.
+   - When `isHydrated`: render the columns with CSS classes:
+     `transition-all duration-300 ease-out opacity-100 translate-y-0` (or `opacity-0 translate-y-2` prior to hydration).
+3. **Card Item & Column Polish**:
+   - Ensure `PaceColumn.tsx` and `StrategyColumn.tsx` accept the hydrated state so individual card containers do not recalculate dimensions abruptly.
 
 ---
 
 ## 5. Execution Steps (Post-Approval)
 
-1. **Shared Firebase Core Setup**:
-   - Establish `src/firebase/` with `firebase.ts` and `AuthContext.tsx`.
-   - Expose `useAuth()` hook providing user state, login/logout functions, and sync status.
-2. **Update Blueprint & Security Rules**:
-   - Update `firebase-blueprint.json` with `PlankDoc` and `ExpandingEdgeDoc` entities and paths.
-   - Update `firestore.rules` with validators for the new document paths.
-   - Deploy updated security rules via `DeployRules` RPC.
-3. **Plank App Integration**:
-   - Wire `src/apps/plank/App.tsx` to `useAuth()`.
-   - Add top-bar authentication widget with guest mode / cloud sync indicator.
-   - Listen to `/users/{userId}/plank/current` on login; sync changes to Firestore with debounce and local fallback.
-4. **Expanding Edge App Integration**:
-   - Wire `src/apps/expanding-edge/App.tsx` and `ControlPanel.tsx` to `useAuth()`.
-   - Place auth pill in the new top header row next to "Stepping Stones" and "Restart".
-   - Listen to `/users/{userId}/expandingEdge/current` on login; sync state changes to Firestore with local fallback.
-5. **Strategizer Refactor to Shared Core**:
-   - Update Strategizer to consume the shared `src/firebase/` modules without modifying database paths or card schema.
-6. **Verification & Quality Checks**:
-   - Verify TypeScript compilation and linter.
-   - Test sign-in, real-time sync, guest fallback, and multi-tab synchronization across all three instruments.
+1. **Update Hydration Logic in `App.tsx`**:
+   - Add `isHydrated` and `isTimedOut` states.
+   - Implement the 3-second timeout controller with cleanup on unmount.
+   - Connect Firestore `cardsInitialized` and `strategyInitialized` completion to release the hydration gate.
+2. **Implement Loading Indicator Component**:
+   - Create a clean loading component inside `src/apps/strategizer/components/` (e.g. `LoadingWorkspace.tsx` or inline within `App.tsx`) with the exact `"Loading card history"` copy.
+3. **Apply Smooth Entry Animations**:
+   - Add smooth CSS transitions to the workspace container with upward slide and fade-in tokens.
+   - Add offline notification indicator if fallback was engaged.
+4. **Build & Verify**:
+   - Run `compile_applet` to verify TypeScript compliance.
+   - Verify guest mode, rapid tab switching, and logged-in experience with zero visual jumping.

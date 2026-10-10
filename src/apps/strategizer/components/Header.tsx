@@ -18,6 +18,7 @@ interface HeaderProps {
   onLogin: () => void;
   onLogout: () => void;
   isGuestMode?: boolean;
+  syncStatus?: 'syncing' | 'synced' | 'offline';
 }
 
 export function Header({ 
@@ -28,7 +29,8 @@ export function Header({
   user,
   onLogin,
   onLogout,
-  isGuestMode
+  isGuestMode,
+  syncStatus = 'synced',
 }: HeaderProps) {
   // Calculate dynamic stats for completing goals
   const fasterCompleted = cards.filter(
@@ -147,9 +149,19 @@ export function Header({
                 <span className="text-xs font-semibold text-white tracking-wide truncate max-w-[90px] leading-none mb-0.5" title={user.displayName || ''}>
                   {user.displayName || 'Guest'}
                 </span>
-                <span className="text-[8.0px] text-emerald-400 font-semibold uppercase tracking-widest leading-none">
-                  Cloud Synced
-                </span>
+                {syncStatus === 'syncing' ? (
+                  <span className="text-[8.0px] text-amber-400 font-semibold uppercase tracking-widest leading-none animate-pulse">
+                    Syncing...
+                  </span>
+                ) : syncStatus === 'offline' ? (
+                  <span className="text-[8.0px] text-amber-400 font-semibold uppercase tracking-widest leading-none">
+                    Local Cache
+                  </span>
+                ) : (
+                  <span className="text-[8.0px] text-emerald-400 font-semibold uppercase tracking-widest leading-none">
+                    Cloud Synced
+                  </span>
+                )}
               </div>
               <button
                 onClick={onLogout}

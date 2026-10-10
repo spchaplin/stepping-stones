@@ -25,6 +25,7 @@ import { Header } from './components/Header.tsx';
 import { PaceColumn } from './components/PaceColumn.tsx';
 import { StrategyColumn } from './components/StrategyColumn.tsx';
 import { ResetConfirmModal } from './components/ResetConfirmModal.tsx';
+import { LoadingWorkspace } from './components/LoadingWorkspace.tsx';
 import { PaceCard, StrategyCard } from './types.ts';
 import { auth, db, googleProvider, handleFirestoreError, OperationType } from './firebase.ts';
 import { useAuth } from '../../firebase/AuthContext';
@@ -78,6 +79,10 @@ export default function App() {
   // Initialization and sync flags
   const [cardsInitialized, setCardsInitialized] = useState(false);
   const [strategyInitialized, setStrategyInitialized] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+  const [isRevealed, setIsRevealed] = useState(false);
+  const [isTimedOut, setIsTimedOut] = useState(false);
+  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isBoardInitializedRef = useRef(false);
   const prevGoalsMetRef = useRef<boolean | null>(null);
   const celebrationIntervalRef = useRef<number | null>(null);
@@ -165,7 +170,7 @@ export default function App() {
     };
   }, []);
 
-  const isBoardReady = user ? (cardsInitialized && strategyInitialized) : !authLoading;
+  const isBoardReady = isHydrated;
 
   useEffect(() => {
     if (!isBoardReady) return;
@@ -206,6 +211,13 @@ export default function App() {
   useEffect(() => {
     setCardsInitialized(false);
     setStrategyInitialized(false);
+    setIsHydrated(false);
+    setIsRevealed(false);
+    setIsTimedOut(false);
+    if (syncTimeoutRef.current) {
+      clearTimeout(syncTimeoutRef.current);
+      syncTimeoutRef.current = null;
+    }
     isBoardInitializedRef.current = false;
     prevGoalsMetRef.current = null;
     if (user) {
@@ -216,6 +228,62 @@ export default function App() {
       } catch {}
     }
   }, [user]);
+
+  // Hydration Gate logic: Wait for Firebase sync OR 3s timeout before revealing board
+  useEffect(() => {
+    if (authLoading) return;
+
+    // Unauthenticated (guest / logged out): hydrate immediately
+    if (!user) {
+      setIsHydrated(true);
+      setIsTimedOut(false);
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+        syncTimeoutRef.current = null;
+      }
+      return;
+    }
+
+    // Authenticated and Firestore data has fully initialized:
+    if (cardsInitialized && strategyInitialized) {
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+        syncTimeoutRef.current = null;
+      }
+      setIsHydrated(true);
+      return;
+    }
+
+    // If waiting for Firestore, start 3-second fallback timer
+    if (!syncTimeoutRef.current && !isHydrated) {
+      syncTimeoutRef.current = setTimeout(() => {
+        setIsTimedOut(true);
+        setIsHydrated(true);
+        syncTimeoutRef.current = null;
+      }, 3000);
+    }
+  }, [user, authLoading, cardsInitialized, strategyInitialized, isHydrated]);
+
+  // Clean up hydration timer on unmount
+  useEffect(() => {
+    return () => {
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Smooth upward slide & fade-in reveal once hydrated
+  useEffect(() => {
+    if (isHydrated) {
+      const timer = setTimeout(() => {
+        setIsRevealed(true);
+      }, 30);
+      return () => clearTimeout(timer);
+    } else {
+      setIsRevealed(false);
+    }
+  }, [isHydrated]);
 
   // Persist guest data locally when not logged in
   useEffect(() => {
@@ -732,6 +800,9 @@ export default function App() {
   const fasterCards = cards.filter((c) => c.type === 'faster');
   const slowerCards = cards.filter((c) => c.type === 'slower');
 
+  const syncStatus: 'syncing' | 'synced' | 'offline' = 
+    user && !isHydrated ? 'syncing' : (isTimedOut && (!cardsInitialized || !strategyInitialized)) ? 'offline' : 'synced';
+
   return (
     <div className="w-screen h-screen flex flex-col bg-slate-950 text-slate-200 overflow-hidden font-sans">
       {/* 1) Dynamic dashboard header */}
@@ -743,6 +814,7 @@ export default function App() {
         onLogin={handleLogin}
         onLogout={handleLogout}
         isGuestMode={isGuestMode}
+        syncStatus={syncStatus}
         onCategoryChange={async (cat) => {
           setActiveCategory(cat);
 
@@ -761,64 +833,87 @@ export default function App() {
 
       {/* 2) Main Workspace */}
       <main className="flex-1 flex flex-col relative overflow-hidden bg-slate-950/90 z-0">
-        <div 
-          className="flex-1 h-full flex-col overflow-hidden" 
-          style={{ display: activeCategory === 'strategy' ? 'flex' : 'none' }}
-        >
-          <StrategyColumn
-            cards={strategyCards}
-            onAddCard={handleAddStrategyCard}
-            onUpdateName={handleUpdateStrategyCardName}
-            onDelete={handleForceDeleteStrategyCard}
-            onReorder={handleReorderStrategyCard}
-            isActive={activeCategory === 'strategy'}
-            lastAddedCardId={lastAddedCardId}
-          />
-        </div>
+        {!isHydrated ? (
+          <LoadingWorkspace message="Loading card history" />
+        ) : (
+          <div 
+            className={`flex-1 h-full flex flex-col relative transition-all duration-300 ease-out ${
+              isRevealed 
+                ? 'opacity-100 translate-y-0' 
+                : 'opacity-0 translate-y-2 pointer-events-none'
+            }`}
+          >
+            <div 
+              className="flex-1 h-full flex-col overflow-hidden" 
+              style={{ display: activeCategory === 'strategy' ? 'flex' : 'none' }}
+            >
+              <StrategyColumn
+                cards={strategyCards}
+                onAddCard={handleAddStrategyCard}
+                onUpdateName={handleUpdateStrategyCardName}
+                onDelete={handleForceDeleteStrategyCard}
+                onReorder={handleReorderStrategyCard}
+                isActive={activeCategory === 'strategy'}
+                lastAddedCardId={lastAddedCardId}
+              />
+            </div>
 
-        <div 
-          className="flex-1 h-full flex-col overflow-hidden" 
-          style={{ display: activeCategory === 'faster' ? 'flex' : 'none' }}
-        >
-          <PaceColumn
-            type="faster"
-            cards={fasterCards}
-            onAddCard={() => handleAddCard('faster')}
-            onUpdateName={handleUpdateName}
-            onUpdateStage={handleUpdateStage}
-            onDelete={handleDeleteCard}
-            onReorder={handleReorderCard}
-            lastAddedCardId={lastAddedCardId}
-          />
-        </div>
+            <div 
+              className="flex-1 h-full flex-col overflow-hidden" 
+              style={{ display: activeCategory === 'faster' ? 'flex' : 'none' }}
+            >
+              <PaceColumn
+                type="faster"
+                cards={fasterCards}
+                onAddCard={() => handleAddCard('faster')}
+                onUpdateName={handleUpdateName}
+                onUpdateStage={handleUpdateStage}
+                onDelete={handleDeleteCard}
+                onReorder={handleReorderCard}
+                lastAddedCardId={lastAddedCardId}
+              />
+            </div>
 
-        <div 
-          className="flex-1 h-full flex-col overflow-hidden" 
-          style={{ display: activeCategory === 'slower' ? 'flex' : 'none' }}
-        >
-          <PaceColumn
-            type="slower"
-            cards={slowerCards}
-            onAddCard={() => handleAddCard('slower')}
-            onUpdateName={handleUpdateName}
-            onUpdateStage={handleUpdateStage}
-            onDelete={handleDeleteCard}
-            onReorder={handleReorderCard}
-            lastAddedCardId={lastAddedCardId}
-          />
-        </div>
+            <div 
+              className="flex-1 h-full flex-col overflow-hidden" 
+              style={{ display: activeCategory === 'slower' ? 'flex' : 'none' }}
+            >
+              <PaceColumn
+                type="slower"
+                cards={slowerCards}
+                onAddCard={() => handleAddCard('slower')}
+                onUpdateName={handleUpdateName}
+                onUpdateStage={handleUpdateStage}
+                onDelete={handleDeleteCard}
+                onReorder={handleReorderCard}
+                lastAddedCardId={lastAddedCardId}
+              />
+            </div>
 
-        {/* Reset Button in bottom corner */}
-        <button
-          onClick={handleResetWorkspace}
-          type="button"
-          id="btn-workspace-restore"
-          className="absolute bottom-4 right-4 z-30 p-2.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-950/20 hover:scale-105 active:scale-95 transition-all text-xs flex items-center gap-1.5 font-bold cursor-pointer"
-          title="Reset back to standard preset cards"
-        >
-          <RotateCcw className="w-4 h-4" />
-          <span className="hidden md:inline">Reset Workspace</span>
-        </button>
+            {/* Offline Local Cache Notice if 3-second fallback triggered */}
+            {isTimedOut && (!cardsInitialized || !strategyInitialized) && (
+              <div 
+                className="absolute bottom-4 left-4 z-30 px-3.5 py-1.5 rounded-full bg-slate-900/95 border border-amber-500/30 text-amber-300 shadow-xl text-xs font-semibold flex items-center gap-2 backdrop-blur-md animate-in fade-in slide-in-from-bottom-2 duration-300 select-none"
+                role="status"
+              >
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
+                <span>Using local card cache · Syncing in background</span>
+              </div>
+            )}
+
+            {/* Reset Button in bottom corner */}
+            <button
+              onClick={handleResetWorkspace}
+              type="button"
+              id="btn-workspace-restore"
+              className="absolute bottom-4 right-4 z-30 p-2.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-950/20 hover:scale-105 active:scale-95 transition-all text-xs flex items-center gap-1.5 font-bold cursor-pointer"
+              title="Reset back to standard preset cards"
+            >
+              <RotateCcw className="w-4 h-4" />
+              <span className="hidden md:inline">Reset Workspace</span>
+            </button>
+          </div>
+        )}
       </main>
       
       {/* Reset Confirmation Modal */}
