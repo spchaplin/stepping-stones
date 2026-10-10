@@ -25,7 +25,8 @@ import {
 import { PlankData, FlyingAnimal, JumpingRiverCritter, SkyParticle } from './types';
 import GorgeStage from './components/GorgeStage';
 import PlankEditor from './components/PlankEditor';
-import { useAuth, AuthWidget } from '../../firebase/AuthContext';
+import { useAuth } from '../../firebase/AuthContext';
+import PlankAuthWidget from './components/PlankAuthWidget';
 import { db, handleFirestoreError, OperationType } from '../../firebase/firebase';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 
@@ -1012,7 +1013,7 @@ export default function App() {
             <button
               id="toggle-sound-btn"
               onClick={() => setSoundEnabled(!soundEnabled)}
-              className="p-2 bg-white hover:bg-stone-100 rounded-xl border border-stone-200 text-stone-700 transition-all cursor-pointer hover:border-stone-300 shadow-2xs"
+              className="h-8 w-8 flex items-center justify-center bg-white hover:bg-stone-100 rounded-xl border border-stone-200 text-stone-700 transition-all cursor-pointer hover:border-stone-300 shadow-2xs"
               title={soundEnabled ? "Disable Sound" : "Enable Sound"}
             >
               {soundEnabled ? <Volume2 className="w-4 h-4 text-stone-800" /> : <VolumeX className="w-4 h-4 opacity-50" />}
@@ -1021,14 +1022,14 @@ export default function App() {
             <button
                id="global-reset-btn"
                onClick={handleReset}
-               className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-stone-100 rounded-xl border border-stone-200 text-xs font-bold text-stone-700 transition-all cursor-pointer hover:border-red-300 hover:text-red-600 shadow-2xs"
+               className="h-8 flex items-center gap-1.5 px-3 bg-white hover:bg-stone-100 rounded-xl border border-stone-200 text-xs font-bold text-stone-700 transition-all cursor-pointer hover:border-red-300 hover:text-red-600 shadow-2xs"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Clear Board</span>
             </button>
 
             {/* Google Cloud Auth Widget */}
-            <AuthWidget compact />
+            <PlankAuthWidget />
           </div>
 
         </div>
