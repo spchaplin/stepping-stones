@@ -5,10 +5,8 @@ import {
   ArrowLeft,
   ArrowUp,
   Info,
-  Sparkles,
   RotateCcw,
   Printer,
-  Compass,
   CheckCircle,
   LayoutGrid,
   FileText,
@@ -16,6 +14,7 @@ import {
 } from 'lucide-react';
 import { LIFE_DOMAINS } from './domains';
 import { LifeVisionData, DomainVision } from './types';
+import MdiIcon from './components/MdiIcon';
 import DomainCard from './components/DomainCard';
 import AboutModal from './components/AboutModal';
 import LifeVisionAuthWidget from './components/LifeVisionAuthWidget';
@@ -238,7 +237,7 @@ export default function App() {
 
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-[#b9684f] flex items-center justify-center text-white shadow-md shadow-[#b9684f]/20">
-                <Compass size={17} />
+                <MdiIcon name="compass-rose" size={17} />
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -318,7 +317,7 @@ export default function App() {
           {/* Left: Name input and vision compass metadata */}
           <div className="flex-1 flex flex-col gap-3">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#9b674f] print:text-slate-700">
-              <Sparkles size={14} />
+              <MdiIcon name="map" size={17} className="relative -top-px" />
               <span>Personal Vision Statement</span>
             </div>
 
@@ -371,7 +370,7 @@ export default function App() {
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#efe4d8] hover:bg-[#e8d6c6] border border-[#dfcdbb] text-[#78513e] text-xs font-semibold transition-all cursor-pointer hover:border-[#cdb39c]"
                 title="Load sample inspiring life visions"
               >
-                <Sparkles size={13} className="text-[#b4864f]" />
+                <MdiIcon name="star-shooting" size={13} className="text-[#b4864f]" />
                 <span className="hidden sm:inline">Load Sample</span>
               </button>
 
@@ -388,27 +387,29 @@ export default function App() {
         </div>
 
         {/* ── Domains Domain Pill Strip ── */}
-        <div className="flex flex-wrap items-center gap-2 pb-1 print:hidden">
-          {LIFE_DOMAINS.map((domain) => {
-            const hasVision = data.domains[domain.id]?.vision?.trim().length > 0;
-            return (
-              <a
-                key={domain.id}
-                href={`#domain-${domain.id}`}
-                onClick={() => lifeVisionAudio.playNavigation()}
-                className={`group flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs whitespace-nowrap transition-all ${
-                  hasVision
-                    ? 'border-[#d5b8a4] bg-[#fffdfa] text-[#3d342c] hover:border-[#b9684f]'
-                    : 'border-[#e5dbcf] bg-[#f8f5ef] text-[#75695d] hover:border-[#cdbca9] hover:text-[#41372e]'
-                }`}
-              >
-                <img src={domain.iconPath} alt="" className="w-5 h-5 object-contain" />
-                <span className="font-medium">{domain.label}</span>
-                {hasVision && <CheckCircle size={12} className="text-[#728261] shrink-0" />}
-              </a>
-            );
-          })}
-        </div>
+        {viewMode === 'cards' && (
+          <div className="flex flex-wrap items-center gap-2 pb-1 print:hidden">
+            {LIFE_DOMAINS.map((domain) => {
+              const hasVision = data.domains[domain.id]?.vision?.trim().length > 0;
+              return (
+                <a
+                  key={domain.id}
+                  href={`#domain-${domain.id}`}
+                  onClick={() => lifeVisionAudio.playNavigation()}
+                  className={`group flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs whitespace-nowrap transition-all ${
+                    hasVision
+                      ? 'border-[#d5b8a4] bg-[#fffdfa] text-[#3d342c] hover:border-[#b9684f]'
+                      : 'border-[#e5dbcf] bg-[#f8f5ef] text-[#75695d] hover:border-[#cdbca9] hover:text-[#41372e]'
+                  }`}
+                >
+                  <img src={domain.iconPath} alt="" className="w-5 h-5 object-contain" />
+                  <span className="font-medium">{domain.label}</span>
+                  {hasVision && <CheckCircle size={12} className="text-[#728261] shrink-0" />}
+                </a>
+              );
+            })}
+          </div>
+        )}
 
         {/* ── View: Cards Grid View ── */}
         {viewMode === 'cards' && (
