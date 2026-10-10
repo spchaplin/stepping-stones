@@ -20,7 +20,10 @@ import {
   BookmarkCheck,
   Award,
   BookOpen,
-  ArrowLeftRight
+  ArrowLeftRight,
+  AlertTriangle,
+  X,
+  Loader2
 } from 'lucide-react';
 import { PlankData, FlyingAnimal, JumpingRiverCritter, SkyParticle } from './types';
 import GorgeStage from './components/GorgeStage';
@@ -314,10 +317,17 @@ export function stopPlankAudio() {
 }
 
 export default function App() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [planks, setPlanks] = useState<PlankData[]>(getInitialPlanks);
   const [hoveredPlankId, setHoveredPlankId] = useState<string | null>(null);
   const isSyncingFromCloud = useRef(false);
+  const [newlyCreatedPlankIds, setNewlyCreatedPlankIds] = useState<Set<string>>(() => new Set());
+
+  // Cloud loading & error fallback states
+  const [isLoadingPlanks, setIsLoadingPlanks] = useState<boolean>(true);
+  const [firestoreError, setFirestoreError] = useState<string | null>(null);
+  const [syncRetryKey, setSyncRetryKey] = useState<number>(0);
+  const isInitialFetchDone = useRef<boolean>(false);
 
   // Sound enablement state (persisted in localStorage)
   const [soundEnabled, setSoundEnabled] = useState(() => {
@@ -338,9 +348,43 @@ export default function App() {
 
   // Subscribe to user's Plank bridge in Firestore with live onSnapshot listener
   useEffect(() => {
-    if (!user) return;
+    // If Auth is still initializing, maintain loading state
+    if (authLoading) {
+      setIsLoadingPlanks(true);
+      return;
+    }
+
+    // Unauthenticated (guest): immediately load from localStorage without cloud sync
+    if (!user) {
+      setIsLoadingPlanks(false);
+      setFirestoreError(null);
+      isInitialFetchDone.current = true;
+      setPlanks(getInitialPlanks());
+      return;
+    }
+
+    // Authenticated user: fetch from Firestore
+    setIsLoadingPlanks(true);
+    setFirestoreError(null);
+    let isCancelled = false;
+
+    // Safety timeout in case of network freeze or hanging request (6 seconds)
+    const timeoutId = setTimeout(() => {
+      if (!isCancelled && !isInitialFetchDone.current) {
+        setIsLoadingPlanks(false);
+        setFirestoreError('Cloud connection timed out. Showing your local device backup.');
+        setPlanks(getInitialPlanks());
+      }
+    }, 6000);
+
     const docRef = doc(db, 'users', user.uid, 'plank', 'current');
     const unsubscribe = onSnapshot(docRef, (snapshot) => {
+      if (isCancelled) return;
+      clearTimeout(timeoutId);
+      isInitialFetchDone.current = true;
+      setIsLoadingPlanks(false);
+      setFirestoreError(null);
+
       if (snapshot.exists()) {
         const data = snapshot.data();
         isSyncingFromCloud.current = true;
@@ -357,25 +401,45 @@ export default function App() {
         // First cloud sign-in: migrate existing local planks if present
         const local = getInitialPlanks();
         if (local.length > 0) {
+          setPlanks(local);
           setDoc(docRef, {
             userId: user.uid,
             planks: local.slice(0, TARGET_PLANKS),
             soundEnabled: soundEnabledRef.current,
             updatedAt: new Date().toISOString()
           }).catch(err => {
-            handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/plank/current`);
+            try {
+              handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/plank/current`);
+            } catch (_) {}
           });
+        } else {
+          setPlanks([]);
         }
       }
     }, (err) => {
-      handleFirestoreError(err, OperationType.GET, `users/${user.uid}/plank/current`);
+      if (isCancelled) return;
+      clearTimeout(timeoutId);
+      setIsLoadingPlanks(false);
+      setFirestoreError(err.message || 'Unable to sync planks with cloud');
+      // Fallback to local storage planks (established offline-first resilience)
+      setPlanks(getInitialPlanks());
+      try {
+        handleFirestoreError(err, OperationType.GET, `users/${user.uid}/plank/current`);
+      } catch (_) {}
     });
 
-    return () => unsubscribe();
-  }, [user]);
+    return () => {
+      isCancelled = true;
+      clearTimeout(timeoutId);
+      unsubscribe();
+    };
+  }, [user, authLoading, syncRetryKey]);
 
   // Persist planks to localStorage (always) and to Firestore (when signed in)
   useEffect(() => {
+    // Only persist after initial fetch has completed, to prevent overwriting
+    if (isLoadingPlanks) return;
+
     try {
       localStorage.setItem(LOCAL_STORAGE_PLANKS_KEY, JSON.stringify(planks));
     } catch {}
@@ -390,12 +454,14 @@ export default function App() {
         soundEnabled,
         updatedAt: new Date().toISOString()
       }).catch(err => {
-        handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/plank/current`);
+        try {
+          handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/plank/current`);
+        } catch (_) {}
       });
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [planks, soundEnabled, user]);
+  }, [planks, soundEnabled, user, isLoadingPlanks]);
 
   // Background bird sounds continuous playback, loop, and interactive autoplay recovery
   useEffect(() => {
@@ -575,10 +641,12 @@ export default function App() {
   // Save changes from draft editor
   const handleSavePlank = () => {
     if (editorMode === 'add') {
+      const newId = `plank-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       const newPlank: PlankData = {
-        id: `plank-${Date.now()}-${Math.random()}`,
+        id: newId,
         text: plankInputText.trim()
       };
+      setNewlyCreatedPlankIds((prev) => new Set(prev).add(newId));
       setPlanks((prev) => [...prev, newPlank]);
       triggerPlankChime(planks.length + 1);
     } else {
@@ -588,6 +656,24 @@ export default function App() {
       playPing(329.63);
     }
     setIsEditorOpen(false);
+  };
+
+  // Callback when newly added plank finishes animating onto the rope bridge
+  const handleNewPlankAnimated = (id: string) => {
+    setNewlyCreatedPlankIds((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  };
+
+  // User-triggered cloud sync retry
+  const handleRetrySync = () => {
+    setFirestoreError(null);
+    setIsLoadingPlanks(true);
+    isInitialFetchDone.current = false;
+    setSyncRetryKey((k) => k + 1);
   };
 
   // Handle removing a plank from the bridge
@@ -615,6 +701,7 @@ export default function App() {
   // Reset all planks to start empty
   const handleReset = () => {
     setPlanks([]);
+    setNewlyCreatedPlankIds(new Set());
     setSkyParticles([]);
     setIsCelebrationCollapsed(false);
     playPing(196);
@@ -972,8 +1059,15 @@ export default function App() {
             <div className="text-right">
               <div className="text-[10px] text-stone-500 uppercase tracking-wider font-bold">Bridge Completeness</div>
               <div className="text-sm font-black text-stone-800 flex items-center gap-1.5 justify-end">
-                <span>{planks.length} / {TARGET_PLANKS} Planks Installed</span>
-                {celebrationActive && (
+                {isLoadingPlanks ? (
+                  <span className="flex items-center gap-1.5 text-stone-500 text-xs font-semibold">
+                    <Loader2 className="w-3 h-3 animate-spin text-amber-700" />
+                    <span>Syncing...</span>
+                  </span>
+                ) : (
+                  <span>{planks.length} / {TARGET_PLANKS} Planks Installed</span>
+                )}
+                {celebrationActive && !isLoadingPlanks && (
                   <motion.div
                     style={{ display: 'inline-block' }}
                     animate={{ 
@@ -997,7 +1091,7 @@ export default function App() {
                 <div
                   key={`progress-dot-${idx}`}
                   className={`w-3.5 h-6 rounded-sm border transition-all duration-300
-                    ${idx < planks.length 
+                    ${!isLoadingPlanks && idx < planks.length 
                       ? planks.length === TARGET_PLANKS
                         ? 'bg-emerald-600 border-emerald-500 shadow-xs'
                         : 'bg-stone-800 border-stone-700 shadow-xs' 
@@ -1038,8 +1132,46 @@ export default function App() {
       {/* MAIN GAME BOARD */}
       <main className="flex-1 max-w-[1530px] w-full mx-auto px-4 py-6 flex flex-col gap-6">
 
+        {/* CLOUD SYNC FALLBACK ERROR BANNER */}
+        {firestoreError && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="p-4 bg-amber-50 border border-amber-300 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs text-amber-900"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center shrink-0 text-amber-800">
+                <AlertTriangle className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-amber-950">Cloud Sync Unavailable</p>
+                <p className="text-xs text-amber-800">
+                  Could not retrieve planks from the cloud. Your local device backup is active and safe to edit.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+              <button
+                onClick={handleRetrySync}
+                className="px-3 py-1.5 bg-amber-800 hover:bg-amber-900 text-amber-50 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Retry</span>
+              </button>
+              <button
+                onClick={() => setFirestoreError(null)}
+                className="p-1.5 text-amber-700 hover:text-amber-950 hover:bg-amber-100 rounded-lg transition-colors cursor-pointer"
+                title="Dismiss notice"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+
         {/* PRESSETS & SAMPLES COMPONENT */}
-        {planks.length === 0 && (
+        {planks.length === 0 && !isLoadingPlanks && (
           <motion.section
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1083,10 +1215,13 @@ export default function App() {
             hoveredPlankId={hoveredPlankId}
             setHoveredPlankId={setHoveredPlankId}
             onMovePlank={movePlankIndex}
+            isLoadingPlanks={isLoadingPlanks}
+            newlyCreatedPlankIds={newlyCreatedPlankIds}
+            onNewPlankAnimated={handleNewPlankAnimated}
           />
 
           {/* ADD TIMBER FLOATER BUTTON hovering over left hills */}
-          {planks.length < TARGET_PLANKS && (
+          {planks.length < TARGET_PLANKS && !isLoadingPlanks && (
             <div className="absolute top-[52%] left-[4%] z-30">
               <motion.button
                 id="add-plank-map-overlay-btn"
@@ -1102,7 +1237,7 @@ export default function App() {
           )}
 
           {/* DRAG-AND-DROP REORDER OVERLAY HEADER / TUTORIAL CUES */}
-          {planks.length > 0 && !celebrationActive && (
+          {planks.length > 0 && !celebrationActive && !isLoadingPlanks && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-white/95 border border-stone-200 px-5 py-1.5 rounded-full shadow-md z-30 pointer-events-none">
               <span className="text-[11px] text-stone-700 font-bold flex items-center gap-1.5">
                 <motion.div

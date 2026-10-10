@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { motion } from 'motion/react';
-import { Sparkles, HelpCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Sparkles, HelpCircle, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { FlyingAnimal, JumpingRiverCritter, SkyParticle, PlankData } from '../types';
 import { getBackRopePoint, getFrontRopePoint } from '../utils';
 
@@ -15,6 +15,9 @@ interface GorgeStageProps {
   hoveredPlankId: string | null;
   setHoveredPlankId: (id: string | null) => void;
   onMovePlank?: (index: number, direction: 'left' | 'right') => void;
+  isLoadingPlanks?: boolean;
+  newlyCreatedPlankIds?: Set<string>;
+  onNewPlankAnimated?: (id: string) => void;
 }
 
 interface LilyPad {
@@ -287,7 +290,10 @@ export default function GorgeStage({
   onPlankClick,
   hoveredPlankId,
   setHoveredPlankId,
-  onMovePlank
+  onMovePlank,
+  isLoadingPlanks = false,
+  newlyCreatedPlankIds,
+  onNewPlankAnimated,
 }: GorgeStageProps) {
   const [rapidsOffset, setRapidsOffset] = useState(0);
   const [jellyfishX, setJellyfishX] = useState<number | null>(() => {
@@ -2316,12 +2322,13 @@ export default function GorgeStage({
           const angleDeg = (angleRad * 180) / Math.PI;
 
           // Only draw empty guides for slots where planks have NOT been built yet
-          if (idx >= planks.length) {
+          const effectivePlankCount = isLoadingPlanks ? 0 : planks.length;
+          if (idx >= effectivePlankCount) {
             return (
               <g
                 key={`empty-guide-${idx}`}
                 transform={`translate(${mX}, ${mY}) rotate(${angleDeg})`}
-                opacity={idx === planks.length ? "0.7" : "0.3"}
+                opacity={idx === effectivePlankCount ? "0.7" : "0.3"}
               >
                 {/* Horizontal guide outline indicating slot position */}
                 <rect
@@ -2381,9 +2388,25 @@ export default function GorgeStage({
 
 
 
+      {/* Loading Planks Notice */}
+      <AnimatePresence>
+        {isLoadingPlanks && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="absolute top-4 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md border border-stone-200 px-4 py-2 rounded-full shadow-md z-35 flex items-center gap-2.5 text-xs font-semibold text-stone-700 pointer-events-none select-none"
+          >
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-700 shrink-0" />
+            <span>Loading planks...</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* RENDER PLANKS (as interactive absolute HTML elements) */}
       <div className="absolute inset-0 pointer-events-none">
-        {planks.map((plank, idx) => {
+        {!isLoadingPlanks && planks.map((plank, idx) => {
           // Calculate parametric curve slot
           const t = (idx + 0.51) / maxPlanks;
           const pBack = getBackRopePoint(t);
@@ -2402,16 +2425,23 @@ export default function GorgeStage({
           const pctTop = (elementY / 650) * 100;
 
           const isHovered = hoveredPlankId === plank.id;
+          const isNew = newlyCreatedPlankIds?.has(plank.id);
 
           return (
             <motion.div
               key={plank.id}
+              initial={isNew ? { left: '0%', top: '0%', rotate: 0 } : false}
               animate={{
                 left: `${pctLeft}%`,
                 top: `${pctTop}%`,
                 rotate: angleDeg,
               }}
               transition={{ type: 'spring', stiffness: 220, damping: 26 }}
+              onAnimationComplete={() => {
+                if (isNew && onNewPlankAnimated) {
+                  onNewPlankAnimated(plank.id);
+                }
+              }}
               className="absolute pointer-events-auto"
               style={{
                 x: '-50%',
