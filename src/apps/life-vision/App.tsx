@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowLeft,
+  ArrowUp,
   Info,
   Sparkles,
   RotateCcw,
@@ -97,6 +98,17 @@ export default function App() {
   const [showAbout, setShowAbout] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [viewMode, setViewMode] = useState<'cards' | 'summary'>('cards');
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
+  useEffect(() => {
+    const updateBackToTopVisibility = () => {
+      setShowBackToTop(window.scrollY > 400);
+    };
+
+    updateBackToTopVisibility();
+    window.addEventListener('scroll', updateBackToTopVisibility, { passive: true });
+    return () => window.removeEventListener('scroll', updateBackToTopVisibility);
+  }, []);
 
   // Firestore Sync: Listen for remote changes
   useEffect(() => {
@@ -173,8 +185,14 @@ export default function App() {
   };
 
   const handleLoadDemo = () => {
-    lifeVisionAudio.playConfirmation();
+    lifeVisionAudio.playSample();
     setData(DEMO_VISION_DATA);
+  };
+
+  const handleViewModeChange = (mode: 'cards' | 'summary') => {
+    if (viewMode === mode) return;
+    lifeVisionAudio.playViewToggle();
+    setViewMode(mode);
   };
 
   const handleReset = () => {
@@ -243,7 +261,7 @@ export default function App() {
             {/* View Mode Toggle */}
             <div className="flex items-center bg-[#f2ede5] border border-[#e5dbcf] rounded-xl p-0.5 text-xs">
               <button
-                onClick={() => setViewMode('cards')}
+                onClick={() => handleViewModeChange('cards')}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer ${
                   viewMode === 'cards'
                     ? 'bg-[#b9684f] text-white shadow-sm'
@@ -255,7 +273,7 @@ export default function App() {
                 <span className="hidden md:inline">Cards</span>
               </button>
               <button
-                onClick={() => setViewMode('summary')}
+                onClick={() => handleViewModeChange('summary')}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer ${
                   viewMode === 'summary'
                     ? 'bg-[#b9684f] text-white shadow-sm'
@@ -377,6 +395,7 @@ export default function App() {
               <a
                 key={domain.id}
                 href={`#domain-${domain.id}`}
+                onClick={() => lifeVisionAudio.playNavigation()}
                 className={`group flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs whitespace-nowrap transition-all ${
                   hasVision
                     ? 'border-[#d5b8a4] bg-[#fffdfa] text-[#3d342c] hover:border-[#b9684f]'
@@ -395,7 +414,7 @@ export default function App() {
         {viewMode === 'cards' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 print:hidden">
             {LIFE_DOMAINS.map((domain, idx) => (
-              <div key={domain.id} id={`domain-${domain.id}`} className="scroll-mt-16">
+              <div key={domain.id} id={`domain-${domain.id}`} className="scroll-mt-[84px]">
                 <DomainCard
                   domain={domain}
                   data={data.domains[domain.id] || { vision: '', priority: '' }}
@@ -496,6 +515,19 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {showBackToTop && (
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-30 inline-flex items-center gap-2 rounded-full bg-[#b9684f] px-4 py-3 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-[#a95c44] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9684f] focus-visible:ring-offset-2 print:hidden"
+          aria-label="Back to top"
+          title="Back to top"
+        >
+          <ArrowUp size={16} aria-hidden="true" />
+          <span>Back to top</span>
+        </button>
+      )}
 
       {/* ── Footer ── */}
       <footer className="relative z-10 w-full border-t border-[#e5dbcf] bg-[#fbf9f5] py-6 px-4 sm:px-6 text-center text-xs text-[#82766a] mt-12 print:hidden">

@@ -28,7 +28,7 @@ export default function DomainCard({ domain, data, onChange, index }: DomainCard
   };
 
   const handlePrioritySelect = (p: string) => {
-    lifeVisionAudio.playAction();
+    lifeVisionAudio.playPriority();
     const newPriority = currentPriority === p ? '' : p;
     onChange(domain.id, {
       ...data,
@@ -38,6 +38,7 @@ export default function DomainCard({ domain, data, onChange, index }: DomainCard
   };
 
   const handleFocus = () => {
+    lifeVisionAudio.playFocus();
     setIsFocused(true);
   };
 
@@ -140,7 +141,9 @@ export default function DomainCard({ domain, data, onChange, index }: DomainCard
         <div className="flex flex-col gap-1.5 pt-2 border-t border-[#eee6dc]">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold text-[#817568] uppercase tracking-wider">
-              Priority Ranking (1 = Highest)
+              Priority <span className="lowercase">
+                (1 is highest)
+              </span>
             </span>
             {currentPriority && (
               <button

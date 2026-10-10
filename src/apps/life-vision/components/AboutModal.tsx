@@ -29,7 +29,7 @@ export default function AboutModal({ onClose }: AboutModalProps) {
         exit={{ scale: 0.92, y: 16 }}
         transition={{ duration: 0.25 }}
       >
-        <div className="h-1 w-full bg-gradient-to-r from-[#b9684f] via-[#c48c68] to-[#879273]" />
+        <div className="h-1 w-full bg-[#b9684f]" />
 
         <div className="p-6 flex flex-col gap-5">
           {/* Header */}
