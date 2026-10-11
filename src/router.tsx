@@ -1,45 +1,41 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import LandingPage from './landing/LandingPage';
 import StrategizerApp from './apps/strategizer/App';
 import PlankApp from './apps/plank/App';
 import ExpandingEdgeApp from './apps/expanding-edge/App';
 import LifeVisionApp from './apps/life-vision/App';
+import { isSubAppActive, SUB_APPS, type SubAppId } from './apps/config';
 
 /**
  * Application router.
  *
  * Route map:
  *   /                  → Stepping Stones landing page
- *   /strategizer/*     → Strategizer (speed-visualizer) sub-app
- *   /plank/*           → Plank sub-app
- *   /expanding-edge/*  → The Expanding Edge sub-app
- *   /life-vision/*     → Life Vision sub-app
+ *   /strategizer       → Strategizer (speed-visualizer) sub-app
+ *   /plank             → Plank sub-app
+ *   /expanding-edge    → The Expanding Edge sub-app
+ *   /life-vision       → Life Vision sub-app
  *
- * The /* wildcard on sub-app routes lets each app handle its own
- * internal navigation (if any) without a 404. The browser Back
- * button returns users to "/" from any sub-app route because
- * <Link> in LandingPage uses history.pushState.
+ * Unknown paths and inactive apps redirect to the landing page.
  */
+const appRoutes: { id: SubAppId; Component: () => React.JSX.Element }[] = [
+  { id: 'strategizer', Component: StrategizerApp },
+  { id: 'plank', Component: PlankApp },
+  { id: 'expanding-edge', Component: ExpandingEdgeApp },
+  { id: 'life-vision', Component: LifeVisionApp },
+];
+
 export const router = createBrowserRouter([
   {
     path: '/',
     element: <LandingPage />,
   },
+  ...appRoutes.map(({ id, Component }) => ({
+    path: SUB_APPS[id].path,
+    element: isSubAppActive(id) ? <Component /> : <Navigate to="/" replace />,
+  })),
   {
-    path: '/strategizer/*',
-    element: <StrategizerApp />,
-  },
-  {
-    path: '/plank/*',
-    element: <PlankApp />,
-  },
-  {
-    path: '/expanding-edge/*',
-    element: <ExpandingEdgeApp />,
-  },
-  {
-    path: '/life-vision/*',
-    element: <LifeVisionApp />,
+    path: '*',
+    element: <Navigate to="/" replace />,
   },
 ]);
-

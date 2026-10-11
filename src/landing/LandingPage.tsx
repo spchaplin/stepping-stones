@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { Footprints, Layers, Globe, Compass } from 'lucide-react';
 import { stopPlankAudio } from '../apps/plank/App';
 import { CosmicAudio } from '../apps/expanding-edge/components/CosmicAudio';
+import { isSubAppActive } from '../apps/config';
 import LandingAuthWidget from './components/LandingAuthWidget';
 
 /* ─────────────────────────────────────────────
@@ -11,6 +12,7 @@ import LandingAuthWidget from './components/LandingAuthWidget';
 ───────────────────────────────────────────── */
 const APPS = [
   {
+    id: 'plank',
     to: '/plank',
     indexLabel: '01',
     label: 'Plank',
@@ -20,6 +22,7 @@ const APPS = [
     icon: Footprints,
   },
   {
+    id: 'strategizer',
     to: '/strategizer',
     indexLabel: '02',
     label: 'Strategizer',
@@ -29,6 +32,7 @@ const APPS = [
     icon: Layers,
   },
   {
+    id: 'expanding-edge',
     to: '/expanding-edge',
     indexLabel: '03',
     label: 'The Expanding Edge',
@@ -38,6 +42,7 @@ const APPS = [
     icon: Globe,
   },
   {
+    id: 'life-vision',
     to: '/life-vision',
     indexLabel: '04',
     label: 'Life Vision',
@@ -243,7 +248,7 @@ export default function LandingPage() {
           className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full"
           style={{ zIndex: 1 }}
         >
-          {APPS.map((app, i) => (
+          {APPS.filter((app) => isSubAppActive(app.id)).map((app, i) => (
             <AppCard key={app.to} app={app} index={i} animateOnMount={shouldAnimate} />
           ))}
         </div>
@@ -271,4 +276,3 @@ export default function LandingPage() {
     </div>
   );
 }
-

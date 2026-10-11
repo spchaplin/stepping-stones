@@ -1,17 +1,28 @@
 # Stepping Stones
 
-**Stepping Stones** is a unified dashboard web application that brings together three distinct TypeScript + React applications into a single cohesive, high-performance experience:
+**Stepping Stones** is a unified dashboard web application that brings together four distinct TypeScript + React applications into a single cohesive, high-performance experience:
 
 1. **Plank** (`/plank`) — Visual stepping stone & goal builder across a living river gorge with animated wildlife and soundscapes.
 2. **Strategizer** (`/strategizer`) — Pacing & race strategy dashboard with Google authentication and real-time Firebase Firestore synchronization.
 3. **The Expanding Edge** (`/expanding-edge`) — Cosmic milestone tracker visualizing life goals as an expanding planetary orbit model with interactive audio.
+4. **Life Vision** (`/life-vision`) — Life-domain vision mapping.
+
+### Enabling and disabling sub-apps
+
+Sub-app availability is controlled in [`src/apps/config.ts`](./src/apps/config.ts). Change an app's `active` value to `true` or `false`; inactive apps are hidden from the landing page and their routes redirect to `/`. Unknown routes also redirect to `/`. Life Vision is currently inactive:
+
+```ts
+'life-vision': { path: '/life-vision', active: false },
+```
+
+Set `active` to `true` to show its card and enable the app route.
 
 ---
 
 ## Architecture Overview
 
 - **Unified Single-App Architecture**: Built on React 19, TypeScript, and Vite.
-- **Client-Side Routing**: Powered by `react-router-dom` (`/`, `/plank/*`, `/strategizer/*`, `/expanding-edge/*`).
+- **Client-Side Routing**: Powered by `react-router-dom`; active sub-apps have dedicated routes and unknown or inactive routes redirect to `/`.
 - **Seamless Browser History Navigation**: Sub-apps do not require in-app "Back to Navigation" buttons. Clicking the browser's Back button seamlessly returns the user from any sub-app to the Stepping Stones landing page (`/`).
 - **Deduplicated Dependencies**: All shared dependencies (`react`, `react-dom`, `@tailwindcss/vite`, `tailwindcss`, `lucide-react`, `motion`, `esbuild`, etc.) are centralized in a single top-level `package.json`, saving disk space and simplifying dependency management.
 - **Original Repositories Preserved**: The original projects remain completely unmodified and serve as the upstream sources of truth:
@@ -41,12 +52,14 @@ projects/stepping-stones/
 │   ├── main.tsx                 # Root entry mounting RouterProvider & global CSS
 │   ├── index.css                # Global stylesheet (Tailwind v4, fonts, keyframes)
 │   ├── router.tsx               # Browser router route definitions
+│   ├── apps/
+│   │   ├── config.ts            # Sub-app activation settings
+│   │   ├── plank/               # Plank sub-app components & state
+│   │   ├── strategizer/         # Strategizer sub-app components & Firebase sync
+│   │   ├── expanding-edge/      # The Expanding Edge sub-app components & audio
+│   │   └── life-vision/         # Life Vision sub-app components
 │   ├── landing/
 │   │   └── LandingPage.tsx      # Stepping Stones glassmorphism landing page
-│   └── apps/
-│       ├── plank/               # Plank sub-app components & state
-│       ├── strategizer/         # Strategizer sub-app components & Firebase sync
-│       └── expanding-edge/      # The Expanding Edge sub-app components & audio
 └── test/
     └── confetti.test.ts         # Goal threshold & celebration transition tests
 ```
@@ -113,7 +126,7 @@ npm test
 ```
 
 ### 4. Type Checking & Linting
-Verify all TypeScript types across the landing page and all three sub-apps:
+Verify all TypeScript types across the landing page and all four sub-apps:
 ```bash
 npm run lint
 ```
