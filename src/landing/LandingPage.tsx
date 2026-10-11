@@ -28,7 +28,7 @@ const APPS = [
     label: 'Strategizer',
     tagline: 'Pace smarter, not just harder',
     description:
-      'Visually map out your strategy to succeed as a personal shopper by identifying what speeds you up, slows you down, and settle on a prioritized strategy.',
+      'Identify how you can increase your speed by considering each factor that increases or decreases speed on a weighted card. Then prioritize your strategy in an ordered list.',
     icon: Layers,
   },
   {
