@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -30,22 +30,44 @@ import GorgeStage from './components/GorgeStage';
 import PlankEditor from './components/PlankEditor';
 import { useAuth } from '../../firebase/AuthContext';
 import PlankAuthWidget from './components/PlankAuthWidget';
-import { db, handleFirestoreError, OperationType } from '../../firebase/firebase';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { readLocalStorage, useFirestoreDocSync, writeLocalStorage } from '../../hooks/useFirestoreSync';
+import { useAudioService } from '../../hooks/useAudioService';
 
 const TARGET_PLANKS = 7;
 const LOCAL_STORAGE_PLANKS_KEY = 'plank_bridge_steps';
+const LOCAL_STORAGE_SOUND_KEY = 'plank_sound_enabled';
 
-const getInitialPlanks = (): PlankData[] => {
-  try {
-    const saved = localStorage.getItem(LOCAL_STORAGE_PLANKS_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed)) return parsed;
-    }
-  } catch {}
-  return [];
-};
+interface PlankSyncData {
+  planks: PlankData[];
+  soundEnabled: boolean;
+}
+
+const INITIAL_PLANK_SYNC_DATA: PlankSyncData = { planks: [], soundEnabled: true };
+
+function mapPlankSyncData(data: Record<string, unknown>): PlankSyncData {
+  return {
+    planks: Array.isArray(data.planks) ? data.planks as PlankData[] : [],
+    soundEnabled: typeof data.soundEnabled === 'boolean' ? data.soundEnabled : true,
+  };
+}
+
+function mapLocalPlankSyncData(data: unknown): PlankSyncData {
+  if (Array.isArray(data)) {
+    const savedSound = readLocalStorage<unknown>(LOCAL_STORAGE_SOUND_KEY);
+    return {
+      planks: data as PlankData[],
+      soundEnabled: typeof savedSound === 'boolean' ? savedSound : true,
+    };
+  }
+  return mapPlankSyncData(data as Record<string, unknown>);
+}
+
+const serializePlankSyncData = (state: PlankSyncData) => ({
+  planks: state.planks.slice(0, TARGET_PLANKS),
+  soundEnabled: state.soundEnabled,
+});
+const serializeLocalPlanks = (state: PlankSyncData) => state.planks;
+const shouldMigratePlanks = (state: PlankSyncData) => state.planks.length > 0;
 
 // Gentle, highly achievable beginner presets for a recent high-school graduate
 const ROADMAP_PRESETS = [
@@ -318,199 +340,73 @@ export function stopPlankAudio() {
 
 export default function App() {
   const { user, loading: authLoading } = useAuth();
-  const [planks, setPlanks] = useState<PlankData[]>(getInitialPlanks);
+  const {
+    state: plankSyncData,
+    setState: setPlankSyncData,
+    isLoading: isLoadingPlanks,
+    firestoreError,
+    refetch: refetchPlanks,
+    clearFirestoreError,
+  } = useFirestoreDocSync<PlankSyncData>(user?.uid, {
+    docPath: 'users/{uid}/plank/current',
+    localStorageKey: LOCAL_STORAGE_PLANKS_KEY,
+    mapper: mapPlankSyncData,
+    localMapper: mapLocalPlankSyncData,
+    localSerializer: serializeLocalPlanks,
+    serializer: serializePlankSyncData,
+    initialState: INITIAL_PLANK_SYNC_DATA,
+    shouldMigrate: shouldMigratePlanks,
+    enabled: !authLoading,
+    debounceMs: 400,
+    timeoutMs: 6000,
+  });
+  const planks = plankSyncData.planks;
+  const soundEnabled = plankSyncData.soundEnabled;
+  const setPlanks: React.Dispatch<React.SetStateAction<PlankData[]>> = (value) => {
+    setPlankSyncData((previous) => ({
+      ...previous,
+      planks: typeof value === 'function' ? value(previous.planks) : value,
+    }));
+  };
+  const setSoundEnabled: React.Dispatch<React.SetStateAction<boolean>> = (value) => {
+    setPlankSyncData((previous) => ({
+      ...previous,
+      soundEnabled: typeof value === 'function' ? value(previous.soundEnabled) : value,
+    }));
+  };
+  const soundEnabledRef = useRef(soundEnabled);
   const [hoveredPlankId, setHoveredPlankId] = useState<string | null>(null);
-  const isSyncingFromCloud = useRef(false);
   const [newlyCreatedPlankIds, setNewlyCreatedPlankIds] = useState<Set<string>>(() => new Set());
 
   // Cloud loading & error fallback states
-  const [isLoadingPlanks, setIsLoadingPlanks] = useState<boolean>(true);
-  const [firestoreError, setFirestoreError] = useState<string | null>(null);
-  const [syncRetryKey, setSyncRetryKey] = useState<number>(0);
-  const isInitialFetchDone = useRef<boolean>(false);
-
-  // Sound enablement state (persisted in localStorage)
-  const [soundEnabled, setSoundEnabled] = useState(() => {
-    try {
-      const saved = localStorage.getItem('plank_sound_enabled');
-      return saved !== null ? JSON.parse(saved) : true;
-    } catch {
-      return true;
-    }
-  });
-  const soundEnabledRef = useRef(soundEnabled);
   useEffect(() => {
     soundEnabledRef.current = soundEnabled;
-    try {
-      localStorage.setItem('plank_sound_enabled', JSON.stringify(soundEnabled));
-    } catch {}
+    writeLocalStorage(LOCAL_STORAGE_SOUND_KEY, soundEnabled);
   }, [soundEnabled]);
 
-  // Subscribe to user's Plank bridge in Firestore with live onSnapshot listener
-  useEffect(() => {
-    // If Auth is still initializing, maintain loading state
-    if (authLoading) {
-      setIsLoadingPlanks(true);
-      return;
-    }
-
-    // Unauthenticated (guest): immediately load from localStorage without cloud sync
-    if (!user) {
-      setIsLoadingPlanks(false);
-      setFirestoreError(null);
-      isInitialFetchDone.current = true;
-      setPlanks(getInitialPlanks());
-      return;
-    }
-
-    // Authenticated user: fetch from Firestore
-    setIsLoadingPlanks(true);
-    setFirestoreError(null);
-    let isCancelled = false;
-
-    // Safety timeout in case of network freeze or hanging request (6 seconds)
-    const timeoutId = setTimeout(() => {
-      if (!isCancelled && !isInitialFetchDone.current) {
-        setIsLoadingPlanks(false);
-        setFirestoreError('Cloud connection timed out. Showing your local device backup.');
-        setPlanks(getInitialPlanks());
+  const startPlankAudio = useCallback(() => {
+    getPlankAudio().play().catch((error: Error) => {
+      if (error.name !== 'AbortError') {
+        console.log('Audio autoplay was restricted initially, waiting for user activity:', error);
       }
-    }, 6000);
-
-    const docRef = doc(db, 'users', user.uid, 'plank', 'current');
-    const unsubscribe = onSnapshot(docRef, (snapshot) => {
-      if (isCancelled) return;
-      clearTimeout(timeoutId);
-      isInitialFetchDone.current = true;
-      setIsLoadingPlanks(false);
-      setFirestoreError(null);
-
-      if (snapshot.exists()) {
-        const data = snapshot.data();
-        isSyncingFromCloud.current = true;
-        if (Array.isArray(data.planks)) {
-          setPlanks(data.planks);
-        }
-        if (typeof data.soundEnabled === 'boolean') {
-          setSoundEnabled(data.soundEnabled);
-        }
-        setTimeout(() => {
-          isSyncingFromCloud.current = false;
-        }, 150);
-      } else {
-        // First cloud sign-in: migrate existing local planks if present
-        const local = getInitialPlanks();
-        if (local.length > 0) {
-          setPlanks(local);
-          setDoc(docRef, {
-            userId: user.uid,
-            planks: local.slice(0, TARGET_PLANKS),
-            soundEnabled: soundEnabledRef.current,
-            updatedAt: new Date().toISOString()
-          }).catch(err => {
-            try {
-              handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/plank/current`);
-            } catch (_) {}
-          });
-        } else {
-          setPlanks([]);
-        }
-      }
-    }, (err) => {
-      if (isCancelled) return;
-      clearTimeout(timeoutId);
-      setIsLoadingPlanks(false);
-      setFirestoreError(err.message || 'Unable to sync planks with cloud');
-      // Fallback to local storage planks (established offline-first resilience)
-      setPlanks(getInitialPlanks());
-      try {
-        handleFirestoreError(err, OperationType.GET, `users/${user.uid}/plank/current`);
-      } catch (_) {}
     });
-
-    return () => {
-      isCancelled = true;
-      clearTimeout(timeoutId);
-      unsubscribe();
-    };
-  }, [user, authLoading, syncRetryKey]);
-
-  // Persist planks to localStorage (always) and to Firestore (when signed in)
-  useEffect(() => {
-    // Only persist after initial fetch has completed, to prevent overwriting
-    if (isLoadingPlanks) return;
-
-    try {
-      localStorage.setItem(LOCAL_STORAGE_PLANKS_KEY, JSON.stringify(planks));
-    } catch {}
-
-    if (!user || isSyncingFromCloud.current) return;
-
-    const timer = setTimeout(() => {
-      const docRef = doc(db, 'users', user.uid, 'plank', 'current');
-      setDoc(docRef, {
-        userId: user.uid,
-        planks: planks.slice(0, TARGET_PLANKS),
-        soundEnabled,
-        updatedAt: new Date().toISOString()
-      }).catch(err => {
-        try {
-          handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/plank/current`);
-        } catch (_) {}
-      });
-    }, 400);
-
-    return () => clearTimeout(timer);
-  }, [planks, soundEnabled, user, isLoadingPlanks]);
-
-  // Background bird sounds continuous playback, loop, and interactive autoplay recovery
-  useEffect(() => {
+  }, []);
+  const stopPlankAudioService = useCallback(() => getPlankAudio().pause(), []);
+  const resumePlankAudio = useCallback(() => {
     const audio = getPlankAudio();
-    let isCleanedUp = false;
-
-    const playAudio = () => {
-      if (soundEnabled && !isCleanedUp) {
-        audio.play().catch((err) => {
-          if (err.name !== 'AbortError') {
-            console.log("Audio autoplay was restricted initially, waiting for user activity: ", err);
-          }
-        });
-      } else {
-        audio.pause();
-      }
-    };
-
-    // Attempt immediately
-    playAudio();
-
-    // Attach user activity listeners to automatically resume playing if blocked by browser policy
-    // Using capturing phase { capture: true } ensures we catch the event before any component calls stopPropagation()
-    const resumeAudio = () => {
-      if (!isCleanedUp && audio && soundEnabled && audio.paused) {
-        audio.play().catch((err) => {
-          if (err.name !== 'AbortError') {
-            console.log("Interactive playback attempt: ", err);
-          }
-        });
-      }
-    };
-
-    const interactionEvents = ['click', 'mousedown', 'keydown', 'touchstart', 'pointerdown'];
-    interactionEvents.forEach(evt => {
-      window.addEventListener(evt, resumeAudio, { capture: true, passive: true });
-      document.addEventListener(evt, resumeAudio, { capture: true, passive: true });
-    });
-
-    return () => {
-      isCleanedUp = true;
-      interactionEvents.forEach(evt => {
-        window.removeEventListener(evt, resumeAudio, { capture: true });
-        document.removeEventListener(evt, resumeAudio, { capture: true });
+    if (audio.paused) {
+      audio.play().catch((error: Error) => {
+        if (error.name !== 'AbortError') console.log('Interactive playback attempt:', error);
       });
-      // CRITICAL: Always pause Plank background audio when navigating away / unmounting!
-      audio.pause();
-    };
-  }, [soundEnabled]);
+    }
+  }, []);
+  useAudioService({
+    enabled: soundEnabled,
+    start: startPlankAudio,
+    stop: stopPlankAudioService,
+    resume: resumePlankAudio,
+    listenOnDocument: true,
+  });
 
   // Celebration collapsible card state
   const [isCelebrationCollapsed, setIsCelebrationCollapsed] = useState(false);
@@ -670,10 +566,8 @@ export default function App() {
 
   // User-triggered cloud sync retry
   const handleRetrySync = () => {
-    setFirestoreError(null);
-    setIsLoadingPlanks(true);
-    isInitialFetchDone.current = false;
-    setSyncRetryKey((k) => k + 1);
+    clearFirestoreError();
+    refetchPlanks();
   };
 
   // Handle removing a plank from the bridge
@@ -1160,7 +1054,7 @@ export default function App() {
                 <span>Retry</span>
               </button>
               <button
-                onClick={() => setFirestoreError(null)}
+                onClick={clearFirestoreError}
                 className="p-1.5 text-amber-700 hover:text-amber-950 hover:bg-amber-100 rounded-lg transition-colors cursor-pointer"
                 title="Dismiss notice"
               >

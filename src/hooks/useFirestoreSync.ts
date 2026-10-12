@@ -1,81 +1,101 @@
-/**
- * useFirestoreSync - Shared hooks for Firebase data synchronization
- *
- * Provides hooks that eliminate duplicated Firebase integration patterns
- * across sub-apps:
- *
- * 1. useFirestoreDocSync - Single-document sync with automatic localStorage
- *    fallback, timeout handling, first-sign-in migration, and debounced writes
- *    to both localStorage and Firestore.
- *    Used by Plank, Expanding Edge, and Life Vision (single-doc pattern).
- *
- * 2. useFirestoreCollectionSync - Firestore collection sync with ordered
- *    querying. Used by the Strategizer app (collection pattern).
- *
- * 3. useLocalStorageState - LocalStorage-backed state persistence.
- */
-
-import { useEffect, useRef, useState, Dispatch, SetStateAction } from 'react';
 import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
+import {
+  collection,
   doc,
   onSnapshot,
-  setDoc,
-  writeBatch,
-  serverTimestamp,
   orderBy,
-  collection,
   query,
+  setDoc,
+  type DocumentData,
+  type Firestore,
 } from 'firebase/firestore';
-import { auth, db, handleFirestoreError, OperationType } from '../firebase/firebase';
+import {
+  db as defaultDb,
+  handleFirestoreError,
+  OperationType,
+} from '../firebase/firebase';
 
-// ── Helper Functions ──────────────────────────────────────────────────────
+const identity = <T,>(value: T): T => value;
+const mapIdentity = <T,>(value: unknown): T => value as T;
+const deserializeIdentity = <T,>(value: unknown): T => value as T;
 
-/** Safely read and parse JSON from localStorage, returning null on failure. */
+function hasEnumerableKeys<T>(value: T): boolean {
+  return Object.keys(Object(value)).length > 0;
+}
+
 export function readLocalStorage<T>(key: string): T | null {
   try {
     const saved = localStorage.getItem(key);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) || (typeof parsed === 'object' && parsed !== null)) {
-        return parsed as T;
-      }
-    }
-  } catch {
-    // localStorage unavailable or corrupt
+    return saved === null ? null : (JSON.parse(saved) as T);
+  } catch (error) {
+    console.error(`Failed to read local storage key "${key}":`, error);
+    return null;
   }
-  return null;
 }
 
-/** Safely write JSON to localStorage, swallowing errors. */
 export function writeLocalStorage(key: string, data: unknown): void {
   try {
     localStorage.setItem(key, JSON.stringify(data));
-  } catch {
-    // localStorage quota exceeded or unavailable
+  } catch (error) {
+    console.error(`Failed to write local storage key "${key}":`, error);
   }
 }
 
-// ── 1. Document-based Sync Hook ───────────────────────────────────────────
-// Manages state internally (like useState) + Firestore sync + localStorage
+export interface AppStateOptions<T> {
+  deserialize?: (value: unknown) => T;
+  serialize?: (value: T) => unknown;
+  enabled?: boolean;
+}
+
+/** Keeps app state backed by localStorage while accepting normal React state updates. */
+export function useAppState<T>(
+  key: string,
+  initialValue: T,
+  {
+    deserialize = deserializeIdentity,
+    serialize = identity,
+    enabled = true,
+  }: AppStateOptions<T> = {},
+): [T, Dispatch<SetStateAction<T>>, boolean] {
+  const [state, setState] = useState<T>(() => {
+    const saved = readLocalStorage<unknown>(key);
+    return saved === null ? initialValue : deserialize(saved);
+  });
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!enabled) return;
+    writeLocalStorage(key, serialize(state));
+  }, [enabled, key, serialize, state]);
+
+  return [state, setState, isHydrated];
+}
 
 export interface FirestoreDocSyncOptions<T> {
-  /** Firestore doc path with {uid} placeholder, e.g. 'users/{uid}/plank/current' */
   docPath: string;
-  /** Local storage key for offline-first fallback */
   localStorageKey: string;
-  /** Transform Firestore document data into app state */
-  mapper: (data: Record<string, any>) => T;
-  /** Transform app state into a Firestore document for writes */
-  serializer: (state: T) => Record<string, any>;
-  /** Debounce delay in ms before Firestore writes after state change */
-  debounceMs?: number;
-  /** Timeout in ms for the initial cloud fetch before falling back to local */
-  timeoutMs?: number;
-  /** State used when neither localStorage nor cloud data is available */
+  mapper: (data: DocumentData) => T;
+  serializer: (state: T) => DocumentData;
   initialState: T;
-  /** Optional callback fired once when cloud data is first loaded */
-  onCloudDataLoaded?: (data: T) => void;
-  /** Optional callback for persistence errors */
+  localMapper?: (data: unknown) => T;
+  localSerializer?: (state: T) => unknown;
+  shouldMigrate?: (state: T) => boolean;
+  enabled?: boolean;
+  debounceMs?: number;
+  timeoutMs?: number;
+  firestore?: Firestore;
+  onError?: (error: Error, operation: OperationType, path: string) => void;
   onPersistError?: (error: Error) => void;
 }
 
@@ -86,163 +106,184 @@ export interface FirestoreDocSyncResult<T> {
   firestoreError: string | null;
   isSyncingFromCloud: boolean;
   refetch: () => void;
+  clearFirestoreError: () => void;
 }
 
 export function useFirestoreDocSync<T>(
   uid: string | null | undefined,
-  options: FirestoreDocSyncOptions<T>
+  options: FirestoreDocSyncOptions<T>,
 ): FirestoreDocSyncResult<T> {
   const {
     docPath,
     localStorageKey,
     mapper,
     serializer,
+    initialState,
+    localMapper = mapIdentity,
+    localSerializer = identity,
+    shouldMigrate = hasEnumerableKeys,
+    enabled = true,
     debounceMs = 500,
     timeoutMs = 6000,
-    initialState,
-    onCloudDataLoaded,
+    firestore = defaultDb,
+    onError = handleSyncError,
     onPersistError,
   } = options;
 
-  const [state, setState] = useState<T>(initialState);
-  const [isLoading, setIsLoading] = useState(true);
+  const [state, setState] = useAppState(localStorageKey, initialState, {
+    deserialize: localMapper,
+    serialize: localSerializer,
+  });
+  const [isLoading, setIsLoading] = useState(enabled && Boolean(uid));
   const [firestoreError, setFirestoreError] = useState<string | null>(null);
   const [isSyncingFromCloud, setIsSyncingFromCloud] = useState(false);
   const [refetchKey, setRefetchKey] = useState(0);
-  const isCancelledRef = useRef(false);
-  const writeDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const stateRef = useRef(state);
+  const syncingRef = useRef(false);
+  const resolvedUidRef = useRef<string | null>(null);
 
-  // Load initial state from localStorage on mount
-  useEffect(() => {
-    const local = readLocalStorage<T>(localStorageKey);
-    if (local) {
-      setState(mapper(local));
-    }
-  }, [localStorageKey, mapper]);
+  stateRef.current = state;
 
-  // Set up Firestore listener
   useEffect(() => {
-    // No authenticated user: use local state, no cloud sync needed
-    if (!uid) {
-      setIsLoading(false);
+    if (!enabled) {
+      resolvedUidRef.current = null;
+      setIsLoading(true);
       return;
     }
 
+    if (!uid) {
+      resolvedUidRef.current = null;
+      setIsLoading(false);
+      setFirestoreError(null);
+      return;
+    }
+
+    resolvedUidRef.current = null;
     setIsLoading(true);
     setFirestoreError(null);
-
-    let isCancelled = false;
-    isCancelledRef.current = false;
-
-    const timeoutId = setTimeout(() => {
-      if (!isCancelled && !isCancelledRef.current) {
-        setIsLoading(false);
-        setFirestoreError(
-          'Cloud connection timed out. Showing your local device backup.'
-        );
-      }
-    }, timeoutMs);
-
-    const docRef = doc(db, docPath.replace('{uid}', uid));
+    let cancelled = false;
+    let hasResolved = false;
+    let resetSyncingTimeout: ReturnType<typeof setTimeout> | undefined;
+    const path = docPath.replace('{uid}', uid);
+    const docRef = doc(firestore, path);
+    const timeoutId = timeoutMs > 0
+      ? setTimeout(() => {
+          if (cancelled || hasResolved) return;
+          hasResolved = true;
+          resolvedUidRef.current = uid;
+          setIsLoading(false);
+          setFirestoreError('Cloud connection timed out. Showing your local device backup.');
+        }, timeoutMs)
+      : undefined;
 
     const unsubscribe = onSnapshot(
       docRef,
       (snapshot) => {
-        if (isCancelled || isCancelledRef.current) return;
-        clearTimeout(timeoutId);
-        isCancelledRef.current = false;
-
-        if (snapshot.exists()) {
-          setIsSyncingFromCloud(true);
-          const mapped = mapper(snapshot.data());
-          setState(mapped);
-          onCloudDataLoaded?.(mapped);
-          setTimeout(() => {
-            setIsSyncingFromCloud(false);
-          }, 150);
-        } else {
-          // First cloud sign-in: migrate existing local data if present
-          setIsSyncingFromCloud(true);
-          const local = readLocalStorage<T>(localStorageKey);
-          if (local && Object.keys(local).length > 0) {
-            setDoc(docRef, {
-              userId: uid,
-              ...serializer(local),
-              updatedAt: new Date().toISOString(),
-            }).catch((err) => {
-              try {
-                handleFirestoreError(err, OperationType.WRITE, docPath);
-              } catch (_) {}
-            });
-          }
-          setIsSyncingFromCloud(false);
-        }
-
+        if (cancelled) return;
+        hasResolved = true;
+        resolvedUidRef.current = uid;
+        if (timeoutId) clearTimeout(timeoutId);
         setIsLoading(false);
         setFirestoreError(null);
-      },
-      (err) => {
-        if (isCancelled || isCancelledRef.current) return;
-        clearTimeout(timeoutId);
-        isCancelledRef.current = true;
-        setIsLoading(false);
-        setFirestoreError(err.message || 'Unable to sync with cloud');
 
-        // Offline-first fallback to localStorage
-        const local = readLocalStorage<T>(localStorageKey);
-        if (local) {
-          setState(mapper(local));
+        if (snapshot.exists()) {
+          syncingRef.current = true;
+          setIsSyncingFromCloud(true);
+          setState(mapper(snapshot.data()));
+          if (resetSyncingTimeout) clearTimeout(resetSyncingTimeout);
+          resetSyncingTimeout = setTimeout(() => {
+            syncingRef.current = false;
+            setIsSyncingFromCloud(false);
+          }, 150);
+          return;
         }
 
-        try {
-          handleFirestoreError(err, OperationType.GET, docPath);
-        } catch (_) {}
-      }
+        const localState = stateRef.current;
+        if (shouldMigrate(localState)) {
+          setDoc(docRef, {
+            userId: uid,
+            ...serializer(localState),
+            updatedAt: new Date().toISOString(),
+          }).catch((error: unknown) => {
+            const syncError = error instanceof Error ? error : new Error(String(error));
+            onError(syncError, OperationType.WRITE, path);
+            onPersistError?.(syncError);
+          });
+        }
+      },
+      (error) => {
+        if (cancelled) return;
+        hasResolved = true;
+        resolvedUidRef.current = uid;
+        if (timeoutId) clearTimeout(timeoutId);
+        setIsLoading(false);
+        setFirestoreError(error.message || 'Unable to sync with cloud');
+        onError(error, OperationType.GET, path);
+      },
     );
 
     return () => {
-      isCancelledRef.current = true;
-      clearTimeout(timeoutId);
+      cancelled = true;
+      if (timeoutId) clearTimeout(timeoutId);
+      if (resetSyncingTimeout) clearTimeout(resetSyncingTimeout);
       unsubscribe();
     };
-  }, [uid, refetchKey, docPath, localStorageKey]);
+  }, [
+    docPath,
+    enabled,
+    firestore,
+    localStorageKey,
+    mapper,
+    onError,
+    onPersistError,
+    refetchKey,
+    serializer,
+    setState,
+    shouldMigrate,
+    timeoutMs,
+    uid,
+  ]);
 
-  // Persist: always to localStorage, debounced to Firestore
   useEffect(() => {
-    // Always write to localStorage
-    writeLocalStorage(localStorageKey, state);
-
-    // Skip Firestore write if not signed in or currently syncing from cloud
-    if (!uid || isSyncingFromCloud) {
+    if (
+      !enabled ||
+      !uid ||
+      isLoading ||
+      resolvedUidRef.current !== uid ||
+      syncingRef.current
+    ) {
       return;
     }
 
-    if (writeDebounceRef.current) {
-      clearTimeout(writeDebounceRef.current);
-    }
-
-    writeDebounceRef.current = setTimeout(() => {
-      const docRef = doc(db, docPath.replace('{uid}', uid));
-      setDoc(docRef, {
+    const path = docPath.replace('{uid}', uid);
+    const timer = setTimeout(() => {
+      setDoc(doc(firestore, path), {
         userId: uid,
         ...serializer(state),
         updatedAt: new Date().toISOString(),
-      }).catch((err) => {
-        try {
-          handleFirestoreError(err, OperationType.WRITE, docPath);
-        } catch (_) {}
-        onPersistError?.(err as Error);
+      }).catch((error: unknown) => {
+        const syncError = error instanceof Error ? error : new Error(String(error));
+        onError(syncError, OperationType.WRITE, path);
+        onPersistError?.(syncError);
       });
     }, debounceMs);
 
-    return () => {
-      if (writeDebounceRef.current) {
-        clearTimeout(writeDebounceRef.current);
-      }
-    };
-  }, [uid, localStorageKey, state, isSyncingFromCloud, docPath, serializer, debounceMs, onPersistError]);
+    return () => clearTimeout(timer);
+  }, [
+    debounceMs,
+    docPath,
+    enabled,
+    firestore,
+    isLoading,
+    onError,
+    onPersistError,
+    serializer,
+    state,
+    uid,
+  ]);
 
-  const refetch = () => setRefetchKey((k) => k + 1);
+  const refetch = useCallback(() => setRefetchKey((key) => key + 1), []);
+  const clearFirestoreError = useCallback(() => setFirestoreError(null), []);
 
   return {
     state,
@@ -251,32 +292,28 @@ export function useFirestoreDocSync<T>(
     firestoreError,
     isSyncingFromCloud,
     refetch,
+    clearFirestoreError,
   };
 }
 
-// ── 2. Collection-based Sync Hook ──────────────────────────────────────────
-
 export interface FirestoreCollectionSyncOptions<T> {
-  /** e.g., 'users/{uid}/cards' or 'users/{uid}/strategyCards' */
   collectionPath: string;
-  /** Local storage key for offline-first fallback */
   localStorageKey: string;
-  /** Transform a Firestore document into an app item */
-  itemMapper: (data: Record<string, any>) => T;
-  /** Local default items when collection is empty */
+  itemMapper: (data: DocumentData) => T | null;
   defaultItems: T[];
-  /** Callback to update app state with fetched items */
   setItems: (items: T[]) => void;
-  /** Callback to set the initialized (hydration complete) flag */
   setIsInitialized: (initialized: boolean) => void;
-  /** Timeout in ms for waiting on the initial collection load */
+  enabled?: boolean;
   timeoutMs?: number;
+  firestore?: Firestore;
+  onEmpty?: (uid: string, items: T[]) => void;
+  onError?: (error: Error, operation: OperationType, path: string) => void;
 }
 
 export function useFirestoreCollectionSync<T>(
   uid: string | null | undefined,
-  options: FirestoreCollectionSyncOptions<T>
-) {
+  options: FirestoreCollectionSyncOptions<T>,
+): { refetch: () => void } {
   const {
     collectionPath,
     localStorageKey,
@@ -284,112 +321,97 @@ export function useFirestoreCollectionSync<T>(
     defaultItems,
     setItems,
     setIsInitialized,
+    enabled = true,
     timeoutMs = 3000,
+    firestore = defaultDb,
+    onEmpty,
+    onError = handleSyncError,
   } = options;
-
   const [refetchKey, setRefetchKey] = useState(0);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    if (!enabled) {
+      setIsInitialized(false);
+      return;
+    }
+
+    const local = readLocalStorage<T[]>(localStorageKey);
+    const fallback = local && local.length > 0 ? local : defaultItems;
+
     if (!uid) {
-      const local = readLocalStorage<T[]>(localStorageKey);
-      setItems(local || defaultItems);
+      setItems(fallback);
       setIsInitialized(true);
       return;
     }
 
-    const collectionRef = collection(db, collectionPath.replace('{uid}', uid));
-    const q = query(collectionRef, orderBy('order', 'asc'));
-
-    timeoutRef.current = setTimeout(() => {
-      const local = readLocalStorage<T[]>(localStorageKey);
-      setItems(local || defaultItems);
-      setIsInitialized(true);
-    }, timeoutMs);
+    setIsInitialized(false);
+    let cancelled = false;
+    let initialized = false;
+    const path = collectionPath.replace('{uid}', uid);
+    const collectionRef = collection(firestore, path);
+    const queryRef = query(collectionRef, orderBy('order', 'asc'));
+    const timeoutId = timeoutMs > 0
+      ? setTimeout(() => {
+          if (cancelled || initialized) return;
+          initialized = true;
+          setItems(fallback);
+          setIsInitialized(true);
+        }, timeoutMs)
+      : undefined;
 
     const unsubscribe = onSnapshot(
-      q,
+      queryRef,
       (snapshot) => {
-        clearTimeout(timeoutRef.current);
+        if (cancelled) return;
+        initialized = true;
+        if (timeoutId) clearTimeout(timeoutId);
 
         if (snapshot.empty) {
-          const local = readLocalStorage<T[]>(localStorageKey);
-          const items = local && local.length > 0 ? local : defaultItems;
-          setItems(items);
-          // Seed empty collection to Firestore
-          const batch = writeBatch(db);
-          items.forEach((item, index) => {
-            const batchDocRef = doc(db, collectionPath.replace('{uid}', uid), (item as any).id);
-            batch.set(batchDocRef, {
-              ...item,
-              order: index,
-              userId: uid,
-              updatedAt: serverTimestamp(),
-            });
-          });
-          batch.commit().catch((err) => {
-            handleFirestoreError(err, OperationType.WRITE, collectionPath);
-          });
+          setItems(fallback);
+          onEmpty?.(uid, fallback);
         } else {
-          const fetched: T[] = [];
-          snapshot.forEach((docSnap: any) => {
-            const data = docSnap.data();
-            if (data && data.id) {
-              fetched.push(itemMapper(data));
-            }
+          const fetched = snapshot.docs.flatMap((document) => {
+            const item = itemMapper(document.data());
+            return item === null ? [] : [item];
           });
           setItems(fetched);
         }
         setIsInitialized(true);
       },
       (error) => {
-        clearTimeout(timeoutRef.current);
-        const local = readLocalStorage<T[]>(localStorageKey);
-        setItems(local || defaultItems);
-        handleFirestoreError(error, OperationType.LIST, collectionPath);
+        if (cancelled) return;
+        initialized = true;
+        if (timeoutId) clearTimeout(timeoutId);
+        setItems(fallback);
         setIsInitialized(true);
-      }
+        onError(error, OperationType.LIST, path);
+      },
     );
 
     return () => {
-      clearTimeout(timeoutRef.current);
+      cancelled = true;
+      if (timeoutId) clearTimeout(timeoutId);
       unsubscribe();
     };
-  }, [uid, refetchKey, collectionPath, localStorageKey, itemMapper]);
+  }, [
+    collectionPath,
+    defaultItems,
+    enabled,
+    firestore,
+    itemMapper,
+    localStorageKey,
+    onEmpty,
+    onError,
+    setIsInitialized,
+    setItems,
+    timeoutMs,
+    uid,
+  ]);
 
-  const refetch = () => setRefetchKey((k) => k + 1);
-
+  const refetch = useCallback(() => setRefetchKey((key) => key + 1), []);
   return { refetch };
 }
 
-// ── 3. LocalStorage State Hook ─────────────────────────────────────────────
-
-/**
- * Manages a state value that persists to localStorage.
- * Returns [value, setValue, isHydrated]. isHydrated indicates the initial
- * value has been loaded from localStorage.
- */
-export function useLocalStorageState<T>(
-  key: string,
-  initialValue: T
-): [T, (value: T | ((prev: T) => T)) => void, boolean] {
-  const [state, setState] = useState<T>(() => {
-    const saved = readLocalStorage<T>(key);
-    return saved !== null ? saved : initialValue;
-  });
-  const [isHydrated, setIsHydrated] = useState(false);
-
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
-
-  const setPersistentState = (value: T | ((prev: T) => T)) => {
-    setState((prev) => {
-      const next = typeof value === 'function' ? (value as (prev: T) => T)(prev) : value;
-      writeLocalStorage(key, next);
-      return next;
-    });
-  };
-
-  return [state, setPersistentState, isHydrated];
+function handleSyncError(error: Error, operation: OperationType, path: string): void {
+  handleFirestoreError(error, operation, path);
 }

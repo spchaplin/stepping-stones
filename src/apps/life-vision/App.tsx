@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -20,10 +20,26 @@ import AboutModal from './components/AboutModal';
 import LifeVisionAuthWidget from './components/LifeVisionAuthWidget';
 import { lifeVisionAudio } from './components/LifeVisionAudio';
 import { useAuth } from '../../firebase/AuthContext';
-import { db, handleFirestoreError, OperationType } from '../../firebase/firebase';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { useFirestoreDocSync } from '../../hooks/useFirestoreSync';
 
 const LOCAL_STORAGE_KEY = 'life_vision_state';
+const INITIAL_LIFE_VISION_DATA: LifeVisionData = { myName: '', domains: {} };
+
+function mapLifeVisionData(data: Record<string, unknown>): LifeVisionData {
+  return {
+    myName: typeof data.myName === 'string' ? data.myName : '',
+    domains: data.domains && typeof data.domains === 'object'
+      ? data.domains as LifeVisionData['domains']
+      : {},
+  };
+}
+
+const serializeLifeVisionData = (state: LifeVisionData) => ({
+  myName: state.myName,
+  domains: state.domains,
+});
+const shouldMigrateLifeVisionData = (state: LifeVisionData) =>
+  Boolean(state.myName || Object.keys(state.domains).length);
 
 const DEMO_VISION_DATA: LifeVisionData = {
   myName: 'Alex Morgan',
@@ -73,25 +89,14 @@ const DEMO_VISION_DATA: LifeVisionData = {
 
 export default function App() {
   const { user } = useAuth();
-  const isSyncingFromCloud = useRef(false);
-
-  const [data, setData] = useState<LifeVisionData>(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return {
-          myName: parsed.myName || '',
-          domains: parsed.domains || {},
-        };
-      }
-    } catch (e) {
-      console.error('Failed to load saved Life Vision data:', e);
-    }
-    return {
-      myName: '',
-      domains: {},
-    };
+  const { state: data, setState: setData } = useFirestoreDocSync<LifeVisionData>(user?.uid, {
+    docPath: 'users/{uid}/lifeVision/current',
+    localStorageKey: LOCAL_STORAGE_KEY,
+    mapper: mapLifeVisionData,
+    serializer: serializeLifeVisionData,
+    initialState: INITIAL_LIFE_VISION_DATA,
+    shouldMigrate: shouldMigrateLifeVisionData,
+    timeoutMs: 0,
   });
 
   const [showAbout, setShowAbout] = useState(false);
@@ -108,70 +113,6 @@ export default function App() {
     window.addEventListener('scroll', updateBackToTopVisibility, { passive: true });
     return () => window.removeEventListener('scroll', updateBackToTopVisibility);
   }, []);
-
-  // Firestore Sync: Listen for remote changes
-  useEffect(() => {
-    if (!user) return;
-    const docRef = doc(db, 'users', user.uid, 'lifeVision', 'current');
-    const unsubscribe = onSnapshot(
-      docRef,
-      (snapshot) => {
-        if (snapshot.exists()) {
-          const cloudData = snapshot.data() as Partial<LifeVisionData>;
-          isSyncingFromCloud.current = true;
-          setData({
-            myName: cloudData.myName || '',
-            domains: cloudData.domains || {},
-          });
-          setTimeout(() => {
-            isSyncingFromCloud.current = false;
-          }, 150);
-        } else {
-          // First sync: Upload local data if present
-          if (data.myName || Object.keys(data.domains).length > 0) {
-            setDoc(docRef, {
-              userId: user.uid,
-              myName: data.myName,
-              domains: data.domains,
-              updatedAt: new Date().toISOString(),
-            }).catch((err) => {
-              handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/lifeVision/current`);
-            });
-          }
-        }
-      },
-      (err) => {
-        handleFirestoreError(err, OperationType.GET, `users/${user.uid}/lifeVision/current`);
-      }
-    );
-
-    return () => unsubscribe();
-  }, [user]);
-
-  // Save to localStorage and Firestore with debounce
-  useEffect(() => {
-    try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
-    } catch (e) {
-      console.error('Failed to save to localStorage:', e);
-    }
-
-    if (!user || isSyncingFromCloud.current) return;
-
-    const timer = setTimeout(() => {
-      const docRef = doc(db, 'users', user.uid, 'lifeVision', 'current');
-      setDoc(docRef, {
-        userId: user.uid,
-        myName: data.myName,
-        domains: data.domains,
-        updatedAt: new Date().toISOString(),
-      }).catch((err) => {
-        handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/lifeVision/current`);
-      });
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [data, user]);
 
   const handleDomainChange = (domainId: string, updated: DomainVision) => {
     setData((prev) => ({

@@ -9,7 +9,7 @@
 
 ### Enabling and disabling sub-apps
 
-Sub-app availability is controlled in [`src/apps/config.ts`](./src/apps/config.ts). Change an app's `active` value to `true` or `false`; inactive apps are hidden from the landing page and their routes redirect to `/`. Unknown routes also redirect to `/`. Life Vision is currently inactive:
+Sub-app availability is controlled in [`src/apps/config.ts`](./src/apps/config.ts). Change an app's `active` value to `true` or `false`; inactive apps are hidden from the landing page and their routes redirect to `/`. Unknown routes also redirect to `/`. For example, to disable Life Vision:
 
 ```ts
 'life-vision': { path: '/life-vision', active: false },
@@ -24,6 +24,7 @@ Set `active` to `true` to show its card and enable the app route.
 - **Unified Single-App Architecture**: Built on React 19, TypeScript, and Vite.
 - **Client-Side Routing**: Powered by `react-router-dom`; active sub-apps have dedicated routes and unknown or inactive routes redirect to `/`.
 - **Seamless Browser History Navigation**: Sub-apps do not require in-app "Back to Navigation" buttons. Clicking the browser's Back button seamlessly returns the user from any sub-app to the Stepping Stones landing page (`/`).
+- **Shared App Hooks**: `src/hooks/` contains reusable local-state, Firestore document/collection sync, and audio lifecycle hooks used by the sub-apps.
 - **Deduplicated Dependencies**: All shared dependencies (`react`, `react-dom`, `@tailwindcss/vite`, `tailwindcss`, `lucide-react`, `motion`, `esbuild`, etc.) are centralized in a single top-level `package.json`, saving disk space and simplifying dependency management.
 - **Original Repositories Preserved**: The original projects remain completely unmodified and serve as the upstream sources of truth:
   - `../plank`
@@ -52,6 +53,9 @@ projects/stepping-stones/
 │   ├── main.tsx                 # Root entry mounting RouterProvider & global CSS
 │   ├── index.css                # Global stylesheet (Tailwind v4, fonts, keyframes)
 │   ├── router.tsx               # Browser router route definitions
+│   ├── hooks/
+│   │   ├── useFirestoreSync.ts  # Shared app state and Firestore sync hooks
+│   │   └── useAudioService.ts   # Shared audio start/resume/cleanup lifecycle
 │   ├── apps/
 │   │   ├── config.ts            # Sub-app activation settings
 │   │   ├── plank/               # Plank sub-app components & state

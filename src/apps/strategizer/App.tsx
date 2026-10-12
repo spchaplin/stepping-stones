@@ -3,15 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import confetti from 'canvas-confetti';
 import { RotateCcw, Lock, AlertTriangle, ExternalLink, Copy, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { User } from 'firebase/auth';
+import type { DocumentData } from 'firebase/firestore';
 import { 
-  collection, 
-  query, 
-  orderBy, 
   onSnapshot, 
   setDoc, 
   doc, 
@@ -30,6 +28,7 @@ import { PaceCard, StrategyCard } from './types.ts';
 import { auth, db, googleProvider, handleFirestoreError, OperationType } from './firebase.ts';
 import { useAuth } from '../../firebase/AuthContext';
 import { checkGoalThreshold } from './utils/goalThreshold.ts';
+import { readLocalStorage, useAppState, useFirestoreCollectionSync } from '../../hooks/useFirestoreSync';
 
 // Local storage keys for guest/offline resilience
 const LOCAL_STORAGE_CARDS_KEY = 'strategizer_local_cards';
@@ -53,27 +52,38 @@ const PRESET_CARDS: PaceCard[] = [
   },
 ];
 
-const getInitialCards = (): PaceCard[] => {
-  try {
-    const saved = localStorage.getItem(LOCAL_STORAGE_CARDS_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch {}
-  return PRESET_CARDS;
-};
+const INITIAL_STRATEGY_CARDS: StrategyCard[] = [{ id: 'strategy-init-1', name: '' }];
 
-const getInitialStrategyCards = (): StrategyCard[] => {
-  try {
-    const saved = localStorage.getItem(LOCAL_STORAGE_STRATEGY_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch {}
-  return [{ id: 'strategy-init-1', name: '' }];
-};
+function restoreCards(value: unknown): PaceCard[] {
+  return Array.isArray(value) && value.length > 0 ? value as PaceCard[] : PRESET_CARDS;
+}
+
+function restoreStrategyCards(value: unknown): StrategyCard[] {
+  return Array.isArray(value) && value.length > 0
+    ? value as StrategyCard[]
+    : INITIAL_STRATEGY_CARDS;
+}
+
+function restoreCategory(value: unknown): 'strategy' | 'faster' | 'slower' {
+  return value === 'strategy' || value === 'faster' || value === 'slower' ? value : 'faster';
+}
+
+function mapPaceCard(data: DocumentData): PaceCard | null {
+  if (
+    typeof data.id !== 'string' ||
+    typeof data.name !== 'string' ||
+    typeof data.stage !== 'number' ||
+    (data.type !== 'faster' && data.type !== 'slower')
+  ) {
+    return null;
+  }
+  return { id: data.id, name: data.name, stage: data.stage, type: data.type };
+}
+
+function mapStrategyCard(data: DocumentData): StrategyCard | null {
+  if (typeof data.id !== 'string' || typeof data.name !== 'string') return null;
+  return { id: data.id, name: data.name };
+}
 
 export default function App() {
   // Initialization and sync flags
@@ -86,26 +96,29 @@ export default function App() {
   const isBoardInitializedRef = useRef(false);
   const prevGoalsMetRef = useRef<boolean | null>(null);
   const celebrationIntervalRef = useRef<number | null>(null);
+  const { user, loading: authLoading, signInWithGoogle, signOutUser } = useAuth();
 
   // UI state
   const [showResetModal, setShowResetModal] = useState(false);
   const [lastAddedCardId, setLastAddedCardId] = useState<string | null>(null);
-  const [activeCategory, setActiveCategory] = useState<'strategy' | 'faster' | 'slower'>(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_CATEGORY_KEY);
-      if (saved === 'strategy' || saved === 'faster' || saved === 'slower') {
-        return saved;
-      }
-    } catch {}
-    return 'faster';
-  });
+  const [activeCategory, setActiveCategory] = useAppState(
+    LOCAL_STORAGE_CATEGORY_KEY,
+    'faster' as const,
+    { deserialize: restoreCategory, enabled: !user },
+  );
 
   // Domain state
-  const [strategyCards, setStrategyCards] = useState<StrategyCard[]>(getInitialStrategyCards);
-  const [cards, setCards] = useState<PaceCard[]>(getInitialCards);
+  const [strategyCards, setStrategyCards] = useAppState(
+    LOCAL_STORAGE_STRATEGY_KEY,
+    INITIAL_STRATEGY_CARDS,
+    { deserialize: restoreStrategyCards, enabled: !user },
+  );
+  const [cards, setCards] = useAppState(
+    LOCAL_STORAGE_CARDS_KEY,
+    PRESET_CARDS,
+    { deserialize: restoreCards, enabled: !user },
+  );
 
-  // Authentication State from Universal AuthContext
-  const { user, loading: authLoading, signInWithGoogle, signOutUser } = useAuth();
   const [isGuestMode, setIsGuestMode] = useState<boolean>(() => {
     try {
       return localStorage.getItem(LOCAL_STORAGE_GUEST_KEY) === 'true';
@@ -191,21 +204,42 @@ export default function App() {
   }, [isBoardReady, cards, strategyCards]);
 
   // Sync memory states with mutable refs for async callbacks
-  const latestCardsRef = useRef(cards);
-  const latestStrategyCardsRef = useRef(strategyCards);
   const latestActiveCategoryRef = useRef(activeCategory);
-
-  useEffect(() => {
-    latestCardsRef.current = cards;
-  }, [cards]);
-
-  useEffect(() => {
-    latestStrategyCardsRef.current = strategyCards;
-  }, [strategyCards]);
 
   useEffect(() => {
     latestActiveCategoryRef.current = activeCategory;
   }, [activeCategory]);
+
+  const seedPaceCards = useCallback((uid: string, items: PaceCard[]) => {
+    void saveExistingToFirestore(uid, items);
+  }, []);
+  const seedStrategyCards = useCallback((uid: string, items: StrategyCard[]) => {
+    void saveExistingStrategyToFirestore(uid, items);
+  }, []);
+
+  useFirestoreCollectionSync<PaceCard>(user?.uid, {
+    collectionPath: 'users/{uid}/cards',
+    localStorageKey: LOCAL_STORAGE_CARDS_KEY,
+    itemMapper: mapPaceCard,
+    defaultItems: PRESET_CARDS,
+    setItems: setCards,
+    setIsInitialized: setCardsInitialized,
+    enabled: !authLoading,
+    timeoutMs: 0,
+    onEmpty: seedPaceCards,
+  });
+
+  useFirestoreCollectionSync<StrategyCard>(user?.uid, {
+    collectionPath: 'users/{uid}/strategyCards',
+    localStorageKey: LOCAL_STORAGE_STRATEGY_KEY,
+    itemMapper: mapStrategyCard,
+    defaultItems: INITIAL_STRATEGY_CARDS,
+    setItems: setStrategyCards,
+    setIsInitialized: setStrategyInitialized,
+    enabled: !authLoading,
+    timeoutMs: 0,
+    onEmpty: seedStrategyCards,
+  });
 
   // Track universal Auth state changes
   useEffect(() => {
@@ -285,68 +319,6 @@ export default function App() {
     }
   }, [isHydrated]);
 
-  // Persist guest data locally when not logged in
-  useEffect(() => {
-    if (!user) {
-      try {
-        localStorage.setItem(LOCAL_STORAGE_CARDS_KEY, JSON.stringify(cards));
-      } catch {}
-    }
-  }, [cards, user]);
-
-  useEffect(() => {
-    if (!user) {
-      try {
-        localStorage.setItem(LOCAL_STORAGE_STRATEGY_KEY, JSON.stringify(strategyCards));
-      } catch {}
-    }
-  }, [strategyCards, user]);
-
-  useEffect(() => {
-    if (!user) {
-      try {
-        localStorage.setItem(LOCAL_STORAGE_CATEGORY_KEY, activeCategory);
-      } catch {}
-    }
-  }, [activeCategory, user]);
-
-  // Sync with Firestore cards when logged in
-  useEffect(() => {
-    if (!user) return;
-
-    const cardsRef = collection(db, 'users', user.uid, 'cards');
-    const q = query(cardsRef, orderBy('order', 'asc'));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      if (snapshot.empty) {
-        // If Firestore has no cards yet for this user, seed with existing local/default cards
-        const existingCards = latestCardsRef.current.length > 0 ? latestCardsRef.current : getInitialCards();
-        setCards(existingCards);
-        saveExistingToFirestore(user.uid, existingCards);
-      } else {
-        const fetchedCards: PaceCard[] = [];
-        snapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          if (data.id && data.name !== undefined && data.stage && data.type) {
-            fetchedCards.push({
-              id: data.id,
-              name: data.name,
-              stage: data.stage,
-              type: data.type as 'faster' | 'slower',
-            });
-          }
-        });
-        setCards(fetchedCards);
-      }
-      setCardsInitialized(true);
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, `users/${user.uid}/cards`);
-      setCardsInitialized(true);
-    });
-
-    return () => unsubscribe();
-  }, [user]);
-
   // Sync user profile settings and preferences when logged in
   useEffect(() => {
     if (!user) return;
@@ -372,41 +344,6 @@ export default function App() {
       }
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
-    });
-
-    return () => unsubscribe();
-  }, [user]);
-
-  // Sync strategy cards with Firestore when logged in
-  useEffect(() => {
-    if (!user) return;
-
-    const stratRef = collection(db, 'users', user.uid, 'strategyCards');
-    const q = query(stratRef, orderBy('order', 'asc'));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      if (snapshot.empty) {
-        // If Firestore has no strategy cards yet, seed with existing local/default strategy cards
-        const existingStrategy = latestStrategyCardsRef.current.length > 0 ? latestStrategyCardsRef.current : getInitialStrategyCards();
-        setStrategyCards(existingStrategy);
-        saveExistingStrategyToFirestore(user.uid, existingStrategy);
-      } else {
-        const fetchedCards: StrategyCard[] = [];
-        snapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          if (data.id && data.name !== undefined) {
-            fetchedCards.push({
-              id: data.id,
-              name: data.name,
-            });
-          }
-        });
-        setStrategyCards(fetchedCards);
-      }
-      setStrategyInitialized(true);
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, `users/${user.uid}/strategyCards`);
-      setStrategyInitialized(true);
     });
 
     return () => unsubscribe();
@@ -534,8 +471,8 @@ export default function App() {
   const handleLogout = async () => {
     try {
       await signOutUser();
-      setCards(getInitialCards());
-      setStrategyCards(getInitialStrategyCards());
+      setCards(restoreCards(readLocalStorage(LOCAL_STORAGE_CARDS_KEY)));
+      setStrategyCards(restoreStrategyCards(readLocalStorage(LOCAL_STORAGE_STRATEGY_KEY)));
       setActiveCategory('faster');
       setIsGuestMode(true);
       if (celebrationIntervalRef.current !== null) {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { JourneyState, LifeStep } from './types';
 import Starfield from './components/Starfield';
 import ControlPanel from './components/ControlPanel';
@@ -6,10 +6,34 @@ import ExpandingEdgeModel from './components/ExpandingEdgeModel';
 import { CosmicAudio } from './components/CosmicAudio';
 import { Sparkles, Compass, Milestone, Info } from 'lucide-react';
 import { useAuth } from '../../firebase/AuthContext';
-import { db, handleFirestoreError, OperationType } from '../../firebase/firebase';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { useFirestoreDocSync } from '../../hooks/useFirestoreSync';
+import { useAudioService } from '../../hooks/useAudioService';
 
 const LOCAL_STORAGE_KEY = 'expanding_edge_journey';
+
+const INITIAL_JOURNEY_STATE: JourneyState = {
+  coreLabel: '',
+  coreDescription: '',
+  steps: [],
+  isAudioEnabled: true,
+};
+
+function mapJourneyState(data: Record<string, unknown>): JourneyState {
+  return {
+    coreLabel: typeof data.coreLabel === 'string' ? data.coreLabel : '',
+    coreDescription: typeof data.coreDescription === 'string' ? data.coreDescription : '',
+    steps: Array.isArray(data.steps) ? data.steps as LifeStep[] : [],
+    isAudioEnabled: typeof data.isAudioEnabled === 'boolean' ? data.isAudioEnabled : true,
+  };
+}
+
+const serializeJourneyState = (state: JourneyState) => ({
+  coreLabel: state.coreLabel,
+  coreDescription: state.coreDescription,
+  steps: state.steps,
+  isAudioEnabled: state.isAudioEnabled,
+});
+const shouldMigrateJourneyState = (state: JourneyState) => Boolean(state.coreLabel || state.steps.length);
 
 const DEMO_STEPS: LifeStep[] = [
   {
@@ -241,132 +265,33 @@ const DEMO_STEPS: LifeStep[] = [
 
 export default function App() {
   const { user } = useAuth();
-  const isSyncingFromCloud = useRef(false);
-
-  const [state, setState] = useState<JourneyState>(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return {
-          coreLabel: parsed.coreLabel || '',
-          coreDescription: parsed.coreDescription || '',
-          steps: parsed.steps || [],
-          isAudioEnabled: parsed.isAudioEnabled !== undefined ? parsed.isAudioEnabled : true
-        };
-      }
-    } catch (e) {
-      console.error("Failed to load saved state:", e);
-    }
-    
-    return {
-      coreLabel: '',
-      coreDescription: '',
-      steps: [],
-      isAudioEnabled: true
-    };
+  const { state, setState } = useFirestoreDocSync<JourneyState>(user?.uid, {
+    docPath: 'users/{uid}/expandingEdge/current',
+    localStorageKey: LOCAL_STORAGE_KEY,
+    mapper: mapJourneyState,
+    serializer: serializeJourneyState,
+    initialState: INITIAL_JOURNEY_STATE,
+    shouldMigrate: shouldMigrateJourneyState,
+    timeoutMs: 0,
   });
 
   const [activeStepId, setActiveStepId] = useState<string | 'core' | 'new' | null>(null);
 
-  // Subscribe to user's Expanding Edge voyage in Firestore
-  useEffect(() => {
-    if (!user) return;
-    const docRef = doc(db, 'users', user.uid, 'expandingEdge', 'current');
-    const unsubscribe = onSnapshot(docRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.data();
-        isSyncingFromCloud.current = true;
-        setState({
-          coreLabel: data.coreLabel || '',
-          coreDescription: data.coreDescription || '',
-          steps: Array.isArray(data.steps) ? data.steps : [],
-          isAudioEnabled: data.isAudioEnabled !== undefined ? data.isAudioEnabled : true
-        });
-        setTimeout(() => {
-          isSyncingFromCloud.current = false;
-        }, 150);
-      } else {
-        // First cloud sign-in: migrate existing local voyage if any
-        if (state.coreLabel || state.steps.length > 0) {
-          setDoc(docRef, {
-            userId: user.uid,
-            coreLabel: state.coreLabel,
-            coreDescription: state.coreDescription,
-            steps: state.steps,
-            isAudioEnabled: state.isAudioEnabled,
-            updatedAt: new Date().toISOString()
-          }).catch(err => {
-            handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/expandingEdge/current`);
-          });
-        }
-      }
-    }, (err) => {
-      handleFirestoreError(err, OperationType.GET, `users/${user.uid}/expandingEdge/current`);
-    });
-
-    return () => unsubscribe();
-  }, [user]);
-
-  // Synchronize audio state & ensure audio stops when navigating back to landing page
-  useEffect(() => {
-    CosmicAudio.toggleBackgroundHum(state.isAudioEnabled);
-    return () => {
-      CosmicAudio.stopBackgroundMusic();
-    };
-  }, [state.isAudioEnabled]);
-
-  // Handle browser autoplay blockages by resuming on first user interaction
-  useEffect(() => {
-    if (state.isAudioEnabled) {
-      const resumeAudio = () => {
-        if (state.isAudioEnabled) {
-          CosmicAudio.toggleBackgroundHum(true);
-        }
-      };
-      const interactionEvents = ['click', 'mousedown', 'keydown', 'touchstart', 'pointerdown'];
-      interactionEvents.forEach(evt => {
-        window.addEventListener(evt, resumeAudio, { capture: true, passive: true });
-      });
-      return () => {
-        interactionEvents.forEach(evt => {
-          window.removeEventListener(evt, resumeAudio, { capture: true });
-        });
-      };
-    }
-  }, [state.isAudioEnabled]);
-
-  // Sync state changes to localStorage (always) and to Firestore (when signed in)
-  useEffect(() => {
-    try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
-        coreLabel: state.coreLabel,
-        coreDescription: state.coreDescription,
-        steps: state.steps,
-        isAudioEnabled: state.isAudioEnabled
-      }));
-    } catch (e) {
-      console.error("Failed to write to localStorage:", e);
-    }
-
-    if (!user || isSyncingFromCloud.current) return;
-
-    const timer = setTimeout(() => {
-      const docRef = doc(db, 'users', user.uid, 'expandingEdge', 'current');
-      setDoc(docRef, {
-        userId: user.uid,
-        coreLabel: state.coreLabel,
-        coreDescription: state.coreDescription,
-        steps: state.steps,
-        isAudioEnabled: state.isAudioEnabled,
-        updatedAt: new Date().toISOString()
-      }).catch(err => {
-        handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/expandingEdge/current`);
-      });
-    }, 450);
-
-    return () => clearTimeout(timer);
-  }, [state.coreLabel, state.coreDescription, state.steps, state.isAudioEnabled, user]);
+  const startBackgroundAudio = useCallback(() => {
+    CosmicAudio.toggleBackgroundHum(true);
+  }, []);
+  const stopBackgroundAudio = useCallback(() => {
+    CosmicAudio.stopBackgroundMusic();
+  }, []);
+  const resumeBackgroundAudio = useCallback(() => {
+    CosmicAudio.toggleBackgroundHum(true);
+  }, []);
+  useAudioService({
+    enabled: state.isAudioEnabled,
+    start: startBackgroundAudio,
+    stop: stopBackgroundAudio,
+    resume: resumeBackgroundAudio,
+  });
 
   // Load standard Demo Voyage to showcase the visual system immediately
   const handleLoadDemo = () => {
