@@ -30,9 +30,21 @@ function hasEnumerableKeys<T>(value: T): boolean {
   return Object.keys(Object(value)).length > 0;
 }
 
-export function readLocalStorage<T>(key: string): T | null {
+function getStorage(): Storage | null {
   try {
-    const saved = localStorage.getItem(key);
+    const storage = globalThis.localStorage;
+    return storage ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function readLocalStorage<T>(key: string): T | null {
+  const storage = getStorage();
+  if (!storage) return null;
+
+  try {
+    const saved = storage.getItem(key);
     return saved === null ? null : (JSON.parse(saved) as T);
   } catch (error) {
     console.error(`Failed to read local storage key "${key}":`, error);
@@ -41,8 +53,11 @@ export function readLocalStorage<T>(key: string): T | null {
 }
 
 export function writeLocalStorage(key: string, data: unknown): void {
+  const storage = getStorage();
+  if (!storage) return;
+
   try {
-    localStorage.setItem(key, JSON.stringify(data));
+    storage.setItem(key, JSON.stringify(data));
   } catch (error) {
     console.error(`Failed to write local storage key "${key}":`, error);
   }
@@ -55,7 +70,7 @@ export interface AppStateOptions<T> {
 }
 
 /** Keeps app state backed by localStorage while accepting normal React state updates. */
-export function useAppState<T>(
+export function usePersistentState<T>(
   key: string,
   initialValue: T,
   {
@@ -81,6 +96,8 @@ export function useAppState<T>(
 
   return [state, setState, isHydrated];
 }
+
+export const useAppState = usePersistentState;
 
 export interface FirestoreDocSyncOptions<T> {
   docPath: string;

@@ -119,13 +119,14 @@ export default function App() {
     { deserialize: restoreCards, enabled: !user },
   );
 
-  const [isGuestMode, setIsGuestMode] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem(LOCAL_STORAGE_GUEST_KEY) === 'true';
-    } catch {
-      return false;
-    }
-  });
+  const [isGuestMode, setIsGuestMode] = useAppState<boolean>(
+    LOCAL_STORAGE_GUEST_KEY,
+    false,
+    {
+      deserialize: (value) => value === true,
+      enabled: !user,
+    },
+  );
   const [authError, setAuthError] = useState<{
     code: string;
     message: string;

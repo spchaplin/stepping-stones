@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { checkGoalThreshold } from '../src/apps/strategizer/utils/goalThreshold.ts';
 import { PaceCard, StrategyCard } from '../src/apps/strategizer/types.ts';
+import { readLocalStorage, writeLocalStorage } from '../src/hooks/useFirestoreSync.ts';
 
 test('checkGoalThreshold: returns false when any category has less than 3 completed cards', () => {
   const cards: PaceCard[] = [
@@ -148,4 +149,25 @@ test('Celebration transition logic: user opens app anew with threshold NOT passe
   // Step 2: User completes cards and crosses threshold
   handleUpdate(true, true);
   assert.equal(celebrationCount, 1, 'Celebrates when user completes 3 cards under each tab');
+});
+
+test('readLocalStorage and writeLocalStorage safely no-op when storage is unavailable', () => {
+  const originalLocalStorage = globalThis.localStorage;
+
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: undefined,
+    configurable: true,
+    writable: true,
+  });
+
+  try {
+    assert.equal(readLocalStorage('missing-key'), null);
+    assert.doesNotThrow(() => writeLocalStorage('missing-key', { ok: true }));
+  } finally {
+    Object.defineProperty(globalThis, 'localStorage', {
+      value: originalLocalStorage,
+      configurable: true,
+      writable: true,
+    });
+  }
 });
