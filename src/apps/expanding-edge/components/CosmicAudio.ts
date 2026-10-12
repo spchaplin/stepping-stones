@@ -12,6 +12,7 @@ class CosmicAudioEngine {
   private masterGain: GainNode | null = null;
   private audioEl: HTMLAudioElement | null = null;
   private currentVolume: number = 0.5;
+  private shouldPlayMusic: boolean = false;
 
   constructor() {
     // Audio Context is initialized lazily upon user interaction to satisfy browser security policies
@@ -32,15 +33,52 @@ class CosmicAudioEngine {
     }
   }
 
-  private ensureAudioEl() {
-    if (!this.audioEl) {
+  private ensureAudioEl(): HTMLAudioElement | null {
+    if (!this.audioEl && typeof Audio !== 'undefined') {
       try {
-        this.audioEl = new Audio('/expanding-edge/sound/space.mp3');
-        this.audioEl.loop = true;
-        this.audioEl.volume = this.currentVolume;
+        const audio = new Audio('/expanding-edge/sound/space.mp3');
+        audio.loop = true;
+        audio.preload = 'auto';
+        audio.volume = this.currentVolume;
+
+        audio.addEventListener('ended', () => {
+          if (this.shouldPlayMusic && this.audioEl) {
+            this.audioEl.currentTime = 0;
+            this.playAudioEl();
+          }
+        });
+
+        this.audioEl = audio;
       } catch (e) {
         console.warn("Failed to create Audio element for space.mp3:", e);
       }
+    }
+    return this.audioEl;
+  }
+
+  private playAudioEl() {
+    const audio = this.ensureAudioEl();
+    if (!audio) return;
+
+    audio.volume = this.currentVolume;
+
+    // If audio is already active and playing, do not interrupt
+    if (!audio.paused) {
+      return;
+    }
+
+    try {
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          // Blocked autoplay before user interaction or pause interruption is expected
+          if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
+            console.warn("Playback of space.mp3 was blocked or failed:", err);
+          }
+        });
+      }
+    } catch (e) {
+      // In some older environments, play() might throw synchronously
     }
   }
 
@@ -70,15 +108,20 @@ class CosmicAudioEngine {
     this.ensureInitialized();
     
     if (enable) {
-      if (this.audioEl) {
-        this.audioEl.play().catch(err => {
-          if (err.name !== 'AbortError') {
-            console.warn("Autoplay or space.mp3 playback was blocked or failed:", err);
-          }
-        });
+      this.shouldPlayMusic = true;
+      this.playAudioEl();
+
+      if (this.ctx && this.ctx.state === 'suspended') {
+        this.ctx.resume().catch(() => {});
       }
 
-      if (this.isHumActive) return;
+      if (this.isHumActive) {
+        if (this.droneGain && this.ctx) {
+          this.droneGain.gain.cancelScheduledValues(this.ctx.currentTime);
+          this.droneGain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+        }
+        return;
+      }
       this.isHumActive = true;
 
       if (!this.ctx) return;
@@ -102,9 +145,9 @@ class CosmicAudioEngine {
         filter.Q.setValueAtTime(1, this.ctx.currentTime);
 
         // Very soft volume so it doesn't overpower
-        gainNode.gain.setValueAtTime(0, this.ctx.currentTime);
+        gainNode.gain.setValueAtTime(0.02, this.ctx.currentTime);
         // Fade in hum slowly
-        gainNode.gain.linearRampToValueAtTime(0.18, this.ctx.currentTime + 3);
+        gainNode.gain.linearRampToValueAtTime(0.18, this.ctx.currentTime + 1.5);
 
         // LFO (Low Frequency Oscillator) to modulate the volume slightly (breathing effect)
         const lfo = this.ctx.createOscillator();
@@ -140,6 +183,7 @@ class CosmicAudioEngine {
         console.error("Failed to start hum drone:", e);
       }
     } else {
+      this.shouldPlayMusic = false;
       if (this.audioEl) {
         this.audioEl.pause();
       }

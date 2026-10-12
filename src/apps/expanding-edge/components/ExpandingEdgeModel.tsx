@@ -216,6 +216,9 @@ const ExpandingEdgeModel = React.memo(function ExpandingEdgeModel({ state, setSt
         <button
           onClick={() => {
             const nextAudioState = !state.isAudioEnabled;
+            try {
+              localStorage.setItem('expanding_edge_explicit_mute', String(!nextAudioState));
+            } catch (_) {}
             setState(prev => ({ ...prev, isAudioEnabled: nextAudioState }));
             CosmicAudio.toggleBackgroundHum(nextAudioState);
             CosmicAudio.playClickSound();

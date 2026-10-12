@@ -24,33 +24,57 @@ export function useAudioService({
   stop,
   resume,
   interactionEvents = DEFAULT_INTERACTION_EVENTS,
-  listenOnDocument = false,
+  listenOnDocument = true,
 }: AudioServiceOptions): void {
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      stop();
+      return;
+    }
 
     start();
 
-    if (resume) {
-      const resumeAudio = () => resume();
+    const resumeAudio = () => {
+      if (resume) {
+        resume();
+      } else {
+        start();
+      }
+    };
+
+    interactionEvents.forEach((eventName) => {
+      window.addEventListener(eventName, resumeAudio, { capture: true, passive: true });
+      if (listenOnDocument) {
+        document.addEventListener(eventName, resumeAudio, { capture: true, passive: true });
+      }
+    });
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        stop();
+      } else if (document.visibilityState === 'visible') {
+        resumeAudio();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    const handlePageHide = () => {
+      stop();
+    };
+    window.addEventListener('pagehide', handlePageHide);
+    window.addEventListener('beforeunload', handlePageHide);
+
+    return () => {
       interactionEvents.forEach((eventName) => {
-        window.addEventListener(eventName, resumeAudio, { capture: true, passive: true });
+        window.removeEventListener(eventName, resumeAudio, { capture: true });
         if (listenOnDocument) {
-          document.addEventListener(eventName, resumeAudio, { capture: true, passive: true });
+          document.removeEventListener(eventName, resumeAudio, { capture: true });
         }
       });
-
-      return () => {
-        interactionEvents.forEach((eventName) => {
-          window.removeEventListener(eventName, resumeAudio, { capture: true });
-          if (listenOnDocument) {
-            document.removeEventListener(eventName, resumeAudio, { capture: true });
-          }
-        });
-        stop();
-      };
-    }
-
-    return stop;
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', handlePageHide);
+      window.removeEventListener('beforeunload', handlePageHide);
+      stop();
+    };
   }, [enabled, interactionEvents, listenOnDocument, resume, start, stop]);
 }

@@ -4,26 +4,36 @@ import Starfield from './components/Starfield';
 import ControlPanel from './components/ControlPanel';
 import ExpandingEdgeModel from './components/ExpandingEdgeModel';
 import { CosmicAudio } from './components/CosmicAudio';
-import { Sparkles, Compass, Milestone, Info } from 'lucide-react';
+import { Sparkles, Compass, Milestone, Info, X } from 'lucide-react';
 import { useAuth } from '../../firebase/AuthContext';
 import { useFirestoreDocSync } from '../../hooks/useFirestoreSync';
 import { useAudioService } from '../../hooks/useAudioService';
 
 const LOCAL_STORAGE_KEY = 'expanding_edge_journey';
 
-const INITIAL_JOURNEY_STATE: JourneyState = {
+export const INITIAL_JOURNEY_STATE: JourneyState = {
   coreLabel: '',
   coreDescription: '',
   steps: [],
   isAudioEnabled: true,
 };
 
-function mapJourneyState(data: Record<string, unknown>): JourneyState {
+export function mapJourneyState(data: Record<string, unknown>): JourneyState {
+  let isAudioEnabled = true;
+  try {
+    const isExplicitlyMuted = localStorage.getItem('expanding_edge_explicit_mute') === 'true';
+    if (isExplicitlyMuted) {
+      isAudioEnabled = false;
+    }
+  } catch (_) {
+    isAudioEnabled = true;
+  }
+
   return {
     coreLabel: typeof data.coreLabel === 'string' ? data.coreLabel : '',
     coreDescription: typeof data.coreDescription === 'string' ? data.coreDescription : '',
     steps: Array.isArray(data.steps) ? data.steps as LifeStep[] : [],
-    isAudioEnabled: typeof data.isAudioEnabled === 'boolean' ? data.isAudioEnabled : true,
+    isAudioEnabled,
   };
 }
 
@@ -269,13 +279,16 @@ export default function App() {
     docPath: 'users/{uid}/expandingEdge/current',
     localStorageKey: LOCAL_STORAGE_KEY,
     mapper: mapJourneyState,
+    localMapper: mapJourneyState,
     serializer: serializeJourneyState,
+    localSerializer: serializeJourneyState,
     initialState: INITIAL_JOURNEY_STATE,
     shouldMigrate: shouldMigrateJourneyState,
     timeoutMs: 0,
   });
 
   const [activeStepId, setActiveStepId] = useState<string | 'core' | 'new' | null>(null);
+  const [isWelcomeDismissed, setIsWelcomeDismissed] = useState(false);
 
   const startBackgroundAudio = useCallback(() => {
     CosmicAudio.toggleBackgroundHum(true);
@@ -291,20 +304,29 @@ export default function App() {
     start: startBackgroundAudio,
     stop: stopBackgroundAudio,
     resume: resumeBackgroundAudio,
+    listenOnDocument: true,
   });
 
   // Load standard Demo Voyage to showcase the visual system immediately
   const handleLoadDemo = () => {
-    setState({
+    setIsWelcomeDismissed(true);
+    setState(prev => ({
+      ...prev,
       coreLabel: 'Having fun with friends and practicing dance',
       coreDescription: "I'm not sure what to do next; it seems scary",
       steps: DEMO_STEPS,
       isAudioEnabled: true
-    });
+    }));
     // Turn on the hum for maximum demo impact!
     CosmicAudio.toggleBackgroundHum(true);
     CosmicAudio.playExpansionSweep();
   };
+
+  const handleRestart = useCallback(() => {
+    setIsWelcomeDismissed(false);
+    setActiveStepId(null);
+    CosmicAudio.toggleBackgroundHum(true);
+  }, []);
 
   const isCoreDefined = state.coreLabel !== '';
 
@@ -312,6 +334,64 @@ export default function App() {
     <div className="min-h-screen bg-[#03030f] flex flex-col relative overflow-x-hidden select-none">
       {/* Dynamic star field background */}
       <Starfield />
+
+      {/* Welcome overlay if Core is empty and not dismissed - fixed viewport overlay */}
+      {!isCoreDefined && !isWelcomeDismissed && (
+        <div 
+          className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 sm:p-6"
+          onClick={() => {
+            CosmicAudio.toggleBackgroundHum(true);
+          }}
+        >
+          <div 
+            className="max-w-md w-full p-8 rounded-2xl bg-slate-900/90 border border-white/10 backdrop-blur-2xl shadow-[0_0_60px_rgba(0,0,0,0.9)] text-center space-y-5 relative"
+          >
+            <button
+              onClick={() => {
+                setIsWelcomeDismissed(true);
+                CosmicAudio.playClickSound();
+                CosmicAudio.toggleBackgroundHum(true);
+              }}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+              title="Dismiss and view canvas"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center mx-auto shadow-[0_0_20px_rgba(34,211,238,0.2)]">
+              <Compass className="w-6 h-6 animate-spin" style={{ animationDuration: '25s' }} />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-black italic tracking-tighter text-white uppercase">
+                ESTABLISH YOUR <span className="text-cyan-400">FRONTIER</span>
+              </h3>
+              <p className="text-xs text-slate-300 font-sans leading-relaxed">
+                To begin drawing &quot;The Expanding Edge&quot;, classify your current life core parameters on the left, or launch an inspiring pre-made voyage to preview the system.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2.5 pt-2">
+              <button
+                onClick={() => {
+                  setIsWelcomeDismissed(true);
+                  const input = document.getElementById('core-label-input');
+                  if (input) input.focus();
+                  CosmicAudio.playClickSound();
+                  CosmicAudio.toggleBackgroundHum(true);
+                }}
+                className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(245,158,11,0.25)] cursor-pointer"
+              >
+                Define Life Baseline
+              </button>
+              <button
+                onClick={handleLoadDemo}
+                className="w-full py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-xl text-xs uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(34,211,238,0.25)] cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Load Inspiring Demo Voyage
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col lg:flex-row relative z-10">
@@ -323,50 +403,12 @@ export default function App() {
             setState={setState} 
             activeStepId={activeStepId}
             setActiveStepId={setActiveStepId}
+            onRestart={handleRestart}
           />
         </div>
 
         {/* Right column: Interactive Visual Model */}
         <div className="flex-1 flex flex-col relative">
-          
-          {/* Welcome overlay if Core is empty */}
-          {!isCoreDefined && (
-            <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[4px] z-20 flex items-center justify-center p-6">
-              <div className="max-w-md p-8 rounded-2xl bg-slate-900/50 border border-white/5 backdrop-blur-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] text-center space-y-5">
-                <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center mx-auto shadow-[0_0_20px_rgba(34,211,238,0.2)]">
-                  <Compass className="w-6 h-6 animate-spin" style={{ animationDuration: '25s' }} />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-xl font-black italic tracking-tighter text-white uppercase">
-                    ESTABLISH YOUR <span className="text-cyan-400">FRONTIER</span>
-                  </h3>
-                  <p className="text-xs text-slate-300 font-sans leading-relaxed">
-                    To begin drawing &quot;The Expanding Edge&quot;, classify your current life core parameters on the left, or launch an inspiring pre-made voyage to preview the system.
-                  </p>
-                </div>
-                <div className="flex flex-col gap-2.5 pt-2">
-                  <button
-                    onClick={() => {
-                      // Focus on the core label input
-                      const input = document.getElementById('core-label-input');
-                      if (input) input.focus();
-                      CosmicAudio.playClickSound();
-                    }}
-                    className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(245,158,11,0.25)] cursor-pointer"
-                  >
-                    Define Life Baseline
-                  </button>
-                  <button
-                    onClick={handleLoadDemo}
-                    className="w-full py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-xl text-xs uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(34,211,238,0.25)] cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    Load Inspiring Demo Voyage
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Render the core planetary SVG quadrant model */}
           <div className="flex-1 flex items-start justify-center relative">

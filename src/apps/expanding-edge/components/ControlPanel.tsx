@@ -26,6 +26,7 @@ interface ControlPanelProps {
   setState: React.Dispatch<React.SetStateAction<JourneyState>>;
   activeStepId: string | 'core' | 'new' | null;
   setActiveStepId: (id: string | 'core' | 'new' | null) => void;
+  onRestart?: () => void;
 }
 
 const PLANET_PRESETS: { type: PlanetType; label: string; desc: string; color: string; defaultNames: string[] }[] = [
@@ -394,7 +395,13 @@ const TimelineStepItem = React.memo(function TimelineStepItem({
   );
 });
 
-export default function ControlPanel({ state, setState, activeStepId, setActiveStepId }: ControlPanelProps) {
+export default function ControlPanel({ 
+  state, 
+  setState, 
+  activeStepId, 
+  setActiveStepId,
+  onRestart 
+}: ControlPanelProps) {
   // Input fields for Core
   const [coreInput, setCoreInput] = useState(state.coreLabel);
   const [coreDescInput, setCoreDescInput] = useState(state.coreDescription);
@@ -539,17 +546,18 @@ export default function ControlPanel({ state, setState, activeStepId, setActiveS
   };
 
   const handleResetAll = () => {
-    setState({
+    setState(prev => ({
+      ...prev,
       coreLabel: '',
       coreDescription: '',
       steps: [],
-      isAudioEnabled: false
-    });
+      isAudioEnabled: prev.isAudioEnabled ?? true
+    }));
     setCoreInput('');
     setCoreDescInput('');
     setIsEditingCore(true);
-    CosmicAudio.toggleBackgroundHum(false);
     CosmicAudio.playChime();
+    onRestart?.();
   };
 
   // Calculate stats
