@@ -70,12 +70,12 @@ projects/stepping-stones/
 
 ---
 
-## Firebase Configuration (Strategizer App)
+## Firebase Configuration (Cloud-Synced Apps)
 
-**Strategizer** is the only sub-app that connects to an external database (Firebase Firestore & Firebase Auth).
+Strategizer and Life Vision use Firebase Authentication and Firestore for user-owned data.
 
 ### 1. `firebase-applet-config.json`
-Firebase credentials are automatically read by `src/apps/strategizer/firebase.ts` from `firebase-applet-config.json` located at the root of the project:
+Firebase credentials are automatically read by `src/firebase/firebase.ts` from `firebase-applet-config.json` located at the root of the project:
 ```json
 {
   "projectId": "<YOUR_PROJECT_ID>",
@@ -90,7 +90,7 @@ Firebase credentials are automatically read by `src/apps/strategizer/firebase.ts
 ```
 
 ### 2. Firestore Security Rules
-Security rules for pacing and strategy card persistence are provided in [`firestore.rules`](./firestore.rules) and [`firebase-blueprint.json`](./firebase-blueprint.json).
+Security rules and schema references for cloud-synced app data are provided in [`firestore.rules`](./firestore.rules) and [`firebase-blueprint.json`](./firebase-blueprint.json).
 
 ### 3. Environment Variables (`.env`)
 To configure environment variables for local development or AI Studio integration:

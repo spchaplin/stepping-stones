@@ -176,6 +176,47 @@
         "isAudioEnabled",
         "updatedAt"
       ]
+    },
+    "LifeVisionDoc": {
+      "title": "LifeVisionDoc",
+      "description": "A user's name and vision statements for each life domain.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "myName": {
+          "type": "string"
+        },
+        "domains": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "vision": {
+                "type": "string"
+              },
+              "priority": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "vision",
+              "priority"
+            ]
+          }
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "userId",
+        "myName",
+        "domains",
+        "updatedAt"
+      ]
     }
   },
   "firestore": {
@@ -198,6 +239,10 @@
     "/users/{userId}/expandingEdge/current": {
       "schema": "ExpandingEdgeDoc",
       "description": "A user's active concentric planetary journey model."
+    },
+    "/users/{userId}/lifeVision/current": {
+      "schema": "LifeVisionDoc",
+      "description": "A user's Life Vision name and life-domain statements."
     }
   }
 }

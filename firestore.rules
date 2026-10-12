@@ -74,6 +74,16 @@ service cloud.firestore {
         && (!('userId' in data) || data.userId == userId);
     }
 
+    // Life Vision document
+    function isValidLifeVisionDoc(data, userId) {
+      return data.keys().hasAll(['myName', 'domains'])
+        && data.keys().hasOnly(['userId', 'myName', 'domains', 'updatedAt'])
+        && data.myName is string
+        && data.domains is map
+        && (!('userId' in data) || data.userId == userId)
+        && (!('updatedAt' in data) || data.updatedAt is string);
+    }
+
     // User Profile matching rule
     match /users/{userId} {
       allow get: if isOwner(userId);
@@ -119,6 +129,13 @@ service cloud.firestore {
       match /expandingEdge/{docId} {
         allow get: if isOwner(userId) && docId == 'current';
         allow create, update: if isOwner(userId) && docId == 'current' && isValidExpandingEdgeDoc(incoming(), userId);
+        allow delete: if isOwner(userId) && docId == 'current';
+      }
+
+      // Life Vision document
+      match /lifeVision/{docId} {
+        allow get: if isOwner(userId) && docId == 'current';
+        allow create, update: if isOwner(userId) && docId == 'current' && isValidLifeVisionDoc(incoming(), userId);
         allow delete: if isOwner(userId) && docId == 'current';
       }
     }
