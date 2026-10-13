@@ -28,7 +28,7 @@ import { PaceCard, StrategyCard } from './types.ts';
 import { auth, db, googleProvider, handleFirestoreError, OperationType } from './firebase.ts';
 import { useAuth } from '../../firebase/AuthContext';
 import { checkGoalThreshold } from './utils/goalThreshold.ts';
-import { readLocalStorage, useAppState, useFirestoreCollectionSync } from '../../hooks/useFirestoreSync';
+import { readLocalStorage, writeLocalStorage, useAppState, useFirestoreCollectionSync } from '../../hooks/useFirestoreSync';
 
 // Local storage keys for guest/offline resilience
 const LOCAL_STORAGE_CARDS_KEY = 'strategizer_local_cards';
@@ -54,14 +54,32 @@ const PRESET_CARDS: PaceCard[] = [
 
 const INITIAL_STRATEGY_CARDS: StrategyCard[] = [{ id: 'strategy-init-1', name: '' }];
 
-function restoreCards(value: unknown): PaceCard[] {
-  return Array.isArray(value) && value.length > 0 ? value as PaceCard[] : PRESET_CARDS;
+export function restoreCards(value: unknown): PaceCard[] {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is PaceCard => {
+      return (
+        Boolean(item) &&
+        typeof (item as PaceCard).id === 'string' &&
+        typeof (item as PaceCard).name === 'string' &&
+        typeof (item as PaceCard).stage === 'number' &&
+        ((item as PaceCard).type === 'faster' || (item as PaceCard).type === 'slower')
+      );
+    });
+  }
+  return PRESET_CARDS;
 }
 
-function restoreStrategyCards(value: unknown): StrategyCard[] {
-  return Array.isArray(value) && value.length > 0
-    ? value as StrategyCard[]
-    : INITIAL_STRATEGY_CARDS;
+export function restoreStrategyCards(value: unknown): StrategyCard[] {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is StrategyCard => {
+      return (
+        Boolean(item) &&
+        typeof (item as StrategyCard).id === 'string' &&
+        typeof (item as StrategyCard).name === 'string'
+      );
+    });
+  }
+  return INITIAL_STRATEGY_CARDS;
 }
 
 function restoreCategory(value: unknown): 'strategy' | 'faster' | 'slower' {
@@ -683,55 +701,36 @@ export default function App() {
   };
 
   const handleConfirmReset = async () => {
+    // 1. Immediately clear in-memory state and localStorage
+    setCards([]);
+    setStrategyCards([]);
+    writeLocalStorage(LOCAL_STORAGE_CARDS_KEY, []);
+    writeLocalStorage(LOCAL_STORAGE_STRATEGY_KEY, []);
+
+    // 2. If authenticated, delete all cards from Firestore
     if (user) {
       try {
         const batch = writeBatch(db);
         
         cards.forEach((card) => {
-          if (card.id !== 'preset-f1' && card.id !== 'preset-s1') {
-            const cardRef = doc(db, 'users', user.uid, 'cards', card.id);
-            batch.delete(cardRef);
-          }
+          const cardRef = doc(db, 'users', user.uid, 'cards', card.id);
+          batch.delete(cardRef);
         });
 
         strategyCards.forEach((card) => {
-          if (card.id !== 'strategy-init-1') {
-            const cardRef = doc(db, 'users', user.uid, 'strategyCards', card.id);
-            batch.delete(cardRef);
-          }
+          const cardRef = doc(db, 'users', user.uid, 'strategyCards', card.id);
+          batch.delete(cardRef);
         });
 
-        PRESET_CARDS.forEach((card, index) => {
-          const cardRef = doc(db, 'users', user.uid, 'cards', card.id);
-          batch.set(cardRef, {
-            id: card.id,
-            name: card.name,
-            stage: card.stage,
-            type: card.type,
-            order: index,
-            userId: user.uid,
-            updatedAt: serverTimestamp(),
-          });
-        });
-
-        const stratRef = doc(db, 'users', user.uid, 'strategyCards', 'strategy-init-1');
-        batch.set(stratRef, {
-          id: 'strategy-init-1',
-          name: '',
-          order: 0,
-          userId: user.uid,
-          updatedAt: serverTimestamp(),
-        });
+        // Also ensure preset IDs are deleted if present
+        batch.delete(doc(db, 'users', user.uid, 'cards', 'preset-f1'));
+        batch.delete(doc(db, 'users', user.uid, 'cards', 'preset-s1'));
+        batch.delete(doc(db, 'users', user.uid, 'strategyCards', 'strategy-init-1'));
 
         await batch.commit();
       } catch (error) {
         handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}`);
       }
-    } else {
-      const freshCards = PRESET_CARDS.map(c => ({ ...c }));
-      setCards(freshCards);
-      const freshStrategy = [{ id: 'strategy-init-1', name: '' }];
-      setStrategyCards(freshStrategy);
     }
   };
 
@@ -845,7 +844,7 @@ export default function App() {
               type="button"
               id="btn-workspace-restore"
               className="absolute bottom-4 right-4 z-30 p-2.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-950/20 hover:scale-105 active:scale-95 transition-all text-xs flex items-center gap-1.5 font-bold cursor-pointer"
-              title="Reset back to standard preset cards"
+              title="Reset workspace and clear all cards"
             >
               <RotateCcw className="w-4 h-4" />
               <span className="hidden md:inline">Reset Workspace</span>

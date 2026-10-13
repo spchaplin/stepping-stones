@@ -63,7 +63,7 @@ export function ResetConfirmModal({ isOpen, onClose, onConfirm }: ResetConfirmMo
             {/* Message Body */}
             <div>
               <p className="text-sm font-semibold text-slate-200 leading-relaxed">
-                Do you want to reset your cards back to the default cards?
+                Do you want to clear all cards from the board?
               </p>
             </div>
 

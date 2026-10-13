@@ -591,7 +591,7 @@ export default function ControlPanel({
               title="Reset your journey"
               id="btn-reset"
             >
-              Restart
+              Reset
             </button>
           </div>
         </div>

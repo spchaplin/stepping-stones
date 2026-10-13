@@ -10,6 +10,7 @@ import { useFirestoreDocSync } from '../../hooks/useFirestoreSync';
 import { useAudioService } from '../../hooks/useAudioService';
 
 const LOCAL_STORAGE_KEY = 'expanding_edge_journey';
+export const WELCOME_DISMISSED_STORAGE_KEY = 'expanding_edge_welcome_dismissed';
 
 export const INITIAL_JOURNEY_STATE: JourneyState = {
   coreLabel: '',
@@ -288,7 +289,20 @@ export default function App() {
   });
 
   const [activeStepId, setActiveStepId] = useState<string | 'core' | 'new' | null>(null);
-  const [isWelcomeDismissed, setIsWelcomeDismissed] = useState(false);
+  const [isWelcomeDismissed, setIsWelcomeDismissed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(WELCOME_DISMISSED_STORAGE_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const markModalSelectionMade = useCallback(() => {
+    setIsWelcomeDismissed(true);
+    try {
+      localStorage.setItem(WELCOME_DISMISSED_STORAGE_KEY, 'true');
+    } catch {}
+  }, []);
 
   const startBackgroundAudio = useCallback(() => {
     CosmicAudio.toggleBackgroundHum(true);
@@ -309,7 +323,7 @@ export default function App() {
 
   // Load standard Demo Voyage to showcase the visual system immediately
   const handleLoadDemo = () => {
-    setIsWelcomeDismissed(true);
+    markModalSelectionMade();
     setState(prev => ({
       ...prev,
       coreLabel: 'Having fun with friends and practicing dance',
@@ -323,6 +337,9 @@ export default function App() {
   };
 
   const handleRestart = useCallback(() => {
+    try {
+      localStorage.removeItem(WELCOME_DISMISSED_STORAGE_KEY);
+    } catch {}
     setIsWelcomeDismissed(false);
     setActiveStepId(null);
     CosmicAudio.toggleBackgroundHum(true);
@@ -348,7 +365,7 @@ export default function App() {
           >
             <button
               onClick={() => {
-                setIsWelcomeDismissed(true);
+                markModalSelectionMade();
                 CosmicAudio.playClickSound();
                 CosmicAudio.toggleBackgroundHum(true);
               }}
@@ -371,7 +388,7 @@ export default function App() {
             <div className="flex flex-col gap-2.5 pt-2">
               <button
                 onClick={() => {
-                  setIsWelcomeDismissed(true);
+                  markModalSelectionMade();
                   const input = document.getElementById('core-label-input');
                   if (input) input.focus();
                   CosmicAudio.playClickSound();

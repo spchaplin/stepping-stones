@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { checkGoalThreshold } from '../src/apps/strategizer/utils/goalThreshold.ts';
 import { PaceCard, StrategyCard } from '../src/apps/strategizer/types.ts';
 import { readLocalStorage, writeLocalStorage } from '../src/hooks/useFirestoreSync.ts';
+import { restoreCards, restoreStrategyCards } from '../src/apps/strategizer/App.tsx';
+import { WELCOME_DISMISSED_STORAGE_KEY } from '../src/apps/expanding-edge/App.tsx';
 
 test('checkGoalThreshold: returns false when any category has less than 3 completed cards', () => {
   const cards: PaceCard[] = [
@@ -180,4 +182,27 @@ test('readLocalStorage gracefully returns raw unquoted strings without throwing 
     });
   }
 });
+
+test('Strategizer: restoreCards preserves empty array after reset and does not restore preset cards', () => {
+  const emptyResult = restoreCards([]);
+  assert.deepEqual(emptyResult, [], 'Clearing cards must yield an empty array, not PRESET_CARDS');
+
+  // Verify non-array falls back to preset cards
+  const nullResult = restoreCards(null);
+  assert.equal(nullResult.length > 0, true, 'Null value falls back to default preset cards');
+});
+
+test('Strategizer: restoreStrategyCards preserves empty array after reset', () => {
+  const emptyResult = restoreStrategyCards([]);
+  assert.deepEqual(emptyResult, [], 'Clearing strategy cards must yield an empty array');
+
+  // Verify non-array falls back to initial strategy cards
+  const nullResult = restoreStrategyCards(null);
+  assert.equal(nullResult.length > 0, true);
+});
+
+test('Expanding Edge: welcome modal dismissed key is correctly defined', () => {
+  assert.equal(WELCOME_DISMISSED_STORAGE_KEY, 'expanding_edge_welcome_dismissed');
+});
+
 

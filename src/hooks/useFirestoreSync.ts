@@ -361,7 +361,7 @@ export function useFirestoreCollectionSync<T>(
     }
 
     const local = readLocalStorage<T[]>(localStorageKey);
-    const fallback = local && local.length > 0 ? local : defaultItems;
+    const fallback = Array.isArray(local) ? local : defaultItems;
 
     if (!uid) {
       setItems(fallback);
@@ -392,14 +392,15 @@ export function useFirestoreCollectionSync<T>(
         if (timeoutId) clearTimeout(timeoutId);
 
         if (snapshot.empty) {
-          setItems(fallback);
-          onEmpty?.(uid, fallback);
+          setItems([]);
+          writeLocalStorage(localStorageKey, []);
         } else {
           const fetched = snapshot.docs.flatMap((document) => {
             const item = itemMapper(document.data());
             return item === null ? [] : [item];
           });
           setItems(fetched);
+          writeLocalStorage(localStorageKey, fetched);
         }
         setIsInitialized(true);
       },
