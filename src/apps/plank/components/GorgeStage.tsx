@@ -1694,10 +1694,11 @@ export default function GorgeStage({
         ))}
 
         {/* Clouds / Birds / Dragonflies (rendered as SVG elements) */}
-        {flyingAnimals.map((animal) => {
+        {flyingAnimals.map((animal, idx) => {
+          const itemKey = animal.id ? `${animal.id}-${idx}` : `flying-animal-${idx}`;
           if (animal.type === 'cloud') {
             return (
-              <g key={animal.id} transform={`translate(${animal.x}, ${animal.y}) scale(${animal.scale})`} opacity="0.85">
+              <g key={itemKey} transform={`translate(${animal.x}, ${animal.y}) scale(${animal.scale})`} opacity="0.85">
                 <path
                   d="M17 10a8 8 0 0 1 15.8-2.5 5.5 5.5 0 0 1 7.2 7.5A7 7 0 0 1 35 28H15a7 7 0 0 1-5.2-11.7A8 8 0 0 1 17 10z"
                   fill="#ffffff"
@@ -1714,7 +1715,7 @@ export default function GorgeStage({
               : undefined;
 
             return (
-              <g key={animal.id} transform={transformStr}>
+              <g key={itemKey} transform={transformStr}>
                 {/* Embedded dynamic animated SVG bird from the public folder */}
                 <image
                   href={`/plank/birds/${animal.svgFilename}`}
@@ -1730,7 +1731,7 @@ export default function GorgeStage({
             const isExotic = animal.type === 'exotic_bird';
             return (
               <g
-                key={animal.id}
+                key={itemKey}
                 transform={`translate(${animal.x}, ${animal.y}) scale(${animal.scale})`}
               >
                 {/* Bird Svg and flap effect */}
@@ -1756,7 +1757,7 @@ export default function GorgeStage({
           } else if (animal.type === 'dragonfly') {
             return (
               <g
-                key={animal.id}
+                key={itemKey}
                 transform={`translate(${animal.x}, ${animal.y}) scale(${animal.scale})`}
               >
                 {/* Dragonfly Body */}
@@ -1772,7 +1773,7 @@ export default function GorgeStage({
           } else if (animal.type === 'flying_squirrel') {
             return (
               <g
-                key={animal.id}
+                key={itemKey}
                 transform={`translate(${animal.x}, ${animal.y}) scale(${animal.direction * animal.scale}, ${animal.scale})`}
               >
                 {/* Gliding membrane */}

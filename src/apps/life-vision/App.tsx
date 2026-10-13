@@ -103,6 +103,7 @@ export default function App() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [viewMode, setViewMode] = useState<'cards' | 'summary'>('cards');
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [printNotice, setPrintNotice] = useState<string | null>(null);
 
   useEffect(() => {
     const updateBackToTopVisibility = () => {
@@ -146,7 +147,17 @@ export default function App() {
 
   const handlePrint = () => {
     lifeVisionAudio.playAction();
-    window.print();
+    try {
+      if (typeof window !== 'undefined' && typeof window.print === 'function') {
+        window.print();
+      }
+    } catch (err) {
+      console.warn('Printing was prevented by the browser environment:', err);
+      // Fallback gracefully to summary matrix view
+      setViewMode('summary');
+      setPrintNotice('Printing is restricted in this browser environment. Switched to Summary View for easy viewing.');
+      setTimeout(() => setPrintNotice(null), 5000);
+    }
   };
 
   // Metrics
@@ -469,6 +480,23 @@ export default function App() {
           <ArrowUp size={16} aria-hidden="true" />
           <span>Back to top</span>
         </button>
+      )}
+
+      {printNotice && (
+        <div
+          role="status"
+          className="fixed bottom-20 right-4 sm:bottom-20 sm:right-6 z-50 max-w-sm rounded-xl border border-amber-300 bg-[#fffbeb] p-3.5 text-xs text-[#78350f] shadow-xl flex items-center gap-3 print:hidden"
+        >
+          <span>{printNotice}</span>
+          <button
+            type="button"
+            onClick={() => setPrintNotice(null)}
+            className="text-amber-800 hover:text-amber-950 font-bold ml-auto cursor-pointer p-1"
+            aria-label="Dismiss notice"
+          >
+            ✕
+          </button>
+        </div>
       )}
 
       {/* ── Footer ── */}

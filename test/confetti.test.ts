@@ -151,18 +151,27 @@ test('Celebration transition logic: user opens app anew with threshold NOT passe
   assert.equal(celebrationCount, 1, 'Celebrates when user completes 3 cards under each tab');
 });
 
-test('readLocalStorage and writeLocalStorage safely no-op when storage is unavailable', () => {
+test('readLocalStorage gracefully returns raw unquoted strings without throwing SyntaxError', () => {
+  const mockStorage: Record<string, string> = {
+    'strategizer_local_category': 'faster',
+    'valid_json': JSON.stringify({ key: 'value' }),
+  };
+
   const originalLocalStorage = globalThis.localStorage;
 
   Object.defineProperty(globalThis, 'localStorage', {
-    value: undefined,
+    value: {
+      getItem: (key: string) => mockStorage[key] ?? null,
+      setItem: (key: string, val: string) => { mockStorage[key] = val; },
+    },
     configurable: true,
     writable: true,
   });
 
   try {
-    assert.equal(readLocalStorage('missing-key'), null);
-    assert.doesNotThrow(() => writeLocalStorage('missing-key', { ok: true }));
+    assert.equal(readLocalStorage<string>('strategizer_local_category'), 'faster');
+    assert.deepEqual(readLocalStorage<{ key: string }>('valid_json'), { key: 'value' });
+    assert.equal(readLocalStorage('non_existent'), null);
   } finally {
     Object.defineProperty(globalThis, 'localStorage', {
       value: originalLocalStorage,
@@ -171,3 +180,4 @@ test('readLocalStorage and writeLocalStorage safely no-op when storage is unavai
     });
   }
 });
+

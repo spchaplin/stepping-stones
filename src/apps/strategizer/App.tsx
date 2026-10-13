@@ -123,7 +123,7 @@ export default function App() {
     LOCAL_STORAGE_GUEST_KEY,
     false,
     {
-      deserialize: (value) => value === true,
+      deserialize: (value) => value === true || value === 'true',
       enabled: !user,
     },
   );

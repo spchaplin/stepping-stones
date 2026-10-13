@@ -907,7 +907,11 @@ export default function App() {
       });
 
       setFlyingAnimals((prev) => [
-        ...prev.filter(a => a.type === 'cloud' || a.type === 'custom_svg_bird'), // keep clouds and our custom svg birds
+        ...prev.filter(
+          (a) =>
+            (a.type === 'cloud' || a.type === 'custom_svg_bird') &&
+            !a.id.startsWith('celebration-')
+        ), // keep clouds and default landscape birds, prevent duplicate celebration keys
         ...celebrationFlock
       ]);
     } else {
