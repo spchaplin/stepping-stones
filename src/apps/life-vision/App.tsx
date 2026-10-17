@@ -380,6 +380,7 @@ export default function App() {
         )}
 
         {/* ── View: Executive Vision Matrix / Summary View ── */}
+        {/* Always rendered (hidden via CSS in card mode) so window.print() captures the summary */}
         {(viewMode === 'summary' || true) && (
           <div
             className={`flex flex-col gap-5 ${

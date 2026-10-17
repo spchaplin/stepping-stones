@@ -11,7 +11,7 @@ import { isSubAppActive, SUB_APPS, type SubAppId } from './apps/config';
  *
  * Route map:
  *   /                  → Stepping Stones landing page
- *   /strategizer       → Strategizer (speed-visualizer) sub-app
+ *   /strategizer       → Strategizer sub-app
  *   /plank             → Plank sub-app
  *   /expanding-edge    → The Expanding Edge sub-app
  *   /life-vision       → Life Vision sub-app

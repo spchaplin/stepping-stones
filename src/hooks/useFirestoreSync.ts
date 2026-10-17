@@ -78,7 +78,7 @@ export interface AppStateOptions<T> {
 }
 
 /** Keeps app state backed by localStorage while accepting normal React state updates. */
-export function usePersistentState<T>(
+function usePersistentState<T>(
   key: string,
   initialValue: T,
   {

@@ -49,7 +49,7 @@ const ExpandingEdgeModel = React.memo(function ExpandingEdgeModel({ state, setSt
     details?: string;
   } | null>(null);
 
-  const hoverTimeoutRef = useRef<any>(null);
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hoverActiveCountRef = useRef<number>(0);
 
   const clearHoverWithDelay = () => {

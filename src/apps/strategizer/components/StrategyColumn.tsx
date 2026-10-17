@@ -6,8 +6,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Check, Target } from 'lucide-react';
-import { StrategyCard } from '../types.ts';
-import { StrategyIcon } from './CustomHeaderIcons.tsx';
+import { StrategyCard } from '../types';
+import { StrategyIcon } from './CustomHeaderIcons';
 
 interface StrategyCardItemProps {
   card: StrategyCard;

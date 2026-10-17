@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { PaceCard, StrategyCard } from '../types.ts';
+import { PaceCard, StrategyCard } from '../types';
 
 /**
  * Checks whether the goal threshold is met:

@@ -5,10 +5,10 @@
 
 import React, { useState } from 'react';
 import { Zap, ShieldAlert, Check } from 'lucide-react';
-import { PaceCard, PaceType } from '../types.ts';
-import { CardItem } from './CardItem.tsx';
+import { PaceCard, PaceType } from '../types';
+import { CardItem } from './CardItem';
 import { AnimatePresence } from 'motion/react';
-import { FasterIcon, SlowerIcon } from './CustomHeaderIcons.tsx';
+import { FasterIcon, SlowerIcon } from './CustomHeaderIcons';
 
 interface PaceColumnProps {
   type: PaceType;

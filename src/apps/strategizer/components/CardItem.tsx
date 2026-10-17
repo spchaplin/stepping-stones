@@ -6,7 +6,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { Plus, Minus, X, AlertCircle, Sparkles } from 'lucide-react';
-import { PaceCard } from '../types.ts';
+import { PaceCard } from '../types';
 
 interface CardItemProps {
   card: PaceCard;

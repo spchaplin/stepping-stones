@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Footprints, Layers, Globe, Compass } from 'lucide-react';
-import { stopPlankAudio } from '../apps/plank/App';
+import { stopPlankAudio } from '../apps/plank/audio/plankAudio';
 import { CosmicAudio } from '../apps/expanding-edge/components/CosmicAudio';
 import { isSubAppActive } from '../apps/config';
 import LandingAuthWidget from './components/LandingAuthWidget';

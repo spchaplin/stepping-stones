@@ -21,7 +21,9 @@ class CosmicAudioEngine {
   private init() {
     if (this.ctx) return;
     try {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioContextClass =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       this.ctx = new AudioContextClass();
       
       // Master gain node
