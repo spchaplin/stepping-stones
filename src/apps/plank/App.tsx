@@ -7,7 +7,7 @@ import {
   RotateCcw,
   Sparkles,
   MoveRight,
-  Compass,
+  Footprints,
   ArrowRight,
   Share2,
   ListRestart,
@@ -505,7 +505,7 @@ export default function App() {
             </Link>
             <div className="w-10 h-10 rounded-xl bg-stone-200 p-0.5 shadow-xs flex items-center justify-center border border-stone-300">
               <div className="w-full h-full rounded-[10px] bg-white flex items-center justify-center">
-                <Compass className="w-5 h-5 text-stone-700 rotate-12" />
+                <Footprints className="w-5 h-5 text-stone-700 rotate-12" />
               </div>
             </div>
             <div>

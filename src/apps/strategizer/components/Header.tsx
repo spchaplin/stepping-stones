@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { ShoppingBag, ShoppingCart, Zap, Sparkles, LogOut, ChevronLeft } from 'lucide-react';
+import { Layers, ShoppingCart, Zap, Sparkles, LogOut, ChevronLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { PaceCard, StrategyCard } from '../types.ts';
 import { User } from 'firebase/auth';
@@ -63,7 +63,7 @@ export function Header({
         </Link>
         <div className="flex items-center gap-3 transition-transform duration-300 hover:scale-105 origin-left">
           <div className="p-2 py-2 bg-emerald-500 rounded-xl text-white shadow-lg shadow-emerald-500/15">
-            <ShoppingBag className="w-6 h-6" />
+            <Layers className="w-6 h-6" />
           </div>
         <div>
           <h1 className="text-[33px] font-extrabold text-white tracking-tight italic uppercase drop-shadow-[0_0_12px_rgba(255,255,255,0.15)]">

@@ -1,7 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Footprints, Layers, Globe, Compass } from 'lucide-react';
+import { Footprints, Layers } from 'lucide-react';
+import { icons as solarIcons } from '@iconify-json/solar';
+import { icons as lineMdIcons } from '@iconify-json/line-md';
+import IconifyIcon from '../components/IconifyIcon';
 import { stopPlankAudio } from '../apps/plank/audio/plankAudio';
 import { CosmicAudio } from '../apps/expanding-edge/components/CosmicAudio';
 import { isSubAppActive } from '../apps/config';
@@ -19,7 +22,7 @@ const APPS = [
     tagline: 'Build your future, one step at a time',
     description:
       'Lay down seven planks across the gorge. Each plank is a concrete, achievable goal that bridges where you are to where you want to be — set to a living world of birds, rivers, and sky.',
-    icon: Footprints,
+    icon: <Footprints size={22} strokeWidth={1.9} />,
   },
   {
     id: 'strategizer',
@@ -29,7 +32,7 @@ const APPS = [
     tagline: 'Pace smarter, not just harder',
     description:
       'Brainstorm ways to increase your speed as a personal shopper and avoid slowdowns. Weigh each factor on a card, then prioritize your strategy.',
-    icon: Layers,
+    icon: <Layers size={22} strokeWidth={1.9} />,
   },
   {
     id: 'expanding-edge',
@@ -39,7 +42,7 @@ const APPS = [
     tagline: 'Map the cosmos of your life journey',
     description:
       'Visualise your path as an ever-growing solar system. Each new planet is a cosmic reminder that the edge of your capability grows outward as you take risks.',
-    icon: Globe,
+    icon: <IconifyIcon icon={solarIcons.icons['planet-3-linear']} size={22} />,
   },
   {
     id: 'life-vision',
@@ -49,7 +52,7 @@ const APPS = [
     tagline: 'Chart your vision across every life domain',
     description:
       'Write the vision you hold for your future across eight life domains — from health and safety to community and advocacy. Each domain you complete builds a vivid, holistic map of a meaningful life.',
-    icon: Compass,
+    icon: <IconifyIcon icon={lineMdIcons.icons['compass-loop']} size={22} disableAnimation />,
   },
 ] as const;
 
@@ -132,8 +135,6 @@ interface AppCardProps {
 }
 
 function AppCard({ app, index, animateOnMount = true }: AppCardProps) {
-  const Icon = app.icon;
-
   return (
     <Link
       to={app.to}
@@ -158,7 +159,7 @@ function AppCard({ app, index, animateOnMount = true }: AppCardProps) {
           {/* Top header row: Icon badge & Editorial index */}
           <div className="flex items-center justify-between gap-4">
             <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-zinc-800/90 border border-zinc-700/60 text-zinc-200 group-hover:text-zinc-100 group-hover:border-zinc-500/40 group-hover:bg-zinc-700/40 transition-all duration-300 shadow-md shrink-0">
-              <Icon size={22} strokeWidth={1.9} />
+              {app.icon}
             </div>
             <span className="text-xs font-mono text-zinc-500 font-semibold tracking-widest">
               {app.indexLabel}

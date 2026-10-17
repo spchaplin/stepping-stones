@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { icons as solarIcons } from '@iconify-json/solar';
 import { 
   Volume2, 
   VolumeX, 
@@ -7,7 +8,6 @@ import {
   Edit2, 
   Check, 
   TrendingUp, 
-  Compass, 
   Award, 
   ShieldAlert, 
   Info, 
@@ -17,6 +17,7 @@ import {
   ChevronLeft
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import IconifyIcon from '../../../components/IconifyIcon';
 import { LifeStep, JourneyState, PlanetType, getPlanetName, getPlanetSizeMultiplier, getOrbitRadius } from '../types';
 import { CosmicAudio } from './CosmicAudio';
 import ExpandingEdgeAuthWidget from './ExpandingEdgeAuthWidget';
@@ -599,7 +600,12 @@ export default function ControlPanel({
         {/* Title & Icon Row: Takes up full horizontal space */}
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.15)] shrink-0">
-            <Compass className="w-5 h-5 animate-spin" style={{ animationDuration: '30s' }} id="compass-icon" />
+            <IconifyIcon
+              icon={solarIcons.icons['planet-3-linear']}
+              size={20}
+              className="animate-spin"
+              style={{ animationDuration: '30s' }}
+            />
           </div>
           <div className="min-w-0 flex-1">
             <h1 className="text-xl sm:text-2xl font-black italic tracking-tighter text-white uppercase leading-none">

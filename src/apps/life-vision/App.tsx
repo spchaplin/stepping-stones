@@ -12,6 +12,8 @@ import {
   FileText,
   User,
 } from 'lucide-react';
+import { icons as lineMdIcons } from '@iconify-json/line-md';
+import IconifyIcon from '../../components/IconifyIcon';
 import { LIFE_DOMAINS } from './domains';
 import { LifeVisionData, DomainVision } from './types';
 import MdiIcon from './components/MdiIcon';
@@ -189,7 +191,7 @@ export default function App() {
 
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-[#b9684f] flex items-center justify-center text-white shadow-md shadow-[#b9684f]/20">
-                <MdiIcon name="compass-rose" size={17} />
+                <IconifyIcon icon={lineMdIcons.icons['compass-loop']} size={17} disableAnimation />
               </div>
               <div>
                 <div className="flex items-center gap-2">
