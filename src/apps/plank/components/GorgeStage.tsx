@@ -18,6 +18,7 @@ interface GorgeStageProps {
   isLoadingPlanks?: boolean;
   newlyCreatedPlankIds?: Set<string>;
   onNewPlankAnimated?: (id: string) => void;
+  isExiting?: boolean;
 }
 
 interface LilyPad {
@@ -294,6 +295,7 @@ export default function GorgeStage({
   isLoadingPlanks = false,
   newlyCreatedPlankIds,
   onNewPlankAnimated,
+  isExiting = false,
 }: GorgeStageProps) {
   const [rapidsOffset, setRapidsOffset] = useState(0);
   const [jellyfishX, setJellyfishX] = useState<number | null>(() => {
@@ -304,13 +306,16 @@ export default function GorgeStage({
 
   // Cycle the jellyfish: stay still in one position for its natural loop (16 seconds), then stay removed for 2–10 seconds
   useEffect(() => {
+    if (isExiting) return;
     let timerId: NodeJS.Timeout;
 
     const runCycle = (isOnScreen: boolean) => {
+      if (isExiting) return;
       if (isOnScreen) {
         // Keeps it on screen for 16 seconds representing its natural animation loop
         const displayDuration = 16000;
         timerId = setTimeout(() => {
+          if (isExiting) return;
           setJellyfishX(null);
           runCycle(false);
         }, displayDuration);
@@ -318,6 +323,7 @@ export default function GorgeStage({
         // Wait 2 - 10 seconds empty
         const waitDuration = (2 + Math.random() * 8) * 1000;
         timerId = setTimeout(() => {
+          if (isExiting) return;
           const randomX = 170 + (0.05 + Math.random() * 0.85) * 860;
           setJellyfishX(randomX);
           setSpawnCount((prev) => prev + 1);
@@ -329,11 +335,13 @@ export default function GorgeStage({
     runCycle(true);
 
     return () => clearTimeout(timerId);
-  }, []);
+  }, [isExiting]);
 
   // Periodic check to manage crab instances and maintain strictly only one crab at any time
   useEffect(() => {
+    if (isExiting) return;
     const interval = setInterval(() => {
+      if (isExiting) return;
       setCrabInstances((prev) => {
         const now = Date.now();
         // Keep crabs whose lifetime has not expired
@@ -348,7 +356,7 @@ export default function GorgeStage({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isExiting]);
 
   const [lovebirdsTime, setLovebirdsTime] = useState(0);
   const [orangeButterflyTime, setOrangeButterflyTime] = useState(0);
@@ -520,12 +528,13 @@ export default function GorgeStage({
 
   // Manage frog fly spawning sequence with 10 to 35 seconds of waiting period
   useEffect(() => {
+    if (isExiting) return;
     let timeoutId: NodeJS.Timeout | null = null;
     let isActive = true;
     let nextFlipped = Math.random() < 0.5; // randomize the initial flip state
 
     const spawnFrog = () => {
-      if (!isActive) return;
+      if (!isActive || isExiting) return;
       
       const width = 72;
       // Fits within river bounds [170, 1030] horizontally
@@ -568,14 +577,16 @@ export default function GorgeStage({
         clearTimeout(timeoutId);
       }
     };
-  }, []);
+  }, [isExiting]);
 
   // 1. Dynamic School Fish Count Shifts (Interval: 25 - 60 seconds, longer interval)
   useEffect(() => {
+    if (isExiting) return;
     let timerId: NodeJS.Timeout;
     const planNext = () => {
       const delay = (25 + Math.random() * 35) * 1000;
       timerId = setTimeout(() => {
+        if (isExiting) return;
         setRiverVanderers((prev) => {
           const schools = prev.filter((v) => v.href === '/plank/fish/fish-school.gif');
           const currentCount = schools.length;
@@ -610,14 +621,16 @@ export default function GorgeStage({
     };
     planNext();
     return () => clearTimeout(timerId);
-  }, []);
+  }, [isExiting]);
 
   // 2. Dynamic Circle Fish Count Shifts (Interval: 25 - 60 seconds, longer interval)
   useEffect(() => {
+    if (isExiting) return;
     let timerId: NodeJS.Timeout;
     const planNext = () => {
       const delay = (25 + Math.random() * 35) * 1000;
       timerId = setTimeout(() => {
+        if (isExiting) return;
         setRiverVanderers((prev) => {
           const circles = prev.filter((v) => v.href === '/plank/fish/two-fish-circles.gif');
           const currentCount = circles.length;
@@ -651,14 +664,16 @@ export default function GorgeStage({
     };
     planNext();
     return () => clearTimeout(timerId);
-  }, []);
+  }, [isExiting]);
 
   // 3. Dynamic Tadpoles Count Shifts (Interval: 10 - 30 seconds)
   useEffect(() => {
+    if (isExiting) return;
     let timerId: NodeJS.Timeout;
     const planNext = () => {
       const delay = (10 + Math.random() * 20) * 1000;
       timerId = setTimeout(() => {
+        if (isExiting) return;
         setTadpoles((prev) => {
           const currentCount = prev.length;
           const targetCount = currentCount === 1 ? 2 : 1;
@@ -692,12 +707,14 @@ export default function GorgeStage({
     };
     planNext();
     return () => clearTimeout(timerId);
-  }, []);
+  }, [isExiting]);
 
   // Animate the flow of the river rapid textures, jellyfish drifting, dolphin block shifting, and turtle swimming
   useEffect(() => {
+    if (isExiting) return;
     let animationId: number;
     const tick = () => {
+      if (isExiting) return;
       setRapidsOffset((prev) => (prev + 0.3) % 1200);
       setLovebirdsTime((prev) => prev + 0.003); // Very slow and gentle time speed for spiraling
       setOrangeButterflyTime((prev) => prev + 0.0012); // Smooth and gentle spiraling motion speed (reduced by 80%)
@@ -1524,7 +1541,7 @@ export default function GorgeStage({
     };
     animationId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(animationId);
-  }, []);
+  }, [isExiting]);
 
   // Gentle elliptical spiraling in the sky for the lovebirds:
   const lovebirdsSpiralRadius = 30 + 100 * Math.abs(Math.sin(lovebirdsTime * 0.15));

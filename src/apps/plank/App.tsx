@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { flushSync } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Plus,
@@ -127,6 +128,44 @@ export default function App() {
   const [hoveredPlankId, setHoveredPlankId] = useState<string | null>(null);
   const [newlyCreatedPlankIds, setNewlyCreatedPlankIds] = useState<Set<string>>(() => new Set());
 
+  // Navigation exit control: prevents transition delays and animation starvation
+  const navigate = useNavigate();
+  const isExitingRef = useRef(false);
+  const [isExiting, setIsExiting] = useState(false);
+
+  const handleExit = useCallback(
+    (e?: React.SyntheticEvent | MouseEvent | TouchEvent) => {
+      if (e && 'button' in e) {
+        const mouseEv = e as unknown as { button?: number; metaKey?: boolean; ctrlKey?: boolean; altKey?: boolean; shiftKey?: boolean };
+        if (mouseEv.button !== 0 || mouseEv.metaKey || mouseEv.ctrlKey || mouseEv.altKey || mouseEv.shiftKey) {
+          return;
+        }
+      }
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      if (isExitingRef.current) return;
+      isExitingRef.current = true;
+      setIsExiting(true);
+
+      // Stop plank audio immediately
+      stopPlankAudio();
+
+      // Flush navigation synchronously so React renders the landing page immediately
+      // without queuing behind in-flight animations or transition buffers
+      try {
+        flushSync(() => {
+          navigate('/');
+        });
+      } catch {
+        navigate('/');
+      }
+    },
+    [navigate],
+  );
+
   // Cloud loading & error fallback states
   useEffect(() => {
     soundEnabledRef.current = soundEnabled;
@@ -134,6 +173,7 @@ export default function App() {
   }, [soundEnabled]);
 
   const startPlankAudio = useCallback(() => {
+    if (isExitingRef.current) return;
     getPlankAudio().play().catch((error: Error) => {
       if (error.name !== 'AbortError') {
         console.log('Audio autoplay was restricted initially, waiting for user activity:', error);
@@ -142,6 +182,7 @@ export default function App() {
   }, []);
   const stopPlankAudioService = useCallback(() => getPlankAudio().pause(), []);
   const resumePlankAudio = useCallback(() => {
+    if (isExitingRef.current) return;
     const audio = getPlankAudio();
     if (audio.paused) {
       audio.play().catch((error: Error) => {
@@ -150,7 +191,7 @@ export default function App() {
     }
   }, []);
   useAudioService({
-    enabled: soundEnabled,
+    enabled: soundEnabled && !isExiting,
     start: startPlankAudio,
     stop: stopPlankAudioService,
     resume: resumePlankAudio,
@@ -284,9 +325,11 @@ export default function App() {
 
   // Physics animation loop using requestAnimationFrame
   useEffect(() => {
+    if (isExiting) return;
     let animId: number;
 
     const updatePhysics = () => {
+      if (isExitingRef.current) return;
       tickCounter.current += 1;
 
       // 1. Move Flying Animals
@@ -413,10 +456,11 @@ export default function App() {
 
     animId = requestAnimationFrame(updatePhysics);
     return () => cancelAnimationFrame(animId);
-  }, [celebrationActive]);
+  }, [celebrationActive, isExiting]);
 
   // Spawn active exotic flocks when celebration launches!
   useEffect(() => {
+    if (isExiting) return;
     if (celebrationActive) {
       playBirdSound();
       setTimeout(() => {
@@ -438,7 +482,7 @@ export default function App() {
       // Revert to peaceful landscape animals when starting fresh
       setFlyingAnimals(initialAnimals());
     }
-  }, [celebrationActive]);
+  }, [celebrationActive, isExiting]);
 
   return (
     <div className="min-h-screen bg-[#f5f5f4] text-stone-900 flex flex-col font-sans selection:bg-stone-500/15 selection:text-stone-850">
@@ -450,7 +494,10 @@ export default function App() {
           <div className="flex items-center gap-3">
             <Link
               to="/"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-100 text-stone-700 hover:text-stone-900 text-xs font-semibold transition-all shadow-2xs cursor-pointer group shrink-0"
+              onClick={handleExit}
+              onPointerDown={handleExit}
+              onTouchStart={handleExit}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-100 text-stone-700 hover:text-stone-900 text-xs font-semibold transition-all shadow-2xs cursor-pointer group shrink-0 active:scale-95 touch-manipulation"
               title="Return to Stepping Stones landing page"
             >
               <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
@@ -636,6 +683,7 @@ export default function App() {
             isLoadingPlanks={isLoadingPlanks}
             newlyCreatedPlankIds={newlyCreatedPlankIds}
             onNewPlankAnimated={handleNewPlankAnimated}
+            isExiting={isExiting}
           />
 
           {/* ADD TIMBER FLOATER BUTTON hovering over left hills */}
