@@ -29,7 +29,6 @@
   },
   "devDependencies": {
     "@firebase/eslint-plugin-security-rules": "^0.0.2",
-    "@iconify-json/line-md": "^1.2.16",
     "@iconify-json/mdi": "^1.2.3",
     "@iconify-json/solar": "^1.2.13",
     "@types/express": "^4.17.21",
