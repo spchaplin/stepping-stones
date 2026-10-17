@@ -191,7 +191,11 @@ export default function App() {
 
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-[#b9684f] flex items-center justify-center text-white shadow-md shadow-[#b9684f]/20">
-                <IconifyIcon icon={lineMdIcons.icons['compass-loop']} size={17} disableAnimation />
+                <IconifyIcon
+                  icon={lineMdIcons.icons['compass-loop']}
+                  size={20}
+                  disableAnimation
+                />
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -265,7 +269,7 @@ export default function App() {
 
       {/* ── Main Content Body ── */}
       <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 flex flex-col gap-6">
-        
+
         {/* ── Top Hero & Profile Banner ── */}
         <div className="relative rounded-2xl border border-[#e6dbce] bg-[#fbf9f5] p-5 sm:p-6 shadow-[0_14px_40px_rgba(70,52,34,0.07)] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-5 print:border-none print:bg-white print:text-black">
           {/* Left: Name input and vision compass metadata */}
