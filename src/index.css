@@ -82,3 +82,7 @@
 .life-vision .font-serif {
   font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
 }
+
+.expanding-edge-planet-icon g {
+  stroke-width: 1.75;
+}

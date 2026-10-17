@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Footprints, Layers } from 'lucide-react';
 import { icons as solarIcons } from '@iconify-json/solar';
-import { icons as lineMdIcons } from '@iconify-json/line-md';
+import { icons as mdiIcons } from '@iconify-json/mdi';
 import IconifyIcon from '../components/IconifyIcon';
 import { stopPlankAudio } from '../apps/plank/audio/plankAudio';
 import { CosmicAudio } from '../apps/expanding-edge/components/CosmicAudio';
@@ -42,7 +42,7 @@ const APPS = [
     tagline: 'Map the cosmos of your life journey',
     description:
       'Visualise your path as an ever-growing solar system. Each new planet is a cosmic reminder that the edge of your capability grows outward as you take risks.',
-    icon: <IconifyIcon icon={solarIcons.icons['planet-3-linear']} size={22} />,
+    icon: <IconifyIcon icon={solarIcons.icons['planet-3-linear']} size={22} className="expanding-edge-planet-icon" />,
   },
   {
     id: 'life-vision',
@@ -52,7 +52,7 @@ const APPS = [
     tagline: 'Chart your vision across every life domain',
     description:
       'Write the vision you hold for your future across eight life domains — from health and safety to community and advocacy. Each domain you complete builds a vivid, holistic map of a meaningful life.',
-    icon: <IconifyIcon icon={lineMdIcons.icons['compass-loop']} size={22} disableAnimation />,
+    icon: <IconifyIcon icon={mdiIcons.icons['compass-outline']} size={22} disableAnimation />,
   },
 ] as const;
 

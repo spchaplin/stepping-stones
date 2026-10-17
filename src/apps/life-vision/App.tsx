@@ -12,7 +12,7 @@ import {
   FileText,
   User,
 } from 'lucide-react';
-import { icons as lineMdIcons } from '@iconify-json/line-md';
+import { icons as mdiIcons } from '@iconify-json/mdi';
 import IconifyIcon from '../../components/IconifyIcon';
 import { LIFE_DOMAINS } from './domains';
 import { LifeVisionData, DomainVision } from './types';
@@ -190,10 +190,11 @@ export default function App() {
             <div className="h-4 w-[1px] bg-[#e4d9cc] hidden sm:block" />
 
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-[#b9684f] flex items-center justify-center text-white shadow-md shadow-[#b9684f]/20">
+              <div className="flex w-9 h-9 items-center justify-center rounded-lg bg-[#b9684f] text-white shadow-md shadow-[#b9684f]/20">
                 <IconifyIcon
-                  icon={lineMdIcons.icons['compass-loop']}
+                  icon={mdiIcons.icons['compass-outline']}
                   size={20}
+                  className="block"
                   disableAnimation
                 />
               </div>
