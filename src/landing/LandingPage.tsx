@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Footprints, Layers } from '../components/LucideIcons';
@@ -8,6 +8,7 @@ import { stopPlankAudio } from '../apps/plank/audio/plankAudio';
 import { CosmicAudio } from '../apps/expanding-edge/components/CosmicAudio';
 import { isSubAppActive } from '../apps/config';
 import LandingAuthWidget from './components/LandingAuthWidget';
+import CreditsScreen from './components/CreditsScreen';
 
 /* ─────────────────────────────────────────────
    App card data
@@ -188,6 +189,7 @@ function AppCard({ app, index, animateOnMount = true }: AppCardProps) {
 ───────────────────────────────────────────── */
 export default function LandingPage() {
   const isFirstVisit = useRef(!hasAnimatedLanding);
+  const [showCredits, setShowCredits] = useState(false);
 
   // Ensure other sub-app background music is stopped when visiting the landing page
   useEffect(() => {
@@ -243,15 +245,19 @@ export default function LandingPage() {
           </p>
         </motion.div>
 
-        {/* ── App cards grid ── */}
-        <div
-          className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full"
-          style={{ zIndex: 1 }}
-        >
-          {APPS.filter((app) => isSubAppActive(app.id)).map((app, i) => (
-            <AppCard key={app.to} app={app} index={i} animateOnMount={shouldAnimate} />
-          ))}
-        </div>
+        {/* ── App cards grid or Credits screen ── */}
+        {showCredits ? (
+          <CreditsScreen onBack={() => setShowCredits(false)} />
+        ) : (
+          <div
+            className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full"
+            style={{ zIndex: 1 }}
+          >
+            {APPS.filter((app) => isSubAppActive(app.id)).map((app, i) => (
+              <AppCard key={app.to} app={app} index={i} animateOnMount={shouldAnimate} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Quiet Footer ── */}
@@ -270,6 +276,16 @@ export default function LandingPage() {
               <span>{app.label}</span>
             </React.Fragment>
           ))}
+          <span aria-hidden="true" className="text-zinc-700">·</span>
+          <button
+            type="button"
+            onClick={() => setShowCredits((prev) => !prev)}
+            className={`transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400 rounded-xs underline-offset-4 hover:underline ${
+              showCredits ? 'text-zinc-200 font-semibold' : 'text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            Credits
+          </button>
         </div>
       </motion.footer>
     </div>

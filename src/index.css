@@ -4,7 +4,7 @@
    ============================================================ */
 
 /* Google Fonts — used by the Plank sub-app */
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@300..700&family=Inter:wght@400;500;600;700&display=swap');
 
 /* Tailwind v4 — single import covers all sub-apps */
 @import "tailwindcss";
