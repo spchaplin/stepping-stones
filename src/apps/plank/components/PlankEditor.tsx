@@ -52,9 +52,10 @@ export default function PlankEditor({
       {isOpen && (
         <div id="plank-edit-modal-wrapper" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/60 backdrop-blur-sm">
           <motion.div
-            initial={{ scale: 0.9, y: 30, opacity: 0 }}
-            animate={{ scale: 1, y: 0, opacity: 1, transition: { type: 'spring', damping: 20, stiffness: 220 } }}
-            exit={{ scale: 0.9, y: 20, opacity: 0 }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 4, transition: { type: 'tween', duration: 0.1, ease: [0.16, 1, 0.3, 1] } }}
+            transition={{ type: 'tween', duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
             className="w-full max-w-xl overflow-hidden rounded-2xl border-4 border-stone-800 bg-stone-100 p-6 shadow-2xl relative"
           >
             {/* Rivets in corners */}
@@ -70,7 +71,7 @@ export default function PlankEditor({
             <div className="absolute bottom-3 right-3 w-3 h-3 rounded-full bg-stone-400 border border-stone-600 shadow-inner flex items-center justify-center">
               <div className="w-1.5 h-[1.5px] bg-stone-700" />
             </div>
- 
+
             {/* Header */}
             <div className="relative z-10 flex items-center justify-between border-b border-stone-200 pb-4 mb-4">
               <div className="flex items-center gap-2">
@@ -94,7 +95,7 @@ export default function PlankEditor({
                 <X className="w-5 h-5" />
               </button>
             </div>
- 
+
             {/* Guided Prompt Question (Helping user design concrete steps) */}
             <div className="relative z-10 bg-stone-200/60 border border-stone-300/40 p-4 rounded-xl mb-4">
               <p className="text-[10px] text-stone-600 uppercase tracking-widest font-bold mb-1 flex items-center gap-1">
@@ -104,7 +105,7 @@ export default function PlankEditor({
                 "{currentQuestion}"
               </p>
             </div>
- 
+
             {/* Main Textarea */}
             <div className="relative z-10 mb-4 h-28">
               <textarea
@@ -119,7 +120,7 @@ export default function PlankEditor({
                 {text.length} / 100 characters
               </div>
             </div>
- 
+
             {/* Validation Indicator if empty */}
             {text.trim().length === 0 && (
               <div className="relative z-10 flex items-center gap-2 bg-amber-50 p-2.5 rounded-lg border border-amber-200 mb-4 text-xs text-amber-800">
@@ -127,7 +128,7 @@ export default function PlankEditor({
                 <span>Write a short sentence to place this plank and lock it onto the bridge ropes.</span>
               </div>
             )}
- 
+
             {/* Action Buttons */}
             <div className="relative z-10 flex check justify-between items-center border-t border-stone-200 pt-4">
               <div>
