@@ -298,44 +298,6 @@ function GorgeStage({
   isExiting = false,
 }: GorgeStageProps) {
   const [rapidsOffset, setRapidsOffset] = useState(0);
-  const [jellyfishX, setJellyfishX] = useState<number | null>(() => {
-    // Start with a jellyfish immediately placed on screen with left edge between 5% and 90% of river horizon width
-    return 170 + (0.05 + Math.random() * 0.85) * 860;
-  });
-  const [spawnCount, setSpawnCount] = useState(0);
-
-  // Cycle the jellyfish: stay still in one position for its natural loop (16 seconds), then stay removed for 2–10 seconds
-  useEffect(() => {
-    if (isExiting) return;
-    let timerId: NodeJS.Timeout;
-
-    const runCycle = (isOnScreen: boolean) => {
-      if (isExiting) return;
-      if (isOnScreen) {
-        // Keeps it on screen for 16 seconds representing its natural animation loop
-        const displayDuration = 16000;
-        timerId = setTimeout(() => {
-          if (isExiting) return;
-          setJellyfishX(null);
-          runCycle(false);
-        }, displayDuration);
-      } else {
-        // Wait 2 - 10 seconds empty
-        const waitDuration = (2 + Math.random() * 8) * 1000;
-        timerId = setTimeout(() => {
-          if (isExiting) return;
-          const randomX = 170 + (0.05 + Math.random() * 0.85) * 860;
-          setJellyfishX(randomX);
-          setSpawnCount((prev) => prev + 1);
-          runCycle(true);
-        }, waitDuration);
-      }
-    };
-
-    runCycle(true);
-
-    return () => clearTimeout(timerId);
-  }, [isExiting]);
 
   // Periodic check to manage crab instances and maintain strictly only one crab at any time
   useEffect(() => {
@@ -709,7 +671,7 @@ function GorgeStage({
     return () => clearTimeout(timerId);
   }, [isExiting]);
 
-  // Animate the flow of the river rapid textures, jellyfish drifting, dolphin block shifting, and turtle swimming
+  // Animate the flow of the river rapid textures, dolphin block shifting, and turtle swimming
   useEffect(() => {
     if (isExiting) return;
     let animationId: number;
@@ -2033,28 +1995,6 @@ function GorgeStage({
               </g>
             );
           })}
-
-          {/* Animated Jellyfish from jellyfish.svg, aligned tightly along river horizon */}
-          {jellyfishX !== null && (() => {
-            const getRiverHorizonY = (x: number) => {
-              const t = (x - 170) / 860;
-              return 510 + 50 * t * (1 - t);
-            };
-            const y = getRiverHorizonY(jellyfishX);
-            return (
-              <image
-                key={`single-jellyfish-${spawnCount}`}
-                id="jellyfish-instance"
-                href={`/plank/fish/jellyfish.svg?v=${spawnCount}`}
-                xlinkHref={`/plank/fish/jellyfish.svg?v=${spawnCount}`}
-                x={jellyfishX}
-                y={y}
-                width={28.05}
-                height={31.875}
-                opacity={0.8}
-              />
-            );
-          })()}
 
           {/* Animated Turtle from turtle.svg, swimming horizontally left-to-right on a beautiful wavy path */}
           {(() => {
