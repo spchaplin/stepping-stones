@@ -29,7 +29,7 @@ export default function CreditsScreen({ onBack }: CreditsScreenProps) {
           <span>Back to Apps</span>
         </button>
         <span className="text-xs font-mono text-zinc-500 font-semibold tracking-widest uppercase">
-          Attributions
+          Thank you
         </span>
       </div>
 
@@ -72,7 +72,7 @@ export default function CreditsScreen({ onBack }: CreditsScreenProps) {
               </div>
               <p className="text-xs text-zinc-400 mt-0.5">
                 Primary motif icon for{' '}
-                <span className="text-zinc-300 font-[460]" style={{ fontWeight: 460 }}>
+                <span className="text-zinc-300 font-[460]" style={{ fontWeight: 300 }}>
                   The Expanding Edge
                 </span>{' '}
                 sub-app
@@ -130,8 +130,8 @@ export default function CreditsScreen({ onBack }: CreditsScreenProps) {
                 <dt className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 font-semibold">
                   Adaptation
                 </dt>
-                <dd className="text-zinc-200 text-xs sm:text-sm font-medium leading-relaxed">
-                  stroke thickened
+                <dd className="text-zinc-200 text-xs sm:text-sm font-normal leading-relaxed">
+                  Stroke thickened
                 </dd>
               </div>
             </dl>
