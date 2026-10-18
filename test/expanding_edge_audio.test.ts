@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mapJourneyState, INITIAL_JOURNEY_STATE } from '../src/apps/expanding-edge/App.tsx';
+import { mapJourneyState, INITIAL_JOURNEY_STATE } from '../src/apps/expanding-edge/journeyUtils.ts';
 
 test('Expanding Edge: Initial state has audio enabled by default', () => {
   assert.equal(INITIAL_JOURNEY_STATE.isAudioEnabled, true);

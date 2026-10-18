@@ -68,48 +68,100 @@ function StarCanvas() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let animId: number;
+    // Check if user prefers reduced motion
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
 
-    const stars: { x: number; y: number; r: number; speed: number; opacity: number }[] = [];
+    let animId: number;
+    let isRunning = true;
+
+    interface Star {
+      x: number;
+      y: number;
+      r: number;
+      speed: number;
+      bucket: number;
+    }
+
+    const BUCKET_COLORS = [
+      'rgba(244, 244, 245, 0.15)',
+      'rgba(244, 244, 245, 0.30)',
+      'rgba(244, 244, 245, 0.48)',
+    ];
+
     const COUNT = 160;
+    const buckets: Star[][] = [[], [], []];
+
+    let width = window.innerWidth;
+    let height = window.innerHeight;
 
     const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     resize();
     window.addEventListener('resize', resize);
 
+    // Distribute stars evenly into 3 opacity groups for batched rendering
     for (let i = 0; i < COUNT; i++) {
-      stars.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
+      const bucket = i % 3;
+      buckets[bucket].push({
+        x: Math.random() * width,
+        y: Math.random() * height,
         r: Math.random() * 1.2 + 0.3,
         speed: Math.random() * 0.12 + 0.02,
-        opacity: Math.random() * 0.45 + 0.1,
+        bucket,
       });
     }
 
     const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      stars.forEach((s) => {
-        s.y += s.speed;
-        if (s.y > canvas.height) {
-          s.y = 0;
-          s.x = Math.random() * canvas.width;
-        }
+      if (!isRunning) return;
+
+      ctx.clearRect(0, 0, width, height);
+
+      // Draw all stars in 3 single path batches (avoids 160 separate beginPath/fill state changes)
+      for (let b = 0; b < 3; b++) {
+        const group = buckets[b];
         ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(244, 244, 245, ${s.opacity})`;
+        for (let i = 0; i < group.length; i++) {
+          const s = group[i];
+          s.y += s.speed;
+          if (s.y > height) {
+            s.y = 0;
+            s.x = Math.random() * width;
+          }
+          ctx.moveTo(s.x + s.r, s.y);
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        }
+        ctx.fillStyle = BUCKET_COLORS[b];
         ctx.fill();
-      });
+      }
+
       animId = requestAnimationFrame(draw);
     };
-    draw();
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        isRunning = false;
+        cancelAnimationFrame(animId);
+      } else if (!isRunning) {
+        isRunning = true;
+        animId = requestAnimationFrame(draw);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    animId = requestAnimationFrame(draw);
 
     return () => {
+      isRunning = false;
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', resize);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 

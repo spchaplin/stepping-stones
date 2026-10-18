@@ -2,9 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { checkGoalThreshold } from '../src/apps/strategizer/utils/goalThreshold.ts';
 import { PaceCard, StrategyCard } from '../src/apps/strategizer/types.ts';
-import { readLocalStorage, writeLocalStorage } from '../src/hooks/useFirestoreSync.ts';
-import { restoreCards, restoreStrategyCards } from '../src/apps/strategizer/App.tsx';
-import { WELCOME_DISMISSED_STORAGE_KEY } from '../src/apps/expanding-edge/App.tsx';
+import { readLocalStorage, writeLocalStorage } from '../src/utils/storage.ts';
+import { restoreCards, restoreStrategyCards } from '../src/apps/strategizer/cardUtils.ts';
+import { WELCOME_DISMISSED_STORAGE_KEY } from '../src/apps/expanding-edge/journeyUtils.ts';
 
 test('checkGoalThreshold: returns false when any category has less than 3 completed cards', () => {
   const cards: PaceCard[] = [

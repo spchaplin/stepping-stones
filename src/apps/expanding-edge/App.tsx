@@ -9,42 +9,23 @@ import { useAuth } from '../../firebase/AuthContext';
 import { useFirestoreDocSync } from '../../hooks/useFirestoreSync';
 import { useAudioService } from '../../hooks/useAudioService';
 
-const LOCAL_STORAGE_KEY = 'expanding_edge_journey';
-export const WELCOME_DISMISSED_STORAGE_KEY = 'expanding_edge_welcome_dismissed';
+import {
+  WELCOME_DISMISSED_STORAGE_KEY,
+  INITIAL_JOURNEY_STATE,
+  mapJourneyState,
+  serializeJourneyState,
+  shouldMigrateJourneyState,
+} from './journeyUtils';
 
-export const INITIAL_JOURNEY_STATE: JourneyState = {
-  coreLabel: '',
-  coreDescription: '',
-  steps: [],
-  isAudioEnabled: true,
+export {
+  WELCOME_DISMISSED_STORAGE_KEY,
+  INITIAL_JOURNEY_STATE,
+  mapJourneyState,
+  serializeJourneyState,
+  shouldMigrateJourneyState,
 };
 
-export function mapJourneyState(data: Record<string, unknown>): JourneyState {
-  let isAudioEnabled = true;
-  try {
-    const isExplicitlyMuted = localStorage.getItem('expanding_edge_explicit_mute') === 'true';
-    if (isExplicitlyMuted) {
-      isAudioEnabled = false;
-    }
-  } catch (_) {
-    isAudioEnabled = true;
-  }
-
-  return {
-    coreLabel: typeof data.coreLabel === 'string' ? data.coreLabel : '',
-    coreDescription: typeof data.coreDescription === 'string' ? data.coreDescription : '',
-    steps: Array.isArray(data.steps) ? data.steps as LifeStep[] : [],
-    isAudioEnabled,
-  };
-}
-
-const serializeJourneyState = (state: JourneyState) => ({
-  coreLabel: state.coreLabel,
-  coreDescription: state.coreDescription,
-  steps: state.steps,
-  isAudioEnabled: state.isAudioEnabled,
-});
-const shouldMigrateJourneyState = (state: JourneyState) => Boolean(state.coreLabel || state.steps.length);
+const LOCAL_STORAGE_KEY = 'expanding_edge_journey';
 
 const DEMO_STEPS: LifeStep[] = [
   {

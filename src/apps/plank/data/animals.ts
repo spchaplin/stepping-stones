@@ -134,7 +134,7 @@ export const initialAnimals = (): FlyingAnimal[] => {
     {
       id: 'bird-hummingbird-fast',
       type: 'custom_svg_bird',
-      svgFilename: 'hummingbird-fast.gif',
+      svgFilename: 'hummingbird-fast.webp',
       nativeDirection: 1,
       x: 900,
       y: 155,
@@ -150,7 +150,7 @@ export const initialAnimals = (): FlyingAnimal[] => {
     {
       id: 'bird-white-hawk',
       type: 'custom_svg_bird',
-      svgFilename: 'white-hawk.gif',
+      svgFilename: 'white-hawk.webp',
       nativeDirection: -1,
       x: 500,
       y: 70,
@@ -166,7 +166,7 @@ export const initialAnimals = (): FlyingAnimal[] => {
     {
       id: 'bird-robin',
       type: 'custom_svg_bird',
-      svgFilename: 'robin.gif',
+      svgFilename: 'robin.webp',
       nativeDirection: 1,
       x: 250,
       y: 130,
@@ -308,7 +308,7 @@ export const CELEBRATION_FLOCK_BASE: Omit<FlyingAnimal, 'x' | 'direction'>[] = [
   {
     id: 'celebration-hummingbird-fast-1',
     type: 'custom_svg_bird',
-    svgFilename: 'hummingbird-fast.gif',
+    svgFilename: 'hummingbird-fast.webp',
     nativeDirection: 1,
     y: 155,
     baseY: 155,
@@ -323,7 +323,7 @@ export const CELEBRATION_FLOCK_BASE: Omit<FlyingAnimal, 'x' | 'direction'>[] = [
   {
     id: 'celebration-white-hawk-1',
     type: 'custom_svg_bird',
-    svgFilename: 'white-hawk.gif',
+    svgFilename: 'white-hawk.webp',
     nativeDirection: -1,
     y: 70,
     baseY: 70,
@@ -338,7 +338,7 @@ export const CELEBRATION_FLOCK_BASE: Omit<FlyingAnimal, 'x' | 'direction'>[] = [
   {
     id: 'celebration-robin-1',
     type: 'custom_svg_bird',
-    svgFilename: 'robin.gif',
+    svgFilename: 'robin.webp',
     nativeDirection: 1,
     y: 130,
     baseY: 130,

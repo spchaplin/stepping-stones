@@ -330,6 +330,10 @@ export default function App() {
 
     const updatePhysics = () => {
       if (isExitingRef.current) return;
+      if (typeof document !== 'undefined' && document.hidden) {
+        animId = requestAnimationFrame(updatePhysics);
+        return;
+      }
       tickCounter.current += 1;
 
       // 1. Move Flying Animals

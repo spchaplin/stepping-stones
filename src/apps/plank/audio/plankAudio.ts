@@ -11,6 +11,7 @@ function getAudioContextClass(): typeof AudioContext | undefined {
 export function getPlankAudio(): HTMLAudioElement {
   if (!plankAudioInstance) {
     plankAudioInstance = new Audio("/plank/birds/bird%20sounds.mp3");
+    plankAudioInstance.preload = 'none';
     plankAudioInstance.loop = true;
     plankAudioInstance.volume = 0.4;
   }
@@ -21,6 +22,24 @@ export function stopPlankAudio(): void {
   if (plankAudioInstance) {
     plankAudioInstance.pause();
   }
+}
+
+// Pause and resume ambient sound when tab visibility changes
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (!plankAudioInstance) return;
+    if (document.hidden) {
+      if (!plankAudioInstance.paused) {
+        plankAudioInstance.pause();
+        (plankAudioInstance as unknown as { _pausedByVisibility?: boolean })._pausedByVisibility = true;
+      }
+    } else {
+      if ((plankAudioInstance as unknown as { _pausedByVisibility?: boolean })._pausedByVisibility) {
+        (plankAudioInstance as unknown as { _pausedByVisibility?: boolean })._pausedByVisibility = false;
+        plankAudioInstance.play().catch(() => {});
+      }
+    }
+  });
 }
 
 export const playPing = (freq: number, soundEnabled = true): void => {

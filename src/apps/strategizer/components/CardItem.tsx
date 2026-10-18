@@ -36,7 +36,7 @@ function placeCaretAtEnd(element: HTMLElement) {
   }
 }
 
-export function CardItem({
+export const CardItem = React.memo(function CardItem({
   card,
   onUpdateName,
   onUpdateStage,
@@ -144,7 +144,7 @@ export function CardItem({
     }
     debounceTimeoutRef.current = setTimeout(() => {
       onUpdateName(id, currentText);
-    }, 400);
+    }, 150);
   };
 
   const handleFocus = () => {
@@ -362,4 +362,18 @@ export function CardItem({
       </div>
     </motion.div>
   );
-}
+}, (prev, next) => {
+  return (
+    prev.card.id === next.card.id &&
+    prev.card.name === next.card.name &&
+    prev.card.stage === next.card.stage &&
+    prev.card.type === next.card.type &&
+    prev.autoFocus === next.autoFocus &&
+    prev.onUpdateName === next.onUpdateName &&
+    prev.onUpdateStage === next.onUpdateStage &&
+    prev.onDelete === next.onDelete &&
+    prev.onDragStart === next.onDragStart &&
+    prev.onDragOver === next.onDragOver &&
+    prev.onDrop === next.onDrop
+  );
+});

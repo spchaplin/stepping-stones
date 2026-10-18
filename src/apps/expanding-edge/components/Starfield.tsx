@@ -30,22 +30,34 @@ const Starfield = React.memo(function Starfield() {
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-[#02020a] select-none pointer-events-none">
-      {/* Dynamic Nebulae */}
+      {/* Dynamic Nebulae using lightweight CSS radial gradients instead of heavy GPU Gaussian blur filters */}
       <div 
-        className="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-blue-900/15 blur-[120px]"
-        style={{ transform: 'translate3d(0,0,0)' }}
+        className="absolute -top-40 -left-40 w-96 h-96 rounded-full"
+        style={{
+          background: 'radial-gradient(circle, rgba(30, 58, 138, 0.22) 0%, rgba(30, 58, 138, 0.08) 45%, transparent 70%)',
+          transform: 'translate3d(0,0,0)',
+        }}
       />
       <div 
-        className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] rounded-full bg-purple-900/10 blur-[150px]"
-        style={{ transform: 'translate3d(0,0,0)' }}
+        className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] rounded-full"
+        style={{
+          background: 'radial-gradient(circle, rgba(88, 28, 135, 0.18) 0%, rgba(88, 28, 135, 0.06) 45%, transparent 70%)',
+          transform: 'translate3d(0,0,0)',
+        }}
       />
       <div 
-        className="absolute top-1/3 left-1/2 w-80 h-80 rounded-full bg-indigo-950/20 blur-[100px]"
-        style={{ transform: 'translate3d(0,0,0)' }}
+        className="absolute top-1/3 left-1/2 w-80 h-80 rounded-full"
+        style={{
+          background: 'radial-gradient(circle, rgba(49, 46, 129, 0.25) 0%, rgba(49, 46, 129, 0.08) 45%, transparent 70%)',
+          transform: 'translate3d(0,0,0)',
+        }}
       />
       <div 
-        className="absolute bottom-10 left-10 w-[400px] h-[400px] rounded-full bg-amber-950/10 blur-[130px]"
-        style={{ transform: 'translate3d(0,0,0)' }}
+        className="absolute bottom-10 left-10 w-[400px] h-[400px] rounded-full"
+        style={{
+          background: 'radial-gradient(circle, rgba(69, 26, 3, 0.20) 0%, rgba(69, 26, 3, 0.05) 45%, transparent 70%)',
+          transform: 'translate3d(0,0,0)',
+        }}
       />
 
       {/* Stellar grid patterns */}
@@ -71,14 +83,6 @@ const Starfield = React.memo(function Starfield() {
 
       {/* Cosmic dust overlay */}
       <div className="absolute inset-0 bg-radial-[circle_at_bottom_left] from-transparent via-transparent to-black/40" />
-
-      {/* Custom keyframes injected via style tag to ensure animation is registered */}
-      <style>{`
-        @keyframes twinkle {
-          0%, 100% { opacity: 0.15; }
-          50% { opacity: 1; }
-        }
-      `}</style>
     </div>
   );
 });

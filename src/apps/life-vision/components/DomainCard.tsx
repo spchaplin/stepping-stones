@@ -12,7 +12,7 @@ interface DomainCardProps {
 
 const PRIORITY_OPTIONS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
 
-export default function DomainCard({ domain, data, onChange, index }: DomainCardProps) {
+function DomainCard({ domain, data, onChange, index }: DomainCardProps) {
   const [isFocused, setIsFocused] = useState(false);
 
   const visionText = data?.vision || '';
@@ -180,3 +180,13 @@ export default function DomainCard({ domain, data, onChange, index }: DomainCard
     </div>
   );
 }
+
+export default React.memo(DomainCard, (prev, next) => {
+  return (
+    prev.domain.id === next.domain.id &&
+    prev.data?.vision === next.data?.vision &&
+    prev.data?.priority === next.data?.priority &&
+    prev.index === next.index &&
+    prev.onChange === next.onChange
+  );
+});

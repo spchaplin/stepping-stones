@@ -36,23 +36,23 @@ export function PaceColumn({
   // Drag-and-drop ordering states
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, id: string) => {
+  const handleDragStart = React.useCallback((e: React.DragEvent<HTMLDivElement>, id: string) => {
     setDraggedId(id);
     e.dataTransfer.setData('text/plain', id);
-  };
+  }, []);
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = React.useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-  };
+  }, []);
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetId: string) => {
+  const handleDrop = React.useCallback((e: React.DragEvent<HTMLDivElement>, targetId: string) => {
     e.preventDefault();
     const sourceId = e.dataTransfer.getData('text/plain') || draggedId;
     if (sourceId && sourceId !== targetId) {
       onReorder(sourceId, targetId);
     }
     setDraggedId(null);
-  };
+  }, [draggedId, onReorder]);
 
   // Section theme classes
   const headerTitleColor = isFaster ? 'text-emerald-400' : 'text-rose-500';

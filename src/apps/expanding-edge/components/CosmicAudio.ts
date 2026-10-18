@@ -40,7 +40,7 @@ class CosmicAudioEngine {
       try {
         const audio = new Audio('/expanding-edge/sound/space.mp3');
         audio.loop = true;
-        audio.preload = 'auto';
+        audio.preload = 'none';
         audio.volume = this.currentVolume;
 
         audio.addEventListener('ended', () => {

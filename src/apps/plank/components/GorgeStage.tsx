@@ -281,7 +281,7 @@ const createCrab = (initialSpawn: boolean = false): CrabInstance => {
   };
 };
 
-export default function GorgeStage({
+function GorgeStage({
   planks,
   maxPlanks,
   celebrationActive,
@@ -715,6 +715,10 @@ export default function GorgeStage({
     let animationId: number;
     const tick = () => {
       if (isExiting) return;
+      if (typeof document !== 'undefined' && document.hidden) {
+        animationId = requestAnimationFrame(tick);
+        return;
+      }
       setRapidsOffset((prev) => (prev + 0.3) % 1200);
       setLovebirdsTime((prev) => prev + 0.003); // Very slow and gentle time speed for spiraling
       setOrangeButterflyTime((prev) => prev + 0.0012); // Smooth and gentle spiraling motion speed (reduced by 80%)
@@ -2584,3 +2588,5 @@ export default function GorgeStage({
     </div>
   );
 }
+
+export default React.memo(GorgeStage);

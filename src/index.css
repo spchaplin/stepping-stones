@@ -59,6 +59,15 @@
   }
 }
 
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 .animate-spin-tilted {
   animation: spin-tilted 12s linear infinite;
   transform-origin: center;
