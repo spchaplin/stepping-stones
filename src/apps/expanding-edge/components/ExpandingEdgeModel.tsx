@@ -93,9 +93,9 @@ const ExpandingEdgeModel = React.memo(function ExpandingEdgeModel({ state, setSt
       case 'mythos':
         return { path: '/expanding-edge/planet/mythos.svg', isStill: false };
       case 'storm':
-        return { path: '/expanding-edge/planet/storm.svg', isStill: true };
+        return { path: '/expanding-edge/planet/storm.webp', isStill: true };
       case 'vespera':
-        return { path: '/expanding-edge/planet/vespera.svg', isStill: true };
+        return { path: '/expanding-edge/planet/vespera.webp', isStill: true };
       default:
         return { path: '/expanding-edge/planet/gaia.svg', isStill: false };
     }
