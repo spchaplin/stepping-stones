@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, Check, X, ShieldAlert, Award, Footprints } from 'lucide-react';
+import { Sparkles, Check, X, ShieldAlert, Award, Footprints } from '../../../components/LucideIcons';
 
 interface PlankEditorProps {
   isOpen: boolean;

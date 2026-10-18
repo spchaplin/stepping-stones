@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { LifeDomain, DomainVision } from '../types';
 import { lifeVisionAudio } from './LifeVisionAudio';
-import { CheckCircle2, HelpCircle } from 'lucide-react';
+import { CheckCircle2, HelpCircle } from '../../../components/LucideIcons';
 
 interface DomainCardProps {
   domain: LifeDomain;

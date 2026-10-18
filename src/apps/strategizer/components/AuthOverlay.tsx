@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, Lock, Check, Copy, ExternalLink } from 'lucide-react';
+import { AlertTriangle, Lock, Check, Copy, ExternalLink } from '../../../components/LucideIcons';
 import { Link } from 'react-router-dom';
 
 export interface AuthOverlayProps {

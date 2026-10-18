@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Zap, ShieldAlert, Check } from 'lucide-react';
+import { Zap, ShieldAlert, Check } from '../../../components/LucideIcons';
 import { PaceCard, PaceType } from '../types';
 import { CardItem } from './CardItem';
 import { AnimatePresence } from 'motion/react';

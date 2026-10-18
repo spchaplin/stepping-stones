@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { X } from 'lucide-react';
+import { X } from '../../../components/LucideIcons';
 
 interface AboutModalProps {
   onClose: () => void;

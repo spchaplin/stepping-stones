@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../firebase/AuthContext';
-import { LogIn, LogOut, Cloud, Loader2 } from 'lucide-react';
+import { LogIn, LogOut, Cloud, Loader2 } from './LucideIcons';
 
 export interface AuthWidgetTheme {
   // Loading state styles

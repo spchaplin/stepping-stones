@@ -25,7 +25,7 @@ import {
   AlertTriangle,
   X,
   Loader2
-} from 'lucide-react';
+} from '../../components/LucideIcons';
 import { PlankData, FlyingAnimal, JumpingRiverCritter, SkyParticle } from './types';
 import GorgeStage from './components/GorgeStage';
 import PlankEditor from './components/PlankEditor';

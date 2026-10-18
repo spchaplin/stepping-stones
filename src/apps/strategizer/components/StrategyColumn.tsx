@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Check, Target } from 'lucide-react';
+import { X, Check, Target } from '../../../components/LucideIcons';
 import { StrategyCard } from '../types';
 import { StrategyIcon } from './CustomHeaderIcons';
 

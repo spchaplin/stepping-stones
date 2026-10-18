@@ -1,7 +1,7 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { LifeStep, JourneyState, PlanetType, getPlanetName, getPlanetSizeMultiplier, getOrbitRadius } from '../types';
 import { CosmicAudio } from './CosmicAudio';
-import { Sparkles, Compass, AlertCircle, Volume2, VolumeX } from 'lucide-react';
+import { Sparkles, Compass, AlertCircle, Volume2, VolumeX } from '../../../components/LucideIcons';
 
 interface ExpandingEdgeModelProps {
   state: JourneyState;

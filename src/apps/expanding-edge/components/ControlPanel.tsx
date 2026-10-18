@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { icons as solarIcons } from '@iconify-json/solar';
 import { 
   Volume2, 
   VolumeX, 
@@ -15,9 +14,10 @@ import {
   Undo2,
   Trash2,
   ChevronLeft
-} from 'lucide-react';
+} from '../../../components/LucideIcons';
 import { Link } from 'react-router-dom';
 import IconifyIcon from '../../../components/IconifyIcon';
+import { ICON_REGISTRY } from '../../../generated/iconRegistry';
 import { LifeStep, JourneyState, PlanetType, getPlanetName, getPlanetSizeMultiplier, getOrbitRadius } from '../types';
 import { CosmicAudio } from './CosmicAudio';
 import ExpandingEdgeAuthWidget from './ExpandingEdgeAuthWidget';
@@ -601,7 +601,7 @@ export default function ControlPanel({
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.15)] shrink-0">
             <IconifyIcon
-              icon={solarIcons.icons['planet-3-linear']}
+              icon={ICON_REGISTRY['solar:planet-3-linear']}
               size={20}
               className="animate-spin"
               style={{ animationDuration: '30s' }}

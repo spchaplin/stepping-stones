@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { AlertTriangle, RotateCcw, X } from 'lucide-react';
+import { AlertTriangle, RotateCcw, X } from '../../../components/LucideIcons';
 
 interface ResetConfirmModalProps {
   isOpen: boolean;

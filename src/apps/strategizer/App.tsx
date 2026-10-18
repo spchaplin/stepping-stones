@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import confetti from 'canvas-confetti';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw } from '../../components/LucideIcons';
 import type { DocumentData } from 'firebase/firestore';
 import { 
   onSnapshot, 

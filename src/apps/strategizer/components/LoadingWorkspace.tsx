@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles } from '../../../components/LucideIcons';
 
 interface LoadingWorkspaceProps {
   message?: string;

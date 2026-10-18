@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Layers, ShoppingCart, Zap, Sparkles, LogOut, ChevronLeft } from 'lucide-react';
+import { Layers, ShoppingCart, Zap, Sparkles, LogOut, ChevronLeft } from '../../../components/LucideIcons';
 import { Link } from 'react-router-dom';
 import { PaceCard, StrategyCard } from '../types.ts';
 import { User } from 'firebase/auth';

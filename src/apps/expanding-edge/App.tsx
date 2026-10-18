@@ -4,7 +4,7 @@ import Starfield from './components/Starfield';
 import ControlPanel from './components/ControlPanel';
 import ExpandingEdgeModel from './components/ExpandingEdgeModel';
 import { CosmicAudio } from './components/CosmicAudio';
-import { Sparkles, Compass, Milestone, Info, X } from 'lucide-react';
+import { Sparkles, Compass, Milestone, Info, X } from '../../components/LucideIcons';
 import { useAuth } from '../../firebase/AuthContext';
 import { useFirestoreDocSync } from '../../hooks/useFirestoreSync';
 import { useAudioService } from '../../hooks/useAudioService';

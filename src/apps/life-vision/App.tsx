@@ -11,12 +11,11 @@ import {
   LayoutGrid,
   FileText,
   User,
-} from 'lucide-react';
-import { icons as mdiIcons } from '@iconify-json/mdi';
+} from '../../components/LucideIcons';
 import IconifyIcon from '../../components/IconifyIcon';
+import { ICON_REGISTRY } from '../../generated/iconRegistry';
 import { LIFE_DOMAINS } from './domains';
 import { LifeVisionData, DomainVision } from './types';
-import MdiIcon from './components/MdiIcon';
 import DomainCard from './components/DomainCard';
 import AboutModal from './components/AboutModal';
 import LifeVisionAuthWidget from './components/LifeVisionAuthWidget';
@@ -192,7 +191,7 @@ export default function App() {
             <div className="flex items-center gap-2.5">
               <div className="flex w-9 h-9 items-center justify-center rounded-lg bg-[#b9684f] text-white shadow-md shadow-[#b9684f]/20">
                 <IconifyIcon
-                  icon={mdiIcons.icons['compass-outline']}
+                  icon={ICON_REGISTRY['mdi:compass-outline']}
                   size={20}
                   className="block"
                   disableAnimation
@@ -276,7 +275,7 @@ export default function App() {
           {/* Left: Name input and vision compass metadata */}
           <div className="flex-1 flex flex-col gap-3">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#9b674f] print:text-slate-700">
-              <MdiIcon name="map" size={17} className="relative -top-px" />
+              <IconifyIcon icon={ICON_REGISTRY['mdi:map']} size={17} className="relative -top-px" />
               <span>Personal Vision Statement</span>
             </div>
 
@@ -329,7 +328,7 @@ export default function App() {
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#efe4d8] hover:bg-[#e8d6c6] border border-[#dfcdbb] text-[#78513e] text-xs font-semibold transition-all cursor-pointer hover:border-[#cdb39c]"
                 title="Load sample inspiring life visions"
               >
-                <MdiIcon name="star-shooting" size={13} className="text-[#b4864f]" />
+                <IconifyIcon icon={ICON_REGISTRY['mdi:star-shooting']} size={13} className="text-[#b4864f]" />
                 <span className="hidden sm:inline">Load Sample</span>
               </button>
 

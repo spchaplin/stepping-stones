@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, HelpCircle, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Sparkles, HelpCircle, ChevronLeft, ChevronRight, Loader2 } from '../../../components/LucideIcons';
 import { FlyingAnimal, JumpingRiverCritter, SkyParticle, PlankData } from '../types';
 import { getBackRopePoint, getFrontRopePoint } from '../utils';
 

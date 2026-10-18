@@ -1,16 +1,14 @@
-import type { CSSProperties } from 'react';
+import type { SVGProps } from 'react';
 
-interface IconifyIconData {
+export interface IconifyIconData {
   body: string;
   width?: number;
   height?: number;
 }
 
-interface IconifyIconProps {
+interface IconifyIconProps extends Omit<SVGProps<SVGSVGElement>, 'width' | 'height' | 'viewBox' | 'children' | 'dangerouslySetInnerHTML'> {
   icon: IconifyIconData;
   size: number;
-  className?: string;
-  style?: CSSProperties;
   disableAnimation?: boolean;
 }
 
@@ -39,17 +37,36 @@ function makeStaticBody(body: string): string {
   });
 }
 
-export default function IconifyIcon({ icon, size, className, style, disableAnimation = false }: IconifyIconProps) {
+function setStrokeWidth(body: string, strokeWidth: SVGProps<SVGSVGElement>['strokeWidth']): string {
+  if (strokeWidth === undefined) return body;
+  return body.replace(/(\bstroke-width=")[^"]*(")/g, `$1${strokeWidth}$2`);
+}
+
+export default function IconifyIcon({
+  icon,
+  size,
+  className,
+  style,
+  strokeWidth,
+  'aria-hidden': ariaHidden,
+  'aria-label': ariaLabel,
+  disableAnimation = false,
+  ...svgProps
+}: IconifyIconProps) {
+  const body = disableAnimation ? makeStaticBody(icon.body) : icon.body;
+
   return (
     <svg
-      aria-hidden="true"
+      {...svgProps}
+      aria-hidden={ariaHidden ?? (ariaLabel ? undefined : true)}
+      aria-label={ariaLabel}
       focusable="false"
       width={size}
       height={size}
       viewBox={`0 0 ${icon.width ?? 24} ${icon.height ?? 24}`}
       className={className}
       style={style}
-      dangerouslySetInnerHTML={{ __html: disableAnimation ? makeStaticBody(icon.body) : icon.body }}
+      dangerouslySetInnerHTML={{ __html: setStrokeWidth(body, strokeWidth) }}
     />
   );
 }
