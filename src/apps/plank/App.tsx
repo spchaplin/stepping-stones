@@ -501,7 +501,7 @@ export default function App() {
               title="Return to Stepping Stones landing page"
             >
               <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
-              <span className="hidden sm:inline">Stepping Stones</span>
+              <span className="hidden sm:inline">Suite</span>
             </Link>
             <div className="w-10 h-10 rounded-xl bg-stone-200 p-0.5 shadow-xs flex items-center justify-center border border-stone-300">
               <div className="w-full h-full rounded-[10px] bg-white flex items-center justify-center">

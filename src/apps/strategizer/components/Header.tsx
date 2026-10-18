@@ -59,7 +59,7 @@ export function Header({
           title="Return to Stepping Stones landing page"
         >
           <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
-          <span className="hidden sm:inline">Stepping Stones</span>
+          <span className="hidden sm:inline">Suite</span>
         </Link>
         <div className="flex items-center gap-3 transition-transform duration-300 hover:scale-105 origin-left">
           <div className="p-2 py-2 bg-emerald-500 rounded-xl text-white shadow-lg shadow-emerald-500/15">

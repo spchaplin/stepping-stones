@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  ArrowLeft,
   ArrowUp,
+  ChevronLeft,
   Info,
   RotateCcw,
   Printer,
@@ -182,8 +182,8 @@ export default function App() {
               className="group flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#e4d9cc] hover:border-[#c9b9a7] bg-white/70 hover:bg-white text-[#6f6257] hover:text-[#342b24] text-xs font-semibold transition-all cursor-pointer shadow-sm"
               title="Return to Stepping Stones suite"
             >
-              <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
-              <span className="hidden sm:inline">Stepping Stones</span>
+              <ChevronLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+              <span className="hidden sm:inline">Suite</span>
             </Link>
 
             <div className="h-4 w-[1px] bg-[#e4d9cc] hidden sm:block" />

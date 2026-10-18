@@ -582,7 +582,7 @@ export default function ControlPanel({
             title="Return to Stepping Stones landing page"
           >
             <ChevronLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
-            <span>Stepping Stones</span>
+            <span>Suite</span>
           </Link>
           <div className="flex items-center gap-2 shrink-0">
             <ExpandingEdgeAuthWidget />
