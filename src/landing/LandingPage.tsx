@@ -264,13 +264,12 @@ export default function LandingPage() {
       >
         <span className="font-semibold text-zinc-400">Stepping Stones Suite</span>
         <div className="flex items-center gap-3 text-zinc-500">
-          <span>Plank</span>
-          <span aria-hidden="true" className="text-zinc-700">·</span>
-          <span>Strategizer</span>
-          <span aria-hidden="true" className="text-zinc-700">·</span>
-          <span>The Expanding Edge</span>
-          <span aria-hidden="true" className="text-zinc-700">·</span>
-          <span>Life Vision</span>
+          {APPS.filter((app) => isSubAppActive(app.id)).map((app, i) => (
+            <React.Fragment key={app.id}>
+              {i > 0 && <span aria-hidden="true" className="text-zinc-700">·</span>}
+              <span>{app.label}</span>
+            </React.Fragment>
+          ))}
         </div>
       </motion.footer>
     </div>
