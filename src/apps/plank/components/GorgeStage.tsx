@@ -2045,8 +2045,8 @@ function GorgeStage({
               <image
                 key={`single-jellyfish-${spawnCount}`}
                 id="jellyfish-instance"
-                href="/plank/fish/jellyfish.svg"
-                xlinkHref="/plank/fish/jellyfish.svg"
+                href={`/plank/fish/jellyfish.svg?v=${spawnCount}`}
+                xlinkHref={`/plank/fish/jellyfish.svg?v=${spawnCount}`}
                 x={jellyfishX}
                 y={y}
                 width={28.05}
