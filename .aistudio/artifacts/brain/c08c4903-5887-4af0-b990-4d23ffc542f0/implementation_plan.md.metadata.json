@@ -1,6 +1,0 @@
-{
-  "summary":  "Comprehensive architectural plan to eliminate jarring card jumps during initial load in the Strategizer app. Implements a synchronized hydration gate with a 'Loading card history' indicator, smooth fade-in and upward slide transitions, and a 3-second offline fallback timer.",
-  "updatedAt":  "2026-10-10T01:22:39.066555584Z",
-  "requestFeedback":  true,
-  "userFacing":  true
-}

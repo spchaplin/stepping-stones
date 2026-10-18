@@ -6,6 +6,9 @@ dist/
 build/
 src/generated
 
+# Google AI Studio workspace files
+.aistudio/
+
 # Environment variables — never commit secrets
 .env
 .env.local
