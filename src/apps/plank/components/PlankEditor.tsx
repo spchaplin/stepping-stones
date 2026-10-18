@@ -52,10 +52,9 @@ export default function PlankEditor({
       {isOpen && (
         <div id="plank-edit-modal-wrapper" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/60 backdrop-blur-sm">
           <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 4, transition: { type: 'tween', duration: 0.1, ease: [0.16, 1, 0.3, 1] } }}
-            transition={{ type: 'tween', duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ scale: 0.9, y: 30, opacity: 0 }}
+            animate={{ scale: 1, y: 0, opacity: 1, transition: { type: 'spring', damping: 80, stiffness: 2500 } }}
+            exit={{ scale: 0.9, y: 20, opacity: 0 }}
             className="w-full max-w-xl overflow-hidden rounded-2xl border-4 border-stone-800 bg-stone-100 p-6 shadow-2xl relative"
           >
             {/* Rivets in corners */}
