@@ -66,7 +66,7 @@ export function Header({
             <Layers className="w-6 h-6" />
           </div>
         <div>
-          <h1 className="text-[33px] font-extrabold text-white tracking-tight italic uppercase drop-shadow-[0_0_12px_rgba(255,255,255,0.15)]">
+          <h1 className="text-[27px] font-bold text-white tracking-tight">
             Strategizer
           </h1>
           <p className="text-xs text-slate-400 font-medium tracking-wide flex items-center gap-0.5 flex-wrap">
@@ -81,7 +81,7 @@ export function Header({
 
       {/* Navigation menu in the center */}
       <div className="flex flex-col items-center gap-1 bg-slate-950/40 p-1.5 rounded-xl border border-slate-800/60 w-full max-w-[440px] md:max-w-[685px] mx-auto">
-        <div className="text-[10px] text-slate-400 font-black tracking-widest uppercase leading-none">
+        <div className="text-[11px] text-slate-400 font-semibold tracking-wide leading-none">
           Menu Options
         </div>
         <div className="flex bg-slate-900/95 p-1 rounded-lg border border-slate-800 w-full gap-1">
@@ -89,31 +89,31 @@ export function Header({
             type="button"
             id="nav-faster-btn"
             onClick={() => onCategoryChange('faster')}
-            className={`flex-1 px-2.5 py-1.5 rounded-md text-[10px] md:text-xs font-bold transition-all duration-200 cursor-pointer ${
+            className={`flex-1 px-1.5 sm:px-2.5 py-1.5 rounded-md text-xs sm:text-[13px] md:text-sm font-semibold transition-all duration-200 cursor-pointer ${
               activeCategory === 'faster'
                 ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
             }`}
           >
-            Things that make me go faster
+            Accelerators
           </button>
           <button
             type="button"
             id="nav-slower-btn"
             onClick={() => onCategoryChange('slower')}
-            className={`flex-1 px-2.5 py-1.5 rounded-md text-[10px] md:text-xs font-bold transition-all duration-200 cursor-pointer ${
+            className={`flex-1 px-1.5 sm:px-2.5 py-1.5 rounded-md text-xs sm:text-[13px] md:text-sm font-semibold transition-all duration-200 cursor-pointer ${
               activeCategory === 'slower'
                 ? 'bg-rose-500 text-white shadow-md shadow-rose-500/20'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
             }`}
           >
-            Things that make me go slower
+            Decelerators
           </button>
           <button
             type="button"
             id="nav-strategy-btn"
             onClick={() => onCategoryChange('strategy')}
-            className={`flex-1 px-2.5 py-1.5 rounded-md text-[10px] md:text-xs font-bold transition-all duration-200 cursor-pointer ${
+            className={`flex-1 px-1.5 sm:px-2.5 py-1.5 rounded-md text-xs sm:text-[13px] md:text-sm font-semibold transition-all duration-200 cursor-pointer ${
               activeCategory === 'strategy'
                 ? 'bg-emerald-800 text-white shadow-md shadow-emerald-900/45'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'

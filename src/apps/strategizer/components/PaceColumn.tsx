@@ -82,7 +82,7 @@ export function PaceColumn({
             />
           )}
           <div className="flex flex-col">
-            <h2 className={`text-[29px] font-extrabold uppercase tracking-tighter ${headerTitleColor} leading-none`}>
+            <h2 className={`text-sm sm:text-[15px] lg:text-base font-extrabold uppercase tracking-tighter ${headerTitleColor} leading-none`}>
               {isFaster ? 'ACCELERATORS' : 'DECELERATORS'}
             </h2>
             <p className="text-[12px] text-white font-medium tracking-normal mt-1 leading-tight max-w-[280px] lg:max-w-[400px]">

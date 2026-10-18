@@ -235,7 +235,7 @@ export function StrategyColumn({
             className="w-9 h-9 text-emerald-600 drop-shadow-[0_0_8px_rgba(5,150,105,0.25)]" 
           />
           <div className="flex flex-col">
-            <h2 className="text-[29px] font-extrabold uppercase tracking-tighter text-emerald-600 leading-none">
+            <h2 className="text-sm sm:text-[15px] lg:text-base font-extrabold uppercase tracking-tighter text-emerald-600 leading-none">
               MY STRATEGY
             </h2>
             <p className="text-[12px] text-white font-medium tracking-normal mt-1 leading-tight max-w-[280px] lg:max-w-[400px]">
