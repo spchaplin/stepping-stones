@@ -9,6 +9,10 @@ consider converting svg planets into webm for smaller file size
     elysium.svg loses quality when converted, just doesn't look as good
     mythos.svg loses quality when converted, skip
 
+    frog-fly.svg could not be converted without jankiness or black bg.
+
+    I've converted all the image and sound files that seem sensible.
+
 productivity enhancements: setup voice to speech with headset.
     -try work headset on home pc
     -try microsoft built in, others for voice to text
