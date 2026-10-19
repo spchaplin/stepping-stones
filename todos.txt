@@ -1,0 +1,20 @@
+To dos:
+
+consider converting svg planets into webm for smaller file size
+    -use copilot lua for this
+    -also, resize the webm frame itself smaller because it's much bigger than needed
+
+    gaia.webm didn't rotate as fast or look as good, leave as .svg
+    lumina.svg is so small @ 10kb that converting it makes no sense
+    elysium.svg loses quality when converted, just doesn't look as good
+    mythos.svg loses quality when converted, skip
+
+productivity enhancements: setup voice to speech with headset.
+    -try work headset on home pc
+    -try microsoft built in, others for voice to text
+    -workflow enhance: extra monitor
+        agents working continuously
+
+examine other image assets for optimization
+
+ask ai studio to check for optimizations.

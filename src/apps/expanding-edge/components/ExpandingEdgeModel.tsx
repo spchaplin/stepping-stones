@@ -81,23 +81,22 @@ const ExpandingEdgeModel = React.memo(function ExpandingEdgeModel({ state, setSt
   
 
 
-  // Helper to map planet type to static SVG assets and detect if still
-  const getPlanetPath = (planetType: PlanetType): { path: string; isStill: boolean } => {
+  const getPlanetPath = (planetType: PlanetType): { path: string; isVideo: boolean } => {
     switch (planetType) {
       case 'elysium':
-        return { path: '/expanding-edge/planet/elysium.svg', isStill: false };
+        return { path: '/expanding-edge/planet/elysium.svg', isVideo: false };
       case 'gaia':
-        return { path: '/expanding-edge/planet/gaia.svg', isStill: false };
+        return { path: '/expanding-edge/planet/gaia.svg', isVideo: false };
       case 'lumina':
-        return { path: '/expanding-edge/planet/lumina.svg', isStill: true };
+        return { path: '/expanding-edge/planet/lumina.svg', isVideo: false };
       case 'mythos':
-        return { path: '/expanding-edge/planet/mythos.svg', isStill: false };
+        return { path: '/expanding-edge/planet/mythos.svg', isVideo: false };
       case 'storm':
-        return { path: '/expanding-edge/planet/storm.webp', isStill: true };
+        return { path: '/expanding-edge/planet/storm.webp', isVideo: false };
       case 'vespera':
-        return { path: '/expanding-edge/planet/vespera.webp', isStill: true };
+        return { path: '/expanding-edge/planet/vespera.webm', isVideo: true };
       default:
-        return { path: '/expanding-edge/planet/gaia.svg', isStill: false };
+        return { path: '/expanding-edge/planet/gaia.svg', isVideo: false };
     }
   };
 
@@ -466,8 +465,7 @@ const ExpandingEdgeModel = React.memo(function ExpandingEdgeModel({ state, setSt
             const isSelected = activeStepId === step.id;
             const gradMeta = getPlanetGradient(step.planetType);
 
-            // Fetch planet SVG details
-            const { path: planetPath } = getPlanetPath(step.planetType);
+            const { path: planetPath, isVideo: isPlanetVideo } = getPlanetPath(step.planetType);
 
             // Increased planet sizes matching precise relative multipliers
             const baseRadius = 10;
@@ -577,18 +575,37 @@ const ExpandingEdgeModel = React.memo(function ExpandingEdgeModel({ state, setSt
                     {/* Planet shadow underlay */}
                     <circle r={scaledRadius * 1.1} fill="rgba(0,0,0,0.6)" />
 
-                    {/* Main Planet SVG Asset Wrapper */}
+                    {/* Main Planet Asset Wrapper */}
                     <g>
                       <g className={getPlanetAnimationClass(step.planetType)}>
-                        {/* SVG Planet Image */}
-                        <image
-                          href={planetPath}
-                          x={-scaledRadius}
-                          y={-scaledRadius}
-                          width={scaledRadius * 2}
-                          height={scaledRadius * 2}
-                          className="filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] group-hover:scale-110 transition-transform duration-300"
-                        />
+                        {isPlanetVideo ? (
+                          <foreignObject
+                            x={-scaledRadius}
+                            y={-scaledRadius}
+                            width={scaledRadius * 2}
+                            height={scaledRadius * 2}
+                          >
+                            <video
+                              src={planetPath}
+                              autoPlay
+                              loop
+                              muted
+                              playsInline
+                              aria-hidden="true"
+                              className="filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] group-hover:scale-110 transition-transform duration-300"
+                              style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }}
+                            />
+                          </foreignObject>
+                        ) : (
+                          <image
+                            href={planetPath}
+                            x={-scaledRadius}
+                            y={-scaledRadius}
+                            width={scaledRadius * 2}
+                            height={scaledRadius * 2}
+                            className="filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] group-hover:scale-110 transition-transform duration-300"
+                          />
+                        )}
                       </g>
                     </g>
 

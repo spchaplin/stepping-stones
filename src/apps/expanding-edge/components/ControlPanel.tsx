@@ -75,22 +75,22 @@ const PLANET_PRESETS: { type: PlanetType; label: string; desc: string; color: st
   }
 ];
 
-const getPlanetPathAndState = (type: PlanetType): { path: string; isStill: boolean } => {
+const getPlanetPathAndState = (type: PlanetType): { path: string; isVideo: boolean } => {
   switch (type) {
     case 'elysium':
-      return { path: '/expanding-edge/planet/elysium.svg', isStill: false };
+      return { path: '/expanding-edge/planet/elysium.svg', isVideo: false };
     case 'gaia':
-      return { path: '/expanding-edge/planet/gaia.svg', isStill: false };
+      return { path: '/expanding-edge/planet/gaia.svg', isVideo: false };
     case 'lumina':
-      return { path: '/expanding-edge/planet/lumina.svg', isStill: true };
+      return { path: '/expanding-edge/planet/lumina.svg', isVideo: false };
     case 'mythos':
-      return { path: '/expanding-edge/planet/mythos.svg', isStill: false };
+      return { path: '/expanding-edge/planet/mythos.svg', isVideo: false };
     case 'storm':
-      return { path: '/expanding-edge/planet/storm.webp', isStill: true };
+      return { path: '/expanding-edge/planet/storm.webp', isVideo: false };
     case 'vespera':
-      return { path: '/expanding-edge/planet/vespera.webp', isStill: true };
+      return { path: '/expanding-edge/planet/vespera.webm', isVideo: true };
     default:
-      return { path: '/expanding-edge/planet/gaia.svg', isStill: false };
+      return { path: '/expanding-edge/planet/gaia.svg', isVideo: false };
   }
 };
 
@@ -256,7 +256,7 @@ const TimelineStepItem = React.memo(function TimelineStepItem({
       {/* Timeline Node - Actual SVGs matching select orbiting planet representing the planet style */}
       <div className="absolute -left-[38px] top-1 w-8 h-8 flex items-center justify-center">
         {(() => {
-          const { path } = getPlanetPathAndState(step.planetType);
+          const { path, isVideo } = getPlanetPathAndState(step.planetType);
           let scale = 1.0;
           if (step.planetType === 'gaia') {
             scale = 1.75;
@@ -276,13 +276,21 @@ const TimelineStepItem = React.memo(function TimelineStepItem({
                 className={getPlanetAnimationClass(step.planetType)}
                 transform={scale !== 1.0 ? `scale(${scale})` : undefined}
               >
-                <image
-                  href={path}
-                  x="-20"
-                  y="-20"
-                  width="40"
-                  height="40"
-                />
+                {isVideo ? (
+                  <foreignObject x="-20" y="-20" width="40" height="40">
+                    <video
+                      src={path}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      aria-hidden="true"
+                      style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }}
+                    />
+                  </foreignObject>
+                ) : (
+                  <image href={path} x="-20" y="-20" width="40" height="40" />
+                )}
               </g>
             </svg>
           );
@@ -684,7 +692,7 @@ export default function ControlPanel({
                     </label>
                     <div className="grid grid-cols-6 gap-0.5">
                       {PLANET_PRESETS.map((p) => {
-                        const { path } = getPlanetPathAndState(p.type);
+                        const { path, isVideo } = getPlanetPathAndState(p.type);
                         return (
                           <button
                             key={p.type}
@@ -708,14 +716,31 @@ export default function ControlPanel({
                                     if (p.type === 'storm') {
                                       previewRadius *= 0.75;
                                     }
-                                    return (
-                                      <image
-                                        href={path}
-                                        x={-previewRadius}
-                                        y={-previewRadius}
-                                        width={previewRadius * 2}
-                                        height={previewRadius * 2}
-                                      />
+                                    return isVideo ? (
+                                        <foreignObject
+                                          x={-previewRadius}
+                                          y={-previewRadius}
+                                          width={previewRadius * 2}
+                                          height={previewRadius * 2}
+                                        >
+                                          <video
+                                            src={path}
+                                            autoPlay
+                                            loop
+                                            muted
+                                            playsInline
+                                            aria-hidden="true"
+                                            style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }}
+                                          />
+                                        </foreignObject>
+                                      ) : (
+                                        <image
+                                          href={path}
+                                          x={-previewRadius}
+                                          y={-previewRadius}
+                                          width={previewRadius * 2}
+                                          height={previewRadius * 2}
+                                        />
                                     );
                                   })()}
                                 </g>
