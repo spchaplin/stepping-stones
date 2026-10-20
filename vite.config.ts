@@ -1,17 +1,33 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
+
+// Lossless HTML whitespace minification plugin for production builds
+function htmlMinifyPlugin(): Plugin {
+  return {
+    name: 'html-minifier',
+    apply: 'build',
+    transformIndexHtml(html: string) {
+      return html
+        .replace(/\n\s*/g, '')
+        .replace(/<!--[\s\S]*?-->/g, '');
+    },
+  };
+}
 
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), htmlMinifyPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
       },
     },
     build: {
+      // Explicitly configure lossless code and style minification for production
+      minify: 'esbuild',
+      cssMinify: true,
       rollupOptions: {
         output: {
           manualChunks(id) {
@@ -31,6 +47,12 @@ export default defineConfig(() => {
           },
         },
       },
+    },
+    esbuild: {
+      minifyWhitespace: true,
+      minifyIdentifiers: true,
+      minifySyntax: true,
+      legalComments: 'none',
     },
     server: {
       host: '0.0.0.0',
