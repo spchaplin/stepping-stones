@@ -360,7 +360,7 @@ export default function App() {
                       : 'border-[#e5dbcf] bg-[#f8f5ef] text-[#75695d] hover:border-[#cdbca9] hover:text-[#41372e]'
                   }`}
                 >
-                  <img src={domain.iconPath} alt="" className="w-5 h-5 object-contain" />
+                  <img src={domain.iconPath} alt="" className="w-[39px] h-[39px] object-contain" />
                   <span className="font-medium">{domain.label}</span>
                   {hasVision && <CheckCircle size={12} className="text-[#728261] shrink-0" />}
                 </a>
@@ -433,8 +433,8 @@ export default function App() {
                     >
                       {/* Domain */}
                       <div className="w-full sm:w-auto shrink-0 flex items-center justify-between sm:justify-start gap-3">
-                        <div className="w-10 h-10 flex items-center justify-center shrink-0">
-                          <img src={domain.iconPath} alt="" className="w-9 h-9 object-contain" />
+                        <div className="w-20 h-20 flex items-center justify-center shrink-0">
+                          <img src={domain.iconPath} alt="" className="w-[72px] h-[72px] object-contain" />
                         </div>
                         <div>
                           <p className="text-xs font-mono text-[#918477] uppercase print:text-slate-500">

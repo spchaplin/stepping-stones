@@ -62,7 +62,7 @@ function DomainCard({ domain, data, onChange, index }: DomainCardProps) {
         {/* Header row */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 flex items-center justify-center shrink-0 p-1">
+            <div className="w-24 h-24 flex items-center justify-center shrink-0 p-2">
               <img src={domain.iconPath} alt="" className="w-full h-full object-contain" />
             </div>
 
