@@ -514,7 +514,7 @@ export default function App() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold font-serif tracking-wider text-stone-800">plank</h1>
+                <h1 className="text-xl font-bold font-serif tracking-wider text-stone-800">Plank</h1>
                 <span className="px-1.5 py-0.5 text-[9px] font-mono tracking-widest uppercase font-bold rounded bg-stone-800 text-stone-100 border border-stone-700">
                   Life Roadmaps
                 </span>
