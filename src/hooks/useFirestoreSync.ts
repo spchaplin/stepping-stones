@@ -117,10 +117,11 @@ export function useFirestoreDocSync<T>(
     onPersistError,
   } = options;
 
-  const [state, setState] = useAppState(localStorageKey, initialState, {
+  const [state, setStoredState] = useAppState(localStorageKey, initialState, {
     deserialize: localMapper,
     serialize: localSerializer,
   });
+  const pendingLocalChangesKey = `${localStorageKey}:pending`;
   const [isLoading, setIsLoading] = useState(enabled && Boolean(uid));
   const [firestoreError, setFirestoreError] = useState<string | null>(null);
   const [isSyncingFromCloud, setIsSyncingFromCloud] = useState(false);
@@ -128,6 +129,16 @@ export function useFirestoreDocSync<T>(
   const stateRef = useRef(state);
   const syncingRef = useRef(false);
   const resolvedUidRef = useRef<string | null>(null);
+  const localChangeVersionRef = useRef(
+    readLocalStorage<boolean>(pendingLocalChangesKey) === true ? 1 : 0,
+  );
+  const syncedChangeVersionRef = useRef(0);
+  const persistInitialStateRef = useRef(false);
+  const setState = useCallback<Dispatch<SetStateAction<T>>>((action) => {
+    localChangeVersionRef.current += 1;
+    writeLocalStorage(pendingLocalChangesKey, true);
+    setStoredState(action);
+  }, [pendingLocalChangesKey, setStoredState]);
 
   stateRef.current = state;
 
@@ -165,6 +176,7 @@ export function useFirestoreDocSync<T>(
 
     const unsubscribe = onSnapshot(
       docRef,
+      { includeMetadataChanges: true },
       (snapshot) => {
         if (cancelled) return;
         hasResolved = true;
@@ -174,9 +186,26 @@ export function useFirestoreDocSync<T>(
         setFirestoreError(null);
 
         if (snapshot.exists()) {
+          const remoteState = mapper(snapshot.data());
+          const hasLocalChanges =
+            localChangeVersionRef.current > syncedChangeVersionRef.current;
+          if (
+            hasLocalChanges &&
+            (
+              snapshot.metadata.hasPendingWrites ||
+              JSON.stringify(serializer(remoteState)) !==
+                JSON.stringify(serializer(stateRef.current))
+            )
+          ) {
+            return;
+          }
+
+          syncedChangeVersionRef.current = localChangeVersionRef.current;
+          persistInitialStateRef.current = false;
+          writeLocalStorage(pendingLocalChangesKey, false);
           syncingRef.current = true;
           setIsSyncingFromCloud(true);
-          setState(mapper(snapshot.data()));
+          setStoredState(remoteState);
           if (resetSyncingTimeout) clearTimeout(resetSyncingTimeout);
           resetSyncingTimeout = setTimeout(() => {
             syncingRef.current = false;
@@ -196,6 +225,8 @@ export function useFirestoreDocSync<T>(
             onError(syncError, OperationType.WRITE, path);
             onPersistError?.(syncError);
           });
+        } else {
+          persistInitialStateRef.current = true;
         }
       },
       (error) => {
@@ -225,7 +256,7 @@ export function useFirestoreDocSync<T>(
     onPersistError,
     refetchKey,
     serializer,
-    setState,
+    setStoredState,
     shouldMigrate,
     timeoutMs,
     uid,
@@ -242,8 +273,13 @@ export function useFirestoreDocSync<T>(
       return;
     }
 
+    const hasLocalChanges =
+      localChangeVersionRef.current > syncedChangeVersionRef.current;
+    if (!hasLocalChanges && !persistInitialStateRef.current) return;
+
     const path = docPath.replace('{uid}', uid);
     const timer = setTimeout(() => {
+      persistInitialStateRef.current = false;
       setDoc(doc(firestore, path), {
         userId: uid,
         ...serializer(state),
@@ -262,6 +298,7 @@ export function useFirestoreDocSync<T>(
     enabled,
     firestore,
     isLoading,
+    isSyncingFromCloud,
     onError,
     onPersistError,
     serializer,

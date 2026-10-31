@@ -289,17 +289,25 @@ export default function App() {
             <div className="flex items-center gap-4">
               {/* Avatar to the left of the name entry field */}
               <div className="flex flex-col items-center gap-1 shrink-0">
-                <img
-                  src={
-                    data.avatar === 'female'
-                      ? '/life-vision/avatars/female.avif'
-                      : '/life-vision/avatars/male.avif'
-                  }
-                  alt={data.avatar === 'female' ? 'Female avatar' : 'Male avatar'}
-                  width={65}
-                  height={65}
-                  className="w-[65px] h-[65px] object-cover rounded-xl border border-[#e7dbcd] shadow-xs select-none"
-                />
+                <button
+                  type="button"
+                  onClick={handleToggleAvatar}
+                  className="rounded-xl cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9684f] focus-visible:ring-offset-2"
+                  title="Switch avatar"
+                  aria-label="Switch avatar"
+                >
+                  <img
+                    src={
+                      data.avatar === 'female'
+                        ? '/life-vision/avatars/female.avif'
+                        : '/life-vision/avatars/male.avif'
+                    }
+                    alt={data.avatar === 'female' ? 'Female avatar' : 'Male avatar'}
+                    width={65}
+                    height={65}
+                    className="w-[65px] h-[65px] object-cover rounded-xl border border-[#e7dbcd] shadow-xs select-none"
+                  />
+                </button>
                 <button
                   type="button"
                   onClick={handleToggleAvatar}
@@ -315,9 +323,9 @@ export default function App() {
                 <input
                   type="text"
                   value={data.myName}
-                  onChange={(e) => setData({ ...data, myName: e.target.value })}
+                  onChange={(e) => setData((prev) => ({ ...prev, myName: e.target.value }))}
                   placeholder="Enter your name (e.g. Alex Morgan)"
-                  className="w-full text-3xl sm:text-4xl font-serif font-semibold text-[#78513e] placeholder:text-xl sm:placeholder:text-2xl placeholder:text-[#a99c8e] bg-transparent border-b border-[#dfd3c5] focus:border-[#b9684f] focus:outline-none pb-1 transition-colors print:text-black print:border-black"
+                  className="w-full text-xl sm:text-2xl font-serif font-semibold text-[#78513e] placeholder:text-xl sm:placeholder:text-2xl placeholder:text-[#a99c8e] bg-transparent border-b border-[#dfd3c5] focus:border-[#b9684f] focus:outline-none pb-1 transition-colors print:text-black print:border-black"
                 />
                 <p className="text-[11px] text-[#82766a] mt-1.5">
                   Life Vision Portfolio · independent tool based on Charting the LifeCourse
