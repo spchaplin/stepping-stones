@@ -14,6 +14,7 @@ const requestedIcons = {
     'shopping-cart', 'zap', 'minus', 'lock', 'copy', 'external-link', 'shield-alert',
     'award', 'chevron-right', 'move-right', 'arrow-right', 'share-2', 'list-restart',
     'chevron-up', 'chevron-down', 'bookmark-check', 'book-open', 'arrow-left-right',
+    'arrow-right-left',
     'trending-up',
   ],
   mdi: ['compass-outline', 'map', 'map-outline', 'star-shooting'],

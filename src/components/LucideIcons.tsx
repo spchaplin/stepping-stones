@@ -54,6 +54,7 @@ type IconName =
   | 'bookmark-check'
   | 'book-open'
   | 'arrow-left-right'
+  | 'arrow-right-left'
   | 'trending-up';
 
 interface LucideIconProps extends Omit<SVGProps<SVGSVGElement>, 'width' | 'height' | 'viewBox' | 'children'> {
@@ -129,4 +130,5 @@ export const ChevronDown = createLucideIcon('chevron-down');
 export const BookmarkCheck = createLucideIcon('bookmark-check');
 export const BookOpen = createLucideIcon('book-open');
 export const ArrowLeftRight = createLucideIcon('arrow-left-right');
+export const ArrowRightLeft = createLucideIcon('arrow-right-left');
 export const TrendingUp = createLucideIcon('trending-up');

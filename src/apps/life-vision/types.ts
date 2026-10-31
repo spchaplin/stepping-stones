@@ -5,6 +5,7 @@ export interface DomainVision {
 
 export interface LifeVisionData {
   myName: string;
+  avatar?: 'male' | 'female';
   domains: {
     [domainId: string]: DomainVision;
   };
