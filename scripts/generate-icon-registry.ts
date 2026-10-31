@@ -2,6 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { icons as lucide } from '@iconify-json/lucide';
 import { icons as mdi } from '@iconify-json/mdi';
 import { icons as solar } from '@iconify-json/solar';
+import { icons as materialSymbols } from '@iconify-json/material-symbols';
 
 const requestedIcons = {
   lucide: [
@@ -15,15 +16,16 @@ const requestedIcons = {
     'chevron-up', 'chevron-down', 'bookmark-check', 'book-open', 'arrow-left-right',
     'trending-up',
   ],
-  mdi: ['compass-outline', 'map', 'star-shooting'],
+  mdi: ['compass-outline', 'map', 'map-outline', 'star-shooting'],
   solar: ['planet-3-linear'],
+  'material-symbols': ['signpost', 'signpost-outline-rounded'],
 } as const;
 
 function getIcon(collection: typeof lucide, name: string) {
   const icon = collection.icons[name];
   if (icon) return icon;
 
-  const alias = collection.aliases[name];
+  const alias = collection.aliases?.[name];
   if (!alias) throw new Error(`Icon "${name}" is missing from "${collection.prefix}".`);
   if (alias.hFlip || alias.vFlip || alias.rotate) {
     throw new Error(`Icon "${name}" uses an unsupported alias transform.`);
@@ -32,14 +34,14 @@ function getIcon(collection: typeof lucide, name: string) {
   return getIcon(collection, alias.parent);
 }
 
-const collections = { lucide, mdi, solar };
+const collections = { lucide, mdi, solar, 'material-symbols': materialSymbols };
 const registry: Record<string, { body: string; width?: number; height?: number }> = {};
 
-for (const prefix of ['lucide', 'mdi', 'solar'] as const) {
+for (const prefix of ['lucide', 'mdi', 'solar', 'material-symbols'] as const) {
   const collection = collections[prefix];
   const names = requestedIcons[prefix];
   for (const name of names) {
-    registry[`${prefix}:${name}`] = getIcon(collection, name);
+    registry[`${prefix}:${name}`] = getIcon(collection as typeof lucide, name);
   }
 }
 

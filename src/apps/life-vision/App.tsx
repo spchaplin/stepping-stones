@@ -189,23 +189,18 @@ export default function App() {
             <div className="h-4 w-[1px] bg-[#e4d9cc] hidden sm:block" />
 
             <div className="flex items-center gap-2.5">
-              <div className="flex w-9 h-9 items-center justify-center rounded-lg bg-[#b9684f] text-white shadow-md shadow-[#b9684f]/20">
+              <div className="w-10 h-10 rounded-xl bg-[#f2ede5] border border-[#e5dbcf] flex items-center justify-center shrink-0">
                 <IconifyIcon
-                  icon={ICON_REGISTRY['mdi:compass-outline']}
-                  size={20}
-                  className="block"
+                  icon={ICON_REGISTRY['material-symbols:signpost']}
+                  size={27}
+                  className="text-[#b9684f]"
                   disableAnimation
                 />
               </div>
               <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-sm sm:text-base font-bold tracking-tight text-[#342b24]">
-                    Life Vision
-                  </h1>
-                  <span className="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full bg-[#e9ddd1] text-[#805b48] border border-[#decdbd] hidden md:inline-block">
-                    LifeCourse
-                  </span>
-                </div>
+                <h1 className="text-sm sm:text-base font-bold tracking-tight text-[#342b24]">
+                  Life Vision
+                </h1>
                 <p className="text-[11px] text-[#82766a] hidden sm:block">
                   Chart your good life across 8 core domains
                 </p>
@@ -275,7 +270,7 @@ export default function App() {
           {/* Left: Name input and vision compass metadata */}
           <div className="flex-1 flex flex-col gap-3">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#9b674f] print:text-slate-700">
-              <IconifyIcon icon={ICON_REGISTRY['mdi:map']} size={17} className="relative -top-px" />
+              <IconifyIcon icon={ICON_REGISTRY['mdi:map-outline']} size={17} className="relative -top-px" />
               <span>Personal Vision Statement</span>
             </div>
 
