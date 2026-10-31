@@ -292,7 +292,7 @@ export default function App() {
                   className="w-full text-lg sm:text-xl font-serif font-semibold text-[#342b24] placeholder:text-[#a99c8e] bg-transparent border-b border-[#dfd3c5] focus:border-[#b9684f] focus:outline-none pb-1 transition-colors print:text-black print:border-black"
                 />
                 <p className="text-[11px] text-[#82766a] mt-1">
-                  Life Vision Portfolio · Charting the LifeCourse
+                  Life Vision Portfolio · independent tool based on Charting the LifeCourse
                 </p>
               </div>
             </div>
@@ -401,7 +401,7 @@ export default function App() {
                     {data.myName ? `${data.myName}’s Life Vision` : 'My Life Vision Matrix'}
                   </h2>
                   <p className="text-xs text-[#82766a] print:text-slate-600 mt-1">
-                    Holistic blueprint across the 8 Charting the LifeCourse domains
+                    A personal planning tool organized around eight life domains
                   </p>
                 </div>
                 <div className="flex items-center gap-3 print:hidden">
@@ -417,7 +417,7 @@ export default function App() {
 
               {/* Matrix List sorted by priority */}
               <div className="divide-y divide-[#ebe3d9] print:divide-slate-200 mt-4">
-                <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:grid-cols-[14rem_3rem_minmax(0,1fr)] items-end gap-4 sm:gap-6 border-b border-[#ebe3d9] pb-2 text-xs font-bold tracking-wide text-[#82766a] print:border-slate-300 print:text-slate-600">
+                <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:grid-cols-[18rem_3rem_minmax(0,1fr)] items-end gap-4 sm:gap-6 border-b border-[#ebe3d9] pb-2 text-xs font-bold tracking-wide text-[#82766a] print:border-slate-300 print:text-slate-600">
                   <span>Life Domain</span>
                   <span className="text-center">Priority</span>
                   <span>My Vision for My Future</span>
@@ -429,7 +429,7 @@ export default function App() {
                   return (
                     <div
                       key={domain.id}
-                      className="py-5 flex flex-col sm:grid sm:grid-cols-[14rem_3rem_minmax(0,1fr)] items-start gap-4 sm:gap-6 print:py-4"
+                      className="py-5 flex flex-col sm:grid sm:grid-cols-[18rem_3rem_minmax(0,1fr)] items-start gap-4 sm:gap-6 print:py-4"
                     >
                       {/* Domain */}
                       <div className="w-full sm:w-auto shrink-0 flex items-center justify-between sm:justify-start gap-3">
@@ -440,7 +440,7 @@ export default function App() {
                           <p className="text-xs font-mono text-[#918477] uppercase print:text-slate-500">
                             Domain {idx + 1}
                           </p>
-                          <h4 className="text-sm font-bold text-[#40362e] print:text-black">
+                          <h4 className="text-sm font-bold text-[#40362e] whitespace-nowrap print:text-black">
                             {domain.label}
                           </h4>
                         </div>
@@ -515,7 +515,10 @@ export default function App() {
             <span className="text-[#62564c]">Life Vision</span>
           </p>
           <p className="text-[11px] text-[#918477]">
-            Based on Charting the LifeCourse™ · LifeCourse Nexus
+            An independent planning app based on Charting the LifeCourse™; not an official tool or replica.{' '}
+            <a href="https://lifecoursenexus.org/" target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-[#62564c]">
+              Learn about the original at LifeCourse Nexus
+            </a>
           </p>
         </div>
       </footer>
