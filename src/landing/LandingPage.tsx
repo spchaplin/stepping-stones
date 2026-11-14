@@ -52,7 +52,7 @@ const APPS = [
     tagline: 'Chart your vision across every life domain',
     description:
       'Write the vision you hold for your future across eight life domains — from health and safety to community and advocacy. Each domain you complete builds a vivid, holistic map of a meaningful life.',
-    icon: <IconifyIcon icon={ICON_REGISTRY['mdi:compass-outline']} size={22} disableAnimation />,
+    icon: <IconifyIcon icon={ICON_REGISTRY['material-symbols:signpost-outline-rounded']} size={26.125} disableAnimation />,
   },
 ] as const;
 

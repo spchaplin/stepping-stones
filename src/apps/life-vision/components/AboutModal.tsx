@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { X } from '../../../components/LucideIcons';
+import { LIFE_DOMAINS } from '../domains';
 
 interface AboutModalProps {
   onClose: () => void;
@@ -36,7 +37,7 @@ export default function AboutModal({ onClose }: AboutModalProps) {
           <div className="flex items-start justify-between">
             <div>
               <h2 className="text-base font-bold text-[#342b24]">About Life Vision</h2>
-              <p className="text-xs text-[#82766a] mt-0.5">A Charting the LifeCourse tool</p>
+              <p className="text-xs text-[#82766a] mt-0.5">An independent tool based on Charting the LifeCourse</p>
             </div>
             <button
               onClick={onClose}
@@ -50,17 +51,24 @@ export default function AboutModal({ onClose }: AboutModalProps) {
           <div
             className="px-4 py-3 rounded-xl border border-[#e5d8c9] bg-[#f4ede4]"
           >
-            <p className="text-sm font-bold text-[#514238]">LifeCourse Nexus</p>
+            <p className="text-sm font-bold text-[#514238]">
+              <a href="https://lifecoursenexus.org/" target="_blank" rel="noreferrer" className="hover:underline">
+                LifeCourse Nexus
+              </a>
+            </p>
             <p className="text-xs text-[#82766a] mt-0.5">
-              A Part of the Charting the LifeCourse Personal Decision Making Foundational Tools
+              Based on Charting the LifeCourse Personal Decision Making Foundational Tools; this is not an official tool or replica.
             </p>
           </div>
 
           {/* Description */}
           <div className="space-y-3 text-sm text-[#66594d] leading-relaxed">
             <p>
-              <strong className="text-[#342b24]">Life Vision</strong> is a personal planning tool based on the{' '}
-              <em>Charting the LifeCourse Framework</em>. It helps individuals articulate what a{' '}
+              <strong className="text-[#342b24]">Life Vision</strong> is an independent personal planning app based on the{' '}
+              <a href="https://lifecoursenexus.org/" target="_blank" rel="noreferrer" className="underline decoration-[#b9684f] underline-offset-2">
+                <em>Charting the LifeCourse Framework</em>
+              </a>
+              . It is not an official Charting the LifeCourse tool or replica. It helps individuals articulate what a{' '}
               <strong className="text-[#342b24]">good life</strong> looks like across eight core life domains —
               from health and safety to community, relationships, and advocacy.
             </p>
@@ -74,21 +82,12 @@ export default function AboutModal({ onClose }: AboutModalProps) {
           <div>
             <p className="text-xs font-bold text-[#82766a] uppercase tracking-widest mb-2">Life Domains</p>
             <div className="grid grid-cols-2 gap-1.5">
-              {[
-                'Healthy Living',
-                'Safety & Security',
-                'Supports for Family',
-                'Supports & Services',
-                'Daily Life & Employment',
-                'Community Living',
-                'Social & Spirituality',
-                'Advocacy & Engagement',
-              ].map(d => (
+              {LIFE_DOMAINS.map(({ id, label }) => (
                 <div
-                  key={d}
+                  key={id}
                   className="text-xs text-[#66594d] px-2.5 py-1.5 rounded-lg border border-[#e9e0d6] bg-[#f8f5ef]"
                 >
-                  {d}
+                  {label}
                 </div>
               ))}
             </div>
@@ -99,8 +98,10 @@ export default function AboutModal({ onClose }: AboutModalProps) {
             className="px-4 py-3 rounded-xl border border-[#e9e0d6] bg-[#f6f1e9] text-xs text-[#82766a] leading-relaxed"
           >
             <p>
-              LifeCourse Framework and Tools, iconography, and assets developed by the{' '}
-              <strong className="text-[#62564c]">LifeCourse Nexus</strong> · 2025
+              Charting the LifeCourse Framework and Tools, iconography, and assets developed by{' '}
+              <a href="https://lifecoursenexus.org/" target="_blank" rel="noreferrer" className="font-semibold text-[#62564c] hover:underline">
+                LifeCourse Nexus
+              </a>
             </p>
             <p className="mt-1">
               Curators of the University of Missouri | UMKC-IHD, UCEDD

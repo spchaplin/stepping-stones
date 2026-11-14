@@ -1,5 +1,6 @@
 # Dependencies
 node_modules/
+pnpm-lock.yaml
 
 # Build output
 dist/
@@ -39,3 +40,6 @@ yarn-error.log*
 
 # Compiled server bundle
 server.js
+
+# AWS
+.aws

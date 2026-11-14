@@ -3,17 +3,18 @@
    Single CSS entry point for the unified app and all sub-apps.
    ============================================================ */
 
-/* Google Fonts — used by the Plank sub-app */
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@300..700&family=Inter:wght@400;500;600;700&display=swap');
+/* Google Fonts — Distinctive sans-serif suite */
+@import url('https://fonts.googleapis.com/css2?family=Amaranth:ital,wght@0,400;0,700;1,400;1,700&family=Ruda:wght@400..900&family=Plus+Jakarta+Sans:wght@300..700&family=Inter:wght@400;500;600;700&display=swap');
 
 /* Tailwind v4 — single import covers all sub-apps */
 @import "tailwindcss";
 
 /* ----------------------------------------------------------
-   @theme — Custom font tokens (Plank sub-app)
+   @theme — Custom font tokens (Sans-serif suite)
    ---------------------------------------------------------- */
 @theme {
-  --font-serif: "Cinzel", Georgia, serif;
+  --font-serif: "Amaranth", "Grayscale", "Ruda", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Amaranth", "Grayscale", "Ruda", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --font-crisp: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
@@ -89,7 +90,7 @@
 }
 
 .life-vision .font-serif {
-  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  font-family: "Amaranth", "Grayscale", "Ruda", ui-sans-serif, system-ui, sans-serif;
 }
 
 .expanding-edge-planet-icon g {

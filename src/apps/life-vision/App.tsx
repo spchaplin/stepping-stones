@@ -10,7 +10,7 @@ import {
   CheckCircle,
   LayoutGrid,
   FileText,
-  User,
+  ArrowRightLeft,
 } from '../../components/LucideIcons';
 import IconifyIcon from '../../components/IconifyIcon';
 import { ICON_REGISTRY } from '../../generated/iconRegistry';
@@ -24,11 +24,12 @@ import { useAuth } from '../../firebase/AuthContext';
 import { useFirestoreDocSync } from '../../hooks/useFirestoreSync';
 
 const LOCAL_STORAGE_KEY = 'life_vision_state';
-const INITIAL_LIFE_VISION_DATA: LifeVisionData = { myName: '', domains: {} };
+const INITIAL_LIFE_VISION_DATA: LifeVisionData = { myName: '', avatar: 'male', domains: {} };
 
 function mapLifeVisionData(data: Record<string, unknown>): LifeVisionData {
   return {
     myName: typeof data.myName === 'string' ? data.myName : '',
+    avatar: data.avatar === 'female' ? 'female' : 'male',
     domains: data.domains && typeof data.domains === 'object'
       ? data.domains as LifeVisionData['domains']
       : {},
@@ -37,6 +38,7 @@ function mapLifeVisionData(data: Record<string, unknown>): LifeVisionData {
 
 const serializeLifeVisionData = (state: LifeVisionData) => ({
   myName: state.myName,
+  avatar: state.avatar || 'male',
   domains: state.domains,
 });
 const shouldMigrateLifeVisionData = (state: LifeVisionData) =>
@@ -44,6 +46,7 @@ const shouldMigrateLifeVisionData = (state: LifeVisionData) =>
 
 const DEMO_VISION_DATA: LifeVisionData = {
   myName: 'Alex Morgan',
+  avatar: 'male',
   domains: {
     'healthy-living': {
       vision:
@@ -137,9 +140,18 @@ export default function App() {
     setViewMode(mode);
   };
 
+  const handleToggleAvatar = () => {
+    lifeVisionAudio.playViewToggle();
+    setData((prev) => ({
+      ...prev,
+      avatar: prev.avatar === 'female' ? 'male' : 'female',
+    }));
+  };
+
   const handleReset = () => {
     setData({
       myName: '',
+      avatar: 'male',
       domains: {},
     });
     setShowResetConfirm(false);
@@ -189,23 +201,18 @@ export default function App() {
             <div className="h-4 w-[1px] bg-[#e4d9cc] hidden sm:block" />
 
             <div className="flex items-center gap-2.5">
-              <div className="flex w-9 h-9 items-center justify-center rounded-lg bg-[#b9684f] text-white shadow-md shadow-[#b9684f]/20">
+              <div className="w-10 h-10 rounded-xl bg-[#f2ede5] border border-[#e5dbcf] flex items-center justify-center shrink-0">
                 <IconifyIcon
-                  icon={ICON_REGISTRY['mdi:compass-outline']}
-                  size={20}
-                  className="block"
+                  icon={ICON_REGISTRY['material-symbols:signpost']}
+                  size={27}
+                  className="text-[#b9684f]"
                   disableAnimation
                 />
               </div>
               <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-sm sm:text-base font-bold tracking-tight text-[#342b24]">
-                    Life Vision
-                  </h1>
-                  <span className="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full bg-[#e9ddd1] text-[#805b48] border border-[#decdbd] hidden md:inline-block">
-                    LifeCourse
-                  </span>
-                </div>
+                <h1 className="text-sm sm:text-base font-bold tracking-tight text-[#342b24]">
+                  Life Vision
+                </h1>
                 <p className="text-[11px] text-[#82766a] hidden sm:block">
                   Chart your good life across 8 core domains
                 </p>
@@ -275,24 +282,53 @@ export default function App() {
           {/* Left: Name input and vision compass metadata */}
           <div className="flex-1 flex flex-col gap-3">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#9b674f] print:text-slate-700">
-              <IconifyIcon icon={ICON_REGISTRY['mdi:map']} size={17} className="relative -top-px" />
+              <IconifyIcon icon={ICON_REGISTRY['mdi:map-outline']} size={17} className="relative -top-px" />
               <span>Personal Vision Statement</span>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#f2e9df] border border-[#e7dbcd] flex items-center justify-center text-[#826552] shrink-0 print:border-slate-300 print:text-slate-800">
-                <User size={20} />
+            <div className="flex items-center gap-4">
+              {/* Avatar to the left of the name entry field */}
+              <div className="flex flex-col items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleToggleAvatar}
+                  className="rounded-xl cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9684f] focus-visible:ring-offset-2"
+                  title="Switch avatar"
+                  aria-label="Switch avatar"
+                >
+                  <img
+                    src={
+                      data.avatar === 'female'
+                        ? '/life-vision/avatars/female.avif'
+                        : '/life-vision/avatars/male.avif'
+                    }
+                    alt={data.avatar === 'female' ? 'Female avatar' : 'Male avatar'}
+                    width={65}
+                    height={65}
+                    className="w-[65px] h-[65px] object-cover rounded-xl border border-[#e7dbcd] shadow-xs select-none"
+                  />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleToggleAvatar}
+                  className="flex items-center justify-center py-0.5 px-3 rounded-md bg-[#efe4d8] hover:bg-[#e8d6c6] border border-[#dfcdbb] hover:border-[#cdb39c] text-[#78513e] transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 print:hidden"
+                  title="Switch avatar"
+                  aria-label="Switch avatar"
+                >
+                  <ArrowRightLeft size={11} strokeWidth={2.2} />
+                </button>
               </div>
+
               <div className="flex-1 max-w-md">
                 <input
                   type="text"
                   value={data.myName}
-                  onChange={(e) => setData({ ...data, myName: e.target.value })}
+                  onChange={(e) => setData((prev) => ({ ...prev, myName: e.target.value }))}
                   placeholder="Enter your name (e.g. Alex Morgan)"
-                  className="w-full text-lg sm:text-xl font-serif font-semibold text-[#342b24] placeholder:text-[#a99c8e] bg-transparent border-b border-[#dfd3c5] focus:border-[#b9684f] focus:outline-none pb-1 transition-colors print:text-black print:border-black"
+                  className="w-full text-xl sm:text-2xl font-serif font-semibold text-[#78513e] placeholder:text-xl sm:placeholder:text-2xl placeholder:text-[#a99c8e] bg-transparent border-b border-[#dfd3c5] focus:border-[#b9684f] focus:outline-none pb-1 transition-colors print:text-black print:border-black"
                 />
-                <p className="text-[11px] text-[#82766a] mt-1">
-                  Life Vision Portfolio · Charting the LifeCourse
+                <p className="text-[11px] text-[#82766a] mt-1.5">
+                  Life Vision Portfolio · independent tool based on Charting the LifeCourse
                 </p>
               </div>
             </div>
@@ -360,7 +396,7 @@ export default function App() {
                       : 'border-[#e5dbcf] bg-[#f8f5ef] text-[#75695d] hover:border-[#cdbca9] hover:text-[#41372e]'
                   }`}
                 >
-                  <img src={domain.iconPath} alt="" className="w-5 h-5 object-contain" />
+                  <img src={domain.iconPath} alt="" className="w-[39px] h-[39px] object-contain" />
                   <span className="font-medium">{domain.label}</span>
                   {hasVision && <CheckCircle size={12} className="text-[#728261] shrink-0" />}
                 </a>
@@ -401,7 +437,7 @@ export default function App() {
                     {data.myName ? `${data.myName}’s Life Vision` : 'My Life Vision Matrix'}
                   </h2>
                   <p className="text-xs text-[#82766a] print:text-slate-600 mt-1">
-                    Holistic blueprint across the 8 Charting the LifeCourse domains
+                    A personal planning tool organized around eight life domains
                   </p>
                 </div>
                 <div className="flex items-center gap-3 print:hidden">
@@ -417,7 +453,7 @@ export default function App() {
 
               {/* Matrix List sorted by priority */}
               <div className="divide-y divide-[#ebe3d9] print:divide-slate-200 mt-4">
-                <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:grid-cols-[14rem_3rem_minmax(0,1fr)] items-end gap-4 sm:gap-6 border-b border-[#ebe3d9] pb-2 text-xs font-bold tracking-wide text-[#82766a] print:border-slate-300 print:text-slate-600">
+                <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:grid-cols-[18rem_3rem_minmax(0,1fr)] items-end gap-4 sm:gap-6 border-b border-[#ebe3d9] pb-2 text-xs font-bold tracking-wide text-[#82766a] print:border-slate-300 print:text-slate-600">
                   <span>Life Domain</span>
                   <span className="text-center">Priority</span>
                   <span>My Vision for My Future</span>
@@ -429,18 +465,18 @@ export default function App() {
                   return (
                     <div
                       key={domain.id}
-                      className="py-5 flex flex-col sm:grid sm:grid-cols-[14rem_3rem_minmax(0,1fr)] items-start gap-4 sm:gap-6 print:py-4"
+                      className="py-5 flex flex-col sm:grid sm:grid-cols-[18rem_3rem_minmax(0,1fr)] items-start gap-4 sm:gap-6 print:py-4"
                     >
                       {/* Domain */}
                       <div className="w-full sm:w-auto shrink-0 flex items-center justify-between sm:justify-start gap-3">
-                        <div className="w-10 h-10 flex items-center justify-center shrink-0">
-                          <img src={domain.iconPath} alt="" className="w-9 h-9 object-contain" />
+                        <div className="w-20 h-20 flex items-center justify-center shrink-0">
+                          <img src={domain.iconPath} alt="" className="w-[72px] h-[72px] object-contain" />
                         </div>
                         <div>
                           <p className="text-xs font-mono text-[#918477] uppercase print:text-slate-500">
                             Domain {idx + 1}
                           </p>
-                          <h4 className="text-sm font-bold text-[#40362e] print:text-black">
+                          <h4 className="text-sm font-bold text-[#40362e] whitespace-nowrap print:text-black">
                             {domain.label}
                           </h4>
                         </div>
@@ -515,7 +551,10 @@ export default function App() {
             <span className="text-[#62564c]">Life Vision</span>
           </p>
           <p className="text-[11px] text-[#918477]">
-            Based on Charting the LifeCourse™ · LifeCourse Nexus
+            An independent planning app based on Charting the LifeCourse™; not an official tool or replica.{' '}
+            <a href="https://lifecoursenexus.org/" target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-[#62564c]">
+              Learn about the original at LifeCourse Nexus
+            </a>
           </p>
         </div>
       </footer>
