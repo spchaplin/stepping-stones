@@ -48,6 +48,15 @@ Traditional IRA
     you're required to withdraw increasing amounts as you get older
   rank: 65
 
+ABLE Account
+  superpower: protect eligiblity for government benefits such as medicaid and SSI (supplemental security income)
+  special skills:
+    tax-free growth and withdrawls, similar to Roth IRA
+    can be spent on almost anything that improves quality of life
+    high yearly contribution limits
+    can be spent by owner at any age
+  limitations:
+    upon death, funds are subject to medicaid payback before being passed to heirs
 
 
 1. The Tri-Shield Healer (HSA — Health Savings Account)
@@ -86,19 +95,17 @@ Concept: A nimble, independent operative from the same Order of the Roth as the 
 	• Upfront Toll: Can only be hired by precious sapphire mined in one's youth
 • Rank: 90
 
+4. Attack Advisor (529 Plan)
 
--> Make this a Strategizer, actuary, or someone with expert planning and atack knowledge. Gains gold by wise planning. King's counsel. Jedi Counsel
-4. Royal Advisor (529 Plan)
-
-Concept: A keen strategizer and counselor who plans the king's attacks. He is strictly confined to the Royal Academies, but can dymamically impart expert attack knowledge to remote warriors.
+Concept: A shrewd counselor who plans the king's attacks and advises his campaigns
 • Superpower: Academy Protection
-	• Wisdom and wealth entrusted to the counselor cannot be thwarted or pilfered by outside attackers 
+	• The advisor cannot be attacked from within the safety of the Royal Academy
 • Special Skills:
-	• Regional Blessing: Warriors from the home state of the counselor at times receive his springtime gifts
-	• Soul-Link Transfer: If one party member finishes their training early, the scholar can freely reassign their entire spellbook to another sibling or ally.
-	• Arcane Transmutation: Unused magic can be morphed into an ABLE ward or transferred directly to a Shadow Rogue (Roth IRA) up to a lifetime limit of 35,000 gold.
+	• Transmutation: Can bestow the academy endowment upon the Emerald Rogue or other warrior seeking a better life experience
+	• Scholarship Transfer: If one of his students finishes their training early, he can reassign the student's scholarship to another warrior
+	• Regional Blessing: Blesses warriors from his home region with springtime gifts
 • Limitations:
-	• Scholar's Vow: Magic can strictly be unleashed for qualified education expenses; using it for anything else triggers severe penalty curses.
+	• Scholar's Vow: He is strictly confined to the Royal Academies
 • Rank: 80
 
 5. The Tax-Breaker Berserker (Traditional IRA)
@@ -112,3 +119,22 @@ Concept: A fierce frontline fighter who gives you an immediate burst of strength
 	• The Final Reckoning: Every single piece of gold withdrawn at the end of the game is hit with full tax damage.
 	• Forced March (RMDs): Once you reach old age, game rules force this warrior to march out of the vault and spend increasing amounts of gold every year, whether you want them to or not.
 • Rank: 65
+
+
+Create a female character who rides a horse, as described below. This character should match the style of the existing character set in the last two images I attached, the last one you generated of the sage, and the final emerald rogue image you generated. She is beautiful, but should not flaunt her body but be dressed modestly. Isolate the character on a transparent background.
+
+The Nimble Ranger (ABLE Account)
+
+Option 6: The Nimble Ranger
+
+Concept: She's a swift pathfinder built for autonomy and survival in rugged terrain. Supplies warriors who would have to wait months for the king's official convoy. Has the freedom to provide bounty for living well right now without losing her stipend and blessing from the king.
+• Superpower: Stealth Supply Line
+	• Keeps gold out of convoy ambush attacks so the army never loses essential rations
+• Special Skills:
+	• King's Blessing: Owes no tax to the king on gold withdrawn from the offical supply chest
+	• Pathfinder’s Versatility: Helps the troops obtain any item, sustinence, or experience that improves quality of life
+	• High Cap & Heavy Quiver: The king allows her to store up ample supplye each year, which can be used freely at any age
+• Limitations:
+	• Final Tribute: When the ranger falls at the end of the game, the king takes back any booty gained through war
+  • Only warriors approved by the king may receive help from the ranger
+
