@@ -127,13 +127,13 @@ The Nimble Ranger (ABLE Account)
 
 Option 6: The Nimble Ranger
 
-Concept: She's a swift pathfinder built for autonomy and survival in rugged terrain. Supplies warriors who would have to wait months for the king's official convoy. Has the freedom to provide bounty for living well right now without losing her stipend and blessing from the king.
+Concept: A swift pathfinder built for autonomy and survival in rugged terrain. Supplies warriors who would have to wait months for the king's official convoy. Free to provide bounty for living well right now without losing her stipend and blessing from the king.
 • Superpower: Stealth Supply Line
 	• Keeps gold out of convoy ambush attacks so the army never loses essential rations
 • Special Skills:
 	• King's Blessing: Owes no tax to the king on gold withdrawn from the offical supply chest
-	• Pathfinder’s Versatility: Helps the troops obtain any item, sustinence, or experience that improves quality of life
-	• High Cap & Heavy Quiver: The king allows her to store up ample supplye each year, which can be used freely at any age
+	• Pathfinder’s Versatility: Helps the troops obtain any item or help that improves quality of life
+	• High Cap & Heavy Quiver: The king allows her to store up ample supply each year, which can be used freely at any age
 • Limitations:
 	• Final Tribute: When the ranger falls at the end of the game, the king takes back any booty gained through war
   • Only warriors approved by the king may receive help from the ranger
