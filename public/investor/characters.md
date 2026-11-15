@@ -110,7 +110,7 @@ Concept: A shrewd counselor who plans the king's attacks and advises his campaig
 
 5. The Tax-Breaker Berserker (Traditional IRA)
 
-Concept: A fierce frontline fighter who gives you an immediate burst of strength today, though they demand a heavy price when the campaign finally comes to an end.
+Concept: A fierce frontline fighter who quickly destroys enemy fighters at the start of battle, but lacks endurance and sustains heavy injuries as the battle progresses.
 • Superpower: Immediate Battle Cry
 	• Recruiting this warrior instantly shields your current year's gold from tax collectors, giving you more resources to fight with right now.
 • Special Skills:
