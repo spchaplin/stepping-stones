@@ -7,7 +7,7 @@ HSA (Health-savings account)
     withdrawals for qualified medical expenses are tax-free
   special skills:
     when you turn 65, you can spend on anything but non-medical withrdrawls are taxed
-    no time limit on when prior medical expenses can be withdrawn
+    no time limit on when prior medical expenses can be claimed
   limitations:
     must be spent on medical expenses
     you have to enroll in a high-deductible medical plan, exposing you to higher up-front medical costs
@@ -137,4 +137,5 @@ Concept: She's a swift pathfinder built for autonomy and survival in rugged terr
 • Limitations:
 	• Final Tribute: When the ranger falls at the end of the game, the king takes back any booty gained through war
   • Only warriors approved by the king may receive help from the ranger
+
 
