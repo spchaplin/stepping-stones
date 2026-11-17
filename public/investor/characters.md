@@ -108,17 +108,33 @@ Concept: A shrewd counselor who plans the king's attacks and advises his campaig
 	• Scholar's Vow: He is strictly confined to the Royal Academies
 • Rank: 80
 
-5. The Tax-Breaker Berserker (Traditional IRA)
+5. The Dawnbreaker (Traditional IRA)
 
 Concept: A fierce frontline fighter who quickly destroys enemy fighters at the start of battle, but lacks endurance and sustains heavy injuries as the battle progresses.
-• Superpower: Immediate Battle Cry
-	• Recruiting this warrior instantly shields your current year's gold from tax collectors, giving you more resources to fight with right now.
+• Superpower: Instant Fury
+	• Wipes out entire sections of the attacking armies at the outset of a battle
 • Special Skills:
-	• Emergency Rationing: Allows you to pull small amounts of gold out early without penalty if your party faces specific, dire hardships (like a first home fortress or sudden medical crisis).
+	• Special Quests: Skilled at carrying out special quests without taking any damage 
 • Limitations:
-	• The Final Reckoning: Every single piece of gold withdrawn at the end of the game is hit with full tax damage.
-	• Forced March (RMDs): Once you reach old age, game rules force this warrior to march out of the vault and spend increasing amounts of gold every year, whether you want them to or not.
+	• The Final Reckoning: Mid to late battle, his strength melts and he endangers himself and the king's army
+	• Forced March: Game rules force this warrior to march out and spend his gold to fortify the king's troops whether there is a need or not
 • Rank: 65
+
+
+5. Traditional IRA — Rank: 75
+
+• Superpower: Up-front tax shield. Contributions can be deducted from your current year's taxable income, lowering your tax bill right now.
+• Special Skills:
+	• Special quest exemptions: You can withdraw money early without the standard 10% penalty for specific milestones, such as buying your first home (up to $10,000), paying for higher education, or covering major medical hardships.
+	• Universal access: Anyone with earned income can open and contribute to one, regardless of how much money they make.
+• Limitations:
+	• All withdrawals in retirement are taxed as ordinary income.
+	• Forced loot drops: Once you reach age 73, the government forces you to take Required Minimum Distributions (RMDs) every year, whether you need the cash or not.
+	• If you (or your spouse) have a retirement plan at work and earn above a certain amount, you lose the ability to deduct your contributions on your taxes.
+• Note: There is a similar account type, the traditional 401k that has some amazing advantages, though only offered through employers:
+	• employers match a percentage of your contributions
+	• higher contribution limit ($24,500 as of 2026)
+	• high earners are allowed to make pre-tax contributions
 
 
 Create a female character who rides a horse, as described below. This character should match the style of the existing character set in the last two images I attached, the last one you generated of the sage, and the final emerald rogue image you generated. She is beautiful, but should not flaunt her body but be dressed modestly. Isolate the character on a transparent background.
