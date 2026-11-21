@@ -10,7 +10,7 @@ Concept: A legendary battle-medic clad in radiant, triple-layered armor. While m
 	• Heavy Armor Requirement: Armor can only be bought by fording the treacherous Jade river
 • Rank: 100
 
-2. The Crimson Phoenix (Roth 401k) [use previous image iteration to avoid copyright issue]
+2. The Crimson Phoenix (Roth 401k)
 Concept: A heavy-armored knight belonging to the Order of the Roth. He pays a heavy toll to forge his weapons, which grant him complete immunity to dragons later.
 • Superpower: Dragon Immunity
 	• No health, achievements, or booty can ever be lost to dragons
@@ -46,7 +46,7 @@ Concept: A shrewd counselor who plans the king's attacks and advises his campaig
 	• Scholar's Vow: He is strictly confined to the Royal Academies
 • Rank: 85
 
-5. The Electric Storm (Traditional 401(k))
+5. The Electric Storm (Traditional 401k)
 Concept: An frontliner who enters battle with a powered-up shield that deflects early enemy strikes, though his defenses later fizzle.
 • Superpower: Electrified Shield
 	• Projects a massive energy barrier at the start of battle that blocks attacks and knocks down enemies

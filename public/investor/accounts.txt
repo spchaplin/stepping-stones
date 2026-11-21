@@ -11,7 +11,7 @@
 	• Strict yearly contribution caps apply ($4,400 for individuals in 2026).
 	• Spending on non-medical items before age 65 triggers income taxes plus a steep 20% penalty.
 
-2. Roth 401(k) — Rank: 95
+2. Roth 401k — Rank: 95
 
 • Superpower: Tax-free retirement wealth. Your investments grow completely tax-free, and every dollar you pull out in retirement is 100% tax-free.
 • Special Skills:
@@ -48,7 +48,7 @@
 	• Using the money for non-education expenses triggers income taxes plus a 10% penalty on the investment earnings.
 	• Investment choices are limited to the specific portfolios offered by the state plan you choose, but brokerages Fidelity and Vanguard offer state plans with additional options.
 
-5. Traditional 401(k) - Rank: 80
+5. Traditional 401k - Rank: 80
 • Superpower: Immediate, powered tax shield. Contributions are taken directly from your paycheck before taxes, lowering your taxable income right now while your investments grow tax-deferred.
 • Special Skills:
 	• Free ally loot: Employers often match a percentage of your contributions, giving you free money.
@@ -76,7 +76,7 @@
 	• higher contribution limit ($24,500 as of 2026)
 	• high earners are allowed to make pre-tax contributions
 
-7. ABLE Account — Rank: 90
+7. ABLE Account — Rank: 85
 
 • Superpower: Benefit shield. Allows individuals with disabilities to save and invest large sums without losing eligibility for vital government benefits like Medicaid and SSI.
 • Special Skills:
