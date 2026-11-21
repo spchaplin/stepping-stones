@@ -217,6 +217,49 @@
         "domains",
         "updatedAt"
       ]
+    },
+    "CommanderDoc": {
+      "title": "CommanderDoc",
+      "description": "A user's 4-warrior Commander campaign roster, warrior selection notes, and strategy reflection.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "selectedWarriorIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 64
+          }
+        },
+        "warriorNotes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 300
+          }
+        },
+        "campaignStrategyNote": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "soundEnabled": {
+          "type": "boolean"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "userId",
+        "selectedWarriorIds",
+        "warriorNotes",
+        "campaignStrategyNote",
+        "soundEnabled",
+        "updatedAt"
+      ]
     }
   },
   "firestore": {
@@ -243,6 +286,10 @@
     "/users/{userId}/lifeVision/current": {
       "schema": "LifeVisionDoc",
       "description": "A user's Life Vision name and life-domain statements."
+    },
+    "/users/{userId}/commander/current": {
+      "schema": "CommanderDoc",
+      "description": "A user's Commander 4-warrior roster and campaign strategy notes."
     }
   }
 }

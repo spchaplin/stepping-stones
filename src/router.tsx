@@ -8,6 +8,7 @@ const StrategizerApp = lazy(() => import('./apps/strategizer/App'));
 const PlankApp = lazy(() => import('./apps/plank/App'));
 const ExpandingEdgeApp = lazy(() => import('./apps/expanding-edge/App'));
 const LifeVisionApp = lazy(() => import('./apps/life-vision/App'));
+const CommanderApp = lazy(() => import('./apps/commander/App'));
 
 /**
  * Obsidian-themed suspense fallback displayed during route transitions.
@@ -30,6 +31,7 @@ function RouteLoadingFallback() {
  *   /plank             → Plank sub-app
  *   /expanding-edge    → The Expanding Edge sub-app
  *   /life-vision       → Life Vision sub-app
+ *   /commander         → Commander sub-app
  *
  * Unknown paths and inactive apps redirect to the landing page.
  */
@@ -38,6 +40,7 @@ const appRoutes: { id: SubAppId; Component: React.LazyExoticComponent<React.Comp
   { id: 'plank', Component: PlankApp },
   { id: 'expanding-edge', Component: ExpandingEdgeApp },
   { id: 'life-vision', Component: LifeVisionApp },
+  { id: 'commander', Component: CommanderApp },
 ];
 
 export const router = createBrowserRouter([

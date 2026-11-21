@@ -4,7 +4,7 @@
    ============================================================ */
 
 /* Google Fonts — Distinctive sans-serif suite */
-@import url('https://fonts.googleapis.com/css2?family=Amaranth:ital,wght@0,400;0,700;1,400;1,700&family=Ruda:wght@400..900&family=Plus+Jakarta+Sans:wght@300..700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Amaranth:ital,wght@0,400;0,700;1,400;1,700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=Ruda:wght@400..900&family=Plus+Jakarta+Sans:wght@300..700&family=Inter:wght@400;500;600;700&display=swap');
 
 /* Tailwind v4 — single import covers all sub-apps */
 @import "tailwindcss";
@@ -95,4 +95,17 @@
 
 .expanding-edge-planet-icon g {
   stroke-width: 1.90;
+}
+
+.commander-root {
+  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+.commander-display {
+  font-family: "Outfit", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+.commander-mono {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  font-variant-numeric: tabular-nums;
 }

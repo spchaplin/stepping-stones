@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Footprints, Layers } from '../components/LucideIcons';
+import { Footprints, Layers, Swords } from '../components/LucideIcons';
 import IconifyIcon from '../components/IconifyIcon';
 import { ICON_REGISTRY } from '../generated/iconRegistry';
 import { stopPlankAudio } from '../apps/plank/audio/plankAudio';
@@ -53,6 +53,16 @@ const APPS = [
     description:
       'Write the vision you hold for your future across eight life domains — from health and safety to community and advocacy. Each domain you complete builds a vivid, holistic map of a meaningful life.',
     icon: <IconifyIcon icon={ICON_REGISTRY['material-symbols:signpost-outline-rounded']} size={26.125} disableAnimation />,
+  },
+  {
+    id: 'commander',
+    to: '/commander',
+    indexLabel: '05',
+    label: 'Commander',
+    tagline: 'Command your financial future',
+    description:
+      'Explore seven investment-account warriors, compare their superpowers and trade-offs against real account rules, and draft a 4-warrior army for your future.',
+    icon: <Swords size={22} strokeWidth={1.9} />,
   },
 ] as const;
 
@@ -293,7 +303,7 @@ export default function LandingPage() {
           </div>
 
           <p className="text-sm sm:text-base text-zinc-400 leading-relaxed max-w-md mt-1">
-            Four focused instruments for personal direction, execution, and growth. Pick a tool and begin.
+            Five focused instruments for personal direction, execution, and growth. Pick a tool and begin.
           </p>
         </motion.div>
 

@@ -16,6 +16,8 @@ const requestedIcons = {
     'chevron-up', 'chevron-down', 'bookmark-check', 'book-open', 'arrow-left-right',
     'arrow-right-left',
     'trending-up',
+    'swords', 'shield', 'zoom-in', 'maximize-2', 'crown', 'flame', 'scroll-text',
+    'landmark', 'eye',
   ],
   mdi: ['compass-outline', 'map', 'map-outline', 'star-shooting'],
   solar: ['planet-3-linear'],

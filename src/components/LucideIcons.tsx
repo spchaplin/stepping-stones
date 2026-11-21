@@ -55,7 +55,16 @@ type IconName =
   | 'book-open'
   | 'arrow-left-right'
   | 'arrow-right-left'
-  | 'trending-up';
+  | 'trending-up'
+  | 'swords'
+  | 'shield'
+  | 'zoom-in'
+  | 'maximize-2'
+  | 'crown'
+  | 'flame'
+  | 'scroll-text'
+  | 'landmark'
+  | 'eye';
 
 interface LucideIconProps extends Omit<SVGProps<SVGSVGElement>, 'width' | 'height' | 'viewBox' | 'children'> {
   size?: number;
@@ -132,3 +141,12 @@ export const BookOpen = createLucideIcon('book-open');
 export const ArrowLeftRight = createLucideIcon('arrow-left-right');
 export const ArrowRightLeft = createLucideIcon('arrow-right-left');
 export const TrendingUp = createLucideIcon('trending-up');
+export const Swords = createLucideIcon('swords');
+export const Shield = createLucideIcon('shield');
+export const ZoomIn = createLucideIcon('zoom-in');
+export const Maximize2 = createLucideIcon('maximize-2');
+export const Crown = createLucideIcon('crown');
+export const Flame = createLucideIcon('flame');
+export const ScrollText = createLucideIcon('scroll-text');
+export const Landmark = createLucideIcon('landmark');
+export const Eye = createLucideIcon('eye');

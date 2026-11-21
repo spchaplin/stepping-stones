@@ -3,6 +3,7 @@ export const SUB_APPS = {
   strategizer: { path: '/strategizer', active: true },
   'expanding-edge': { path: '/expanding-edge', active: true },
   'life-vision': { path: '/life-vision', active: true },
+  commander: { path: '/commander', active: true },
 } as const;
 
 export type SubAppId = keyof typeof SUB_APPS;

@@ -84,6 +84,22 @@ service cloud.firestore {
         && (!('updatedAt' in data) || data.updatedAt is string);
     }
 
+    // Commander document
+    function isValidCommanderDoc(data, userId) {
+      return data.keys().hasAll(['selectedWarriorIds', 'warriorNotes', 'campaignStrategyNote', 'soundEnabled'])
+        && data.keys().hasOnly(['userId', 'selectedWarriorIds', 'warriorNotes', 'campaignStrategyNote', 'soundEnabled', 'updatedAt'])
+        && data.selectedWarriorIds is list
+        && data.selectedWarriorIds.size() <= 4
+        && (data.selectedWarriorIds.size() == 0 || (data.selectedWarriorIds[0] is string && data.selectedWarriorIds[0].size() <= 64))
+        && data.warriorNotes is map
+        && data.warriorNotes.size() <= 10
+        && data.campaignStrategyNote is string
+        && data.campaignStrategyNote.size() <= 2000
+        && data.soundEnabled is bool
+        && (!('userId' in data) || data.userId == userId)
+        && (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64));
+    }
+
     // User Profile matching rule
     match /users/{userId} {
       allow get: if isOwner(userId);
@@ -136,6 +152,13 @@ service cloud.firestore {
       match /lifeVision/{docId} {
         allow get: if isOwner(userId) && docId == 'current';
         allow create, update: if isOwner(userId) && docId == 'current' && isValidLifeVisionDoc(incoming(), userId);
+        allow delete: if isOwner(userId) && docId == 'current';
+      }
+
+      // Commander document
+      match /commander/{docId} {
+        allow get: if isOwner(userId) && docId == 'current';
+        allow create, update: if isOwner(userId) && docId == 'current' && isValidCommanderDoc(incoming(), userId);
         allow delete: if isOwner(userId) && docId == 'current';
       }
     }
