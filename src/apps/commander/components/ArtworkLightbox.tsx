@@ -123,8 +123,11 @@ export default function ArtworkLightbox({
             </div>
 
             {/* Footer caption */}
-            <div className="px-5 py-3 border-t border-slate-800 bg-slate-950/60 flex items-center justify-between gap-4 text-xs text-slate-400">
-              <span className="truncate">{warrior.warrior.superpowerTitle}: {warrior.warrior.superpowerDetail}</span>
+            <div className="px-5 py-3 border-t border-slate-800 bg-slate-950/60 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 sm:gap-4 text-xs text-slate-400">
+              <span className="leading-relaxed text-slate-300">
+                <strong className="font-semibold text-white">{warrior.warrior.superpowerTitle}:</strong>{' '}
+                {warrior.warrior.superpowerDetail}
+              </span>
               <span className="commander-mono whitespace-nowrap shrink-0 text-slate-500">Full-Size Artwork</span>
             </div>
           </motion.div>

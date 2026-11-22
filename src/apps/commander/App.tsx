@@ -268,7 +268,7 @@ export default function App() {
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors whitespace-nowrap shrink-0 py-1.5 px-2.5 rounded-lg hover:bg-slate-800/80"
             >
               <ChevronLeft size={15} />
-              <span>Stepping Stones</span>
+              <span>Suite</span>
             </Link>
             <span aria-hidden="true" className="text-slate-700 hidden sm:inline">
               /

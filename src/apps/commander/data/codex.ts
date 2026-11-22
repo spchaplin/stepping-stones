@@ -279,7 +279,7 @@ export const CODEX_ENTRIES: WarriorAccountEntry[] = [
       name: 'Attack Advisor',
       concept: 'A shrewd counselor who plans the king’s attacks and advises his campaigns.',
       superpowerTitle: 'Academy Protection',
-      superpowerDetail: 'The advisor cannot be attacked from within the safety of the Royal Academy.',
+      superpowerDetail: 'Cannot be attacked within the safety of the Royal Academies.',
       specialSkills: [
         {
           title: 'Transmutation',
@@ -361,7 +361,7 @@ export const CODEX_ENTRIES: WarriorAccountEntry[] = [
       concept:
         'A swift pathfinder built for autonomy and survival in rugged terrain. Supplies warriors who would have to wait months for the king’s official convoy, and is free to provide bounty for living well right now without losing her stipend and blessing from the king.',
       superpowerTitle: 'Stealth Supply Line',
-      superpowerDetail: 'Keeps gold out of convoy ambush attacks so the army never loses essential rations.',
+      superpowerDetail: 'Avoids convoy ambush attacks so the army never loses essential rations.',
       specialSkills: [
         {
           title: 'King’s Blessing',
@@ -450,7 +450,7 @@ export const CODEX_ENTRIES: WarriorAccountEntry[] = [
       concept:
         'A frontliner who enters battle with a powered-up shield that deflects early enemy strikes, though his defenses later fizzle.',
       superpowerTitle: 'Electrified Shield',
-      superpowerDetail: 'Projects a massive energy barrier at the start of battle that blocks attacks and knocks down enemies.',
+      superpowerDetail: 'Blocks attacks and knocks down enemies with a massive energy shield.',
       specialSkills: [
         {
           title: 'Ally Reinforcements',

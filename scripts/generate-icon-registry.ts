@@ -17,7 +17,7 @@ const requestedIcons = {
     'arrow-right-left',
     'trending-up',
     'swords', 'shield', 'zoom-in', 'maximize-2', 'crown', 'flame', 'scroll-text',
-    'landmark', 'eye',
+    'landmark', 'eye', 'star',
   ],
   mdi: ['compass-outline', 'map', 'map-outline', 'star-shooting'],
   solar: ['planet-3-linear'],

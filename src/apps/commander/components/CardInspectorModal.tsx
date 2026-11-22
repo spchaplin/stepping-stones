@@ -11,6 +11,7 @@ import {
   ScrollText,
   ShieldAlert,
   Sparkles,
+  Star,
   Swords,
   X,
 } from '../../../components/LucideIcons';
@@ -299,7 +300,7 @@ export default function CardInspectorModal({
 
                       <section className="pt-4 border-t border-slate-800/80 space-y-3">
                         <h3 className="text-xs font-semibold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-                          <Sparkles size={14} />
+                          <Star size={14} />
                           <span>Special Skills</span>
                         </h3>
                         <ul className="space-y-2.5">
@@ -342,7 +343,7 @@ export default function CardInspectorModal({
 
                       <section className="pt-4 border-t border-slate-800/80 space-y-3">
                         <h3 className="text-xs font-semibold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-                          <Sparkles size={14} />
+                          <Star size={14} />
                           <span>Special Skills (Account Perks)</span>
                         </h3>
                         <ul className="space-y-2.5">

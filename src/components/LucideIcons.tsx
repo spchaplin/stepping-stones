@@ -64,7 +64,8 @@ type IconName =
   | 'flame'
   | 'scroll-text'
   | 'landmark'
-  | 'eye';
+  | 'eye'
+  | 'star';
 
 interface LucideIconProps extends Omit<SVGProps<SVGSVGElement>, 'width' | 'height' | 'viewBox' | 'children'> {
   size?: number;
@@ -150,3 +151,4 @@ export const Flame = createLucideIcon('flame');
 export const ScrollText = createLucideIcon('scroll-text');
 export const Landmark = createLucideIcon('landmark');
 export const Eye = createLucideIcon('eye');
+export const Star = createLucideIcon('star');
