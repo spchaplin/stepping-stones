@@ -43,3 +43,6 @@ server.js
 
 # AWS
 .aws
+
+# image creation history
+public/commander/warriors/full-size/history/
