@@ -52,17 +52,20 @@ export default function WarriorCard({
     >
       {/* Top unboxed metadata strip (Zero-pill discipline) */}
       <div className="flex items-center justify-between gap-2 px-4 pt-3.5 pb-2 text-xs">
-        <div className="flex items-center gap-1.5 text-slate-400 truncate">
-          <span className={`font-semibold ${entry.element.textClass}`}>{entry.element.name}</span>
-          <span aria-hidden="true" className="text-slate-600">·</span>
-          <span className="truncate">{entry.account.shortName}</span>
+        <div className="flex items-center gap-2 text-slate-300 truncate">
+          <span
+            aria-hidden="true"
+            className="w-3.5 h-3.5 rounded-[4px] border border-white/25 shrink-0"
+            style={{ backgroundColor: entry.element.accentHex }}
+          />
+          <span className="font-semibold text-slate-200 truncate">{entry.account.shortName}</span>
         </div>
         <span className="commander-mono font-semibold text-slate-300 whitespace-nowrap shrink-0">
           Rank {entry.rank}
         </span>
       </div>
 
-      {/* Framed card-size portrait */}
+      {/* Framed portrait */}
       <div className="px-4">
         <div
           className="relative aspect-square w-full rounded-xl overflow-hidden border border-slate-700/60 flex items-center justify-center cursor-pointer"
@@ -76,7 +79,7 @@ export default function WarriorCard({
             </div>
           ) : (
             <img
-              src={entry.cardImageUrl}
+              src={entry.imageUrl}
               alt={`${entry.warrior.name} — ${entry.account.name}`}
               referrerPolicy="no-referrer"
               loading="lazy"

@@ -88,8 +88,11 @@ export default function CardInspectorModal({
                   {entry.warrior.name}
                 </h2>
                 <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400 mt-0.5">
-                  <span className={entry.element.textClass}>{entry.element.name}</span>
-                  <span aria-hidden="true">·</span>
+                  <span
+                    aria-hidden="true"
+                    className="w-3 h-3 rounded-[3px] border border-white/25 shrink-0"
+                    style={{ backgroundColor: entry.element.accentHex }}
+                  />
                   <span className="text-slate-200 font-medium">{entry.account.name}</span>
                   <span aria-hidden="true">·</span>
                   <span className="commander-mono">Rank {entry.rank}</span>
@@ -140,7 +143,7 @@ export default function CardInspectorModal({
                       </div>
                     ) : (
                       <img
-                        src={entry.cardImageUrl}
+                        src={entry.imageUrl}
                         alt={`${entry.warrior.name} portrait`}
                         referrerPolicy="no-referrer"
                         onError={() => setImgError(true)}

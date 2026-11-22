@@ -62,9 +62,12 @@ export default function ArtworkLightbox({
                   {warrior.warrior.name}
                 </h2>
                 <div className="flex items-center gap-2 text-xs text-slate-400">
-                  <span className={warrior.element.textClass}>{warrior.element.name}</span>
-                  <span aria-hidden="true">·</span>
-                  <span>{warrior.account.name}</span>
+                  <span
+                    aria-hidden="true"
+                    className="w-3 h-3 rounded-[3px] border border-white/25 shrink-0"
+                    style={{ backgroundColor: warrior.element.accentHex }}
+                  />
+                  <span className="text-slate-200 font-medium">{warrior.account.name}</span>
                   <span aria-hidden="true">·</span>
                   <span className="commander-mono">Rank {warrior.rank}</span>
                 </div>
@@ -92,7 +95,7 @@ export default function ArtworkLightbox({
                 </div>
               ) : (
                 <img
-                  src={warrior.fullImageUrl}
+                  src={warrior.imageUrl}
                   alt={`${warrior.warrior.name} full-size warrior portrait`}
                   referrerPolicy="no-referrer"
                   onError={() => setImgError(true)}

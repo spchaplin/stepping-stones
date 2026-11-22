@@ -160,7 +160,7 @@ export default function CommandRosterPanel({
                 title={`Inspect ${entry.warrior.name}`}
               >
                 <img
-                  src={entry.cardImageUrl}
+                  src={entry.imageUrl}
                   alt={entry.warrior.name}
                   referrerPolicy="no-referrer"
                   className="w-full h-full object-contain p-0.5"
@@ -179,7 +179,12 @@ export default function CommandRosterPanel({
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-slate-400 truncate mt-0.5">
-                  <span className={entry.element.textClass}>{entry.account.shortName}</span>
+                  <span
+                    aria-hidden="true"
+                    className="w-2.5 h-2.5 rounded-[3px] border border-white/25 shrink-0"
+                    style={{ backgroundColor: entry.element.accentHex }}
+                  />
+                  <span className="text-slate-200 font-medium">{entry.account.shortName}</span>
                   <span aria-hidden="true">·</span>
                   <span className="commander-mono">Rank {entry.rank}</span>
                   {note && (

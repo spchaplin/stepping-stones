@@ -16,7 +16,6 @@ export type TaxTiming = 'triple-tax-free' | 'tax-free-exit' | 'pre-tax-deferred'
 export type AccessType = 'employer' | 'individual' | 'specialized';
 
 export interface ElementTheme {
-  name: string;
   accentHex: string;
   textClass: string;
   borderClass: string;
@@ -56,8 +55,7 @@ export interface AccountProfile {
 export interface WarriorAccountEntry {
   id: WarriorId;
   rank: number;
-  cardImageUrl: string;
-  fullImageUrl: string;
+  imageUrl: string;
   filters: CodexFilter[];
   element: ElementTheme;
   warrior: WarriorProfile;
