@@ -100,7 +100,7 @@ export default function App() {
     serializer: serializeLifeVisionData,
     initialState: INITIAL_LIFE_VISION_DATA,
     shouldMigrate: shouldMigrateLifeVisionData,
-    timeoutMs: 0,
+    timeoutMs: 6000,
   });
 
   const [showAbout, setShowAbout] = useState(false);

@@ -21,6 +21,7 @@ import {
   handleFirestoreError,
   OperationType,
 } from '../firebase/firebase';
+import { useSyncStatusReporter, type CloudSyncStatus } from '../firebase/SyncStatusContext';
 
 const identity = <T,>(value: T): T => value;
 const mapIdentity = <T,>(value: unknown): T => value as T;
@@ -92,6 +93,7 @@ export interface FirestoreDocSyncResult<T> {
   isLoading: boolean;
   firestoreError: string | null;
   isSyncingFromCloud: boolean;
+  syncStatus: CloudSyncStatus;
   refetch: () => void;
   clearFirestoreError: () => void;
 }
@@ -121,31 +123,48 @@ export function useFirestoreDocSync<T>(
     deserialize: localMapper,
     serialize: localSerializer,
   });
-  const pendingLocalChangesKey = `${localStorageKey}:pending`;
   const [isLoading, setIsLoading] = useState(enabled && Boolean(uid));
   const [firestoreError, setFirestoreError] = useState<string | null>(null);
   const [isSyncingFromCloud, setIsSyncingFromCloud] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<CloudSyncStatus>(() => (uid ? 'saving' : 'local'));
   const [refetchKey, setRefetchKey] = useState(0);
   const stateRef = useRef(state);
   const syncingRef = useRef(false);
   const resolvedUidRef = useRef<string | null>(null);
-  const localChangeVersionRef = useRef(
-    readLocalStorage<boolean>(pendingLocalChangesKey) === true ? 1 : 0,
-  );
-  const syncedChangeVersionRef = useRef(0);
+  const activeUidRef = useRef<string | null>(uid ?? null);
+  const activeEnabledRef = useRef<boolean>(enabled);
+  const inSessionDirtyVersionRef = useRef(0);
+  const syncedInSessionVersionRef = useRef(0);
   const persistInitialStateRef = useRef(false);
-  const setState = useCallback<Dispatch<SetStateAction<T>>>((action) => {
-    localChangeVersionRef.current += 1;
-    writeLocalStorage(pendingLocalChangesKey, true);
-    setStoredState(action);
-  }, [pendingLocalChangesKey, setStoredState]);
 
+  activeUidRef.current = uid ?? null;
+  activeEnabledRef.current = enabled;
   stateRef.current = state;
 
+  useSyncStatusReporter(`doc:${localStorageKey}`, uid ? syncStatus : 'local', firestoreError);
+
+  const setState = useCallback<Dispatch<SetStateAction<T>>>(
+    (action) => {
+      if (activeUidRef.current && activeEnabledRef.current) {
+        inSessionDirtyVersionRef.current += 1;
+        setSyncStatus('saving');
+      }
+      setStoredState(action);
+    },
+    [setStoredState],
+  );
+
   useEffect(() => {
+    // Reset session-scoped dirty tracking whenever auth identity changes so pre-login
+    // localStorage edits never overwrite existing cloud documents on sign-in.
+    inSessionDirtyVersionRef.current = 0;
+    syncedInSessionVersionRef.current = 0;
+    persistInitialStateRef.current = false;
+
     if (!enabled) {
       resolvedUidRef.current = null;
       setIsLoading(true);
+      setSyncStatus(uid ? 'saving' : 'local');
       return;
     }
 
@@ -153,26 +172,31 @@ export function useFirestoreDocSync<T>(
       resolvedUidRef.current = null;
       setIsLoading(false);
       setFirestoreError(null);
+      setSyncStatus('local');
       return;
     }
 
     resolvedUidRef.current = null;
     setIsLoading(true);
     setFirestoreError(null);
+    setSyncStatus('saving');
     let cancelled = false;
     let hasResolved = false;
     let resetSyncingTimeout: ReturnType<typeof setTimeout> | undefined;
     const path = docPath.replace('{uid}', uid);
     const docRef = doc(firestore, path);
-    const timeoutId = timeoutMs > 0
-      ? setTimeout(() => {
-          if (cancelled || hasResolved) return;
-          hasResolved = true;
-          resolvedUidRef.current = uid;
-          setIsLoading(false);
-          setFirestoreError('Cloud connection timed out. Showing your local device backup.');
-        }, timeoutMs)
-      : undefined;
+    const timeoutId =
+      timeoutMs > 0
+        ? setTimeout(() => {
+            if (cancelled || hasResolved) return;
+            hasResolved = true;
+            resolvedUidRef.current = uid;
+            setIsLoading(false);
+            const timeoutMsg = 'Cloud connection timed out. Showing your local device backup.';
+            setFirestoreError(timeoutMsg);
+            setSyncStatus('error');
+          }, timeoutMs)
+        : undefined;
 
     const unsubscribe = onSnapshot(
       docRef,
@@ -187,25 +211,23 @@ export function useFirestoreDocSync<T>(
 
         if (snapshot.exists()) {
           const remoteState = mapper(snapshot.data());
-          const hasLocalChanges =
-            localChangeVersionRef.current > syncedChangeVersionRef.current;
+          const hasInSessionPendingWrites =
+            inSessionDirtyVersionRef.current > syncedInSessionVersionRef.current;
+
           if (
-            hasLocalChanges &&
-            (
-              snapshot.metadata.hasPendingWrites ||
-              JSON.stringify(serializer(remoteState)) !==
-                JSON.stringify(serializer(stateRef.current))
-            )
+            hasInSessionPendingWrites &&
+            (snapshot.metadata.hasPendingWrites ||
+              JSON.stringify(serializer(remoteState)) !== JSON.stringify(serializer(stateRef.current)))
           ) {
             return;
           }
 
-          syncedChangeVersionRef.current = localChangeVersionRef.current;
+          syncedInSessionVersionRef.current = inSessionDirtyVersionRef.current;
           persistInitialStateRef.current = false;
-          writeLocalStorage(pendingLocalChangesKey, false);
           syncingRef.current = true;
           setIsSyncingFromCloud(true);
           setStoredState(remoteState);
+          setSyncStatus('synced');
           if (resetSyncingTimeout) clearTimeout(resetSyncingTimeout);
           resetSyncingTimeout = setTimeout(() => {
             syncingRef.current = false;
@@ -214,19 +236,34 @@ export function useFirestoreDocSync<T>(
           return;
         }
 
+        // Cloud document does not exist yet: migrate local edits if present.
         const localState = stateRef.current;
         if (shouldMigrate(localState)) {
+          setSyncStatus('saving');
           setDoc(docRef, {
             userId: uid,
             ...serializer(localState),
             updatedAt: new Date().toISOString(),
-          }).catch((error: unknown) => {
-            const syncError = error instanceof Error ? error : new Error(String(error));
-            onError(syncError, OperationType.WRITE, path);
-            onPersistError?.(syncError);
-          });
+          })
+            .then(() => {
+              if (cancelled || activeUidRef.current !== uid) return;
+              if (inSessionDirtyVersionRef.current <= syncedInSessionVersionRef.current) {
+                setSyncStatus('synced');
+                setFirestoreError(null);
+              }
+            })
+            .catch((error: unknown) => {
+              const syncError = error instanceof Error ? error : new Error(String(error));
+              if (!cancelled) {
+                setFirestoreError(syncError.message || 'Unable to save to cloud');
+                setSyncStatus('error');
+              }
+              onPersistError?.(syncError);
+              onError(syncError, OperationType.WRITE, path);
+            });
         } else {
           persistInitialStateRef.current = true;
+          setSyncStatus('synced');
         }
       },
       (error) => {
@@ -236,6 +273,7 @@ export function useFirestoreDocSync<T>(
         if (timeoutId) clearTimeout(timeoutId);
         setIsLoading(false);
         setFirestoreError(error.message || 'Unable to sync with cloud');
+        setSyncStatus('error');
         onError(error, OperationType.GET, path);
       },
     );
@@ -263,32 +301,45 @@ export function useFirestoreDocSync<T>(
   ]);
 
   useEffect(() => {
-    if (
-      !enabled ||
-      !uid ||
-      isLoading ||
-      resolvedUidRef.current !== uid ||
-      syncingRef.current
-    ) {
+    if (!enabled || !uid || isLoading || resolvedUidRef.current !== uid || syncingRef.current) {
       return;
     }
 
-    const hasLocalChanges =
-      localChangeVersionRef.current > syncedChangeVersionRef.current;
-    if (!hasLocalChanges && !persistInitialStateRef.current) return;
+    const hasInSessionChanges =
+      inSessionDirtyVersionRef.current > syncedInSessionVersionRef.current;
+    if (!hasInSessionChanges && !persistInitialStateRef.current) return;
 
+    const targetVersion = inSessionDirtyVersionRef.current;
     const path = docPath.replace('{uid}', uid);
+    setSyncStatus('saving');
+
     const timer = setTimeout(() => {
       persistInitialStateRef.current = false;
       setDoc(doc(firestore, path), {
         userId: uid,
         ...serializer(state),
         updatedAt: new Date().toISOString(),
-      }).catch((error: unknown) => {
-        const syncError = error instanceof Error ? error : new Error(String(error));
-        onError(syncError, OperationType.WRITE, path);
-        onPersistError?.(syncError);
-      });
+      })
+        .then(() => {
+          if (activeUidRef.current !== uid) return;
+          syncedInSessionVersionRef.current = Math.max(
+            syncedInSessionVersionRef.current,
+            targetVersion,
+          );
+          if (inSessionDirtyVersionRef.current <= syncedInSessionVersionRef.current) {
+            setSyncStatus('synced');
+            setFirestoreError(null);
+          }
+        })
+        .catch((error: unknown) => {
+          const syncError = error instanceof Error ? error : new Error(String(error));
+          if (activeUidRef.current === uid) {
+            setFirestoreError(syncError.message || 'Unable to save to cloud');
+            setSyncStatus('error');
+          }
+          onPersistError?.(syncError);
+          onError(syncError, OperationType.WRITE, path);
+        });
     }, debounceMs);
 
     return () => clearTimeout(timer);
@@ -315,6 +366,7 @@ export function useFirestoreDocSync<T>(
     isLoading,
     firestoreError,
     isSyncingFromCloud,
+    syncStatus: uid ? syncStatus : 'local',
     refetch,
     clearFirestoreError,
   };
@@ -330,14 +382,14 @@ export interface FirestoreCollectionSyncOptions<T> {
   enabled?: boolean;
   timeoutMs?: number;
   firestore?: Firestore;
-  onEmpty?: (uid: string, items: T[]) => void;
+  onEmpty?: (uid: string, items: T[]) => Promise<void> | void;
   onError?: (error: Error, operation: OperationType, path: string) => void;
 }
 
 export function useFirestoreCollectionSync<T>(
   uid: string | null | undefined,
   options: FirestoreCollectionSyncOptions<T>,
-): { refetch: () => void } {
+): { refetch: () => void; status: CloudSyncStatus; error: string | null } {
   const {
     collectionPath,
     localStorageKey,
@@ -352,6 +404,14 @@ export function useFirestoreCollectionSync<T>(
     onError = handleSyncError,
   } = options;
   const [refetchKey, setRefetchKey] = useState(0);
+  const [status, setStatus] = useState<CloudSyncStatus>(() => (uid ? 'saving' : 'local'));
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  useSyncStatusReporter(
+    `collection:${localStorageKey}`,
+    uid ? status : 'local',
+    errorMsg,
+  );
 
   useEffect(() => {
     if (!enabled) {
@@ -365,23 +425,32 @@ export function useFirestoreCollectionSync<T>(
     if (!uid) {
       setItems(fallback);
       setIsInitialized(true);
+      setStatus('local');
+      setErrorMsg(null);
       return;
     }
 
     setIsInitialized(false);
+    setStatus('saving');
+    setErrorMsg(null);
     let cancelled = false;
     let initialized = false;
+    let hasResolvedInitialSnapshot = false;
     const path = collectionPath.replace('{uid}', uid);
     const collectionRef = collection(firestore, path);
     const queryRef = query(collectionRef, orderBy('order', 'asc'));
-    const timeoutId = timeoutMs > 0
-      ? setTimeout(() => {
-          if (cancelled || initialized) return;
-          initialized = true;
-          setItems(fallback);
-          setIsInitialized(true);
-        }, timeoutMs)
-      : undefined;
+    const timeoutId =
+      timeoutMs > 0
+        ? setTimeout(() => {
+            if (cancelled || initialized) return;
+            initialized = true;
+            setItems(fallback);
+            setIsInitialized(true);
+            const msg = 'Cloud connection timed out. Using local cache.';
+            setErrorMsg(msg);
+            setStatus('error');
+          }, timeoutMs)
+        : undefined;
 
     const unsubscribe = onSnapshot(
       queryRef,
@@ -390,9 +459,41 @@ export function useFirestoreCollectionSync<T>(
         initialized = true;
         if (timeoutId) clearTimeout(timeoutId);
 
+        const isInitialSnapshot = !hasResolvedInitialSnapshot;
+        hasResolvedInitialSnapshot = true;
+
         if (snapshot.empty) {
+          if (isInitialSnapshot && onEmpty) {
+            // Cloud collection is empty on sign-in: keep local items and migrate them up.
+            setItems(fallback);
+            writeLocalStorage(localStorageKey, fallback);
+            setIsInitialized(true);
+            if (fallback.length > 0) {
+              setStatus('saving');
+              Promise.resolve(onEmpty(uid, fallback))
+                .then(() => {
+                  if (!cancelled) {
+                    setStatus('synced');
+                    setErrorMsg(null);
+                  }
+                })
+                .catch((err: unknown) => {
+                  if (!cancelled) {
+                    setStatus('error');
+                    setErrorMsg(err instanceof Error ? err.message : 'Unable to upload local cards');
+                  }
+                });
+            } else {
+              setStatus('synced');
+              setErrorMsg(null);
+            }
+            return;
+          }
+
           setItems([]);
           writeLocalStorage(localStorageKey, []);
+          setStatus('synced');
+          setErrorMsg(null);
         } else {
           const fetched = snapshot.docs.flatMap((document) => {
             const item = itemMapper(document.data());
@@ -400,6 +501,8 @@ export function useFirestoreCollectionSync<T>(
           });
           setItems(fetched);
           writeLocalStorage(localStorageKey, fetched);
+          setStatus('synced');
+          setErrorMsg(null);
         }
         setIsInitialized(true);
       },
@@ -409,6 +512,8 @@ export function useFirestoreCollectionSync<T>(
         if (timeoutId) clearTimeout(timeoutId);
         setItems(fallback);
         setIsInitialized(true);
+        setStatus('error');
+        setErrorMsg(error.message || 'Unable to sync with cloud');
         onError(error, OperationType.LIST, path);
       },
     );
@@ -427,6 +532,7 @@ export function useFirestoreCollectionSync<T>(
     localStorageKey,
     onEmpty,
     onError,
+    refetchKey,
     setIsInitialized,
     setItems,
     timeoutMs,
@@ -434,7 +540,7 @@ export function useFirestoreCollectionSync<T>(
   ]);
 
   const refetch = useCallback(() => setRefetchKey((key) => key + 1), []);
-  return { refetch };
+  return { refetch, status: uid ? status : 'local', error: errorMsg };
 }
 
 function handleSyncError(error: Error, operation: OperationType, path: string): void {

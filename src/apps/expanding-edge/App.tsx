@@ -266,7 +266,7 @@ export default function App() {
     localSerializer: serializeJourneyState,
     initialState: INITIAL_JOURNEY_STATE,
     shouldMigrate: shouldMigrateJourneyState,
-    timeoutMs: 0,
+    timeoutMs: 6000,
   });
 
   const [activeStepId, setActiveStepId] = useState<string | 'core' | 'new' | null>(null);

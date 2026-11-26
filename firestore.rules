@@ -77,8 +77,9 @@ service cloud.firestore {
     // Life Vision document
     function isValidLifeVisionDoc(data, userId) {
       return data.keys().hasAll(['myName', 'domains'])
-        && data.keys().hasOnly(['userId', 'myName', 'domains', 'updatedAt'])
+        && data.keys().hasOnly(['userId', 'myName', 'avatar', 'domains', 'updatedAt'])
         && data.myName is string
+        && (!('avatar' in data) || (data.avatar is string && (data.avatar == 'male' || data.avatar == 'female')))
         && data.domains is map
         && (!('userId' in data) || data.userId == userId)
         && (!('updatedAt' in data) || data.updatedAt is string);

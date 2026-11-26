@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../firebase/AuthContext';
-import { LogIn, LogOut, Cloud, Loader2 } from './LucideIcons';
+import { useSyncStatus } from '../firebase/SyncStatusContext';
+import { LogIn, LogOut, Cloud, CloudUpload, CloudAlert, Loader2 } from './LucideIcons';
 
 export interface AuthWidgetTheme {
   // Loading state styles
@@ -283,8 +284,10 @@ export default function AuthWidget({
   title
 }: AuthWidgetProps) {
   const { user, loading, signInWithGoogle, signOutUser } = useAuth();
+  const { status: syncStatus, message: syncMessage } = useSyncStatus();
   const [isSigningIn, setIsSigningIn] = useState(false);
   const themeConfig = DEFAULT_THEMES[theme];
+  const isLightTheme = theme === 'plank' || theme === 'lifeVision';
 
   const handleSignIn = async () => {
     setIsSigningIn(true);
@@ -368,8 +371,38 @@ export default function AuthWidget({
         >
           {displayName}
         </span>
-        <span title="Cloud Synced" className="flex items-center">
-          <Cloud className={`${themeConfig.cloudIconColor} ${themeConfig.cloudIconFill} shrink-0`} />
+        <span
+          title={
+            syncStatus === 'error'
+              ? syncMessage || 'Cloud sync error — local backup active'
+              : syncStatus === 'saving'
+                ? 'Saving changes to cloud...'
+                : 'All changes synced to cloud'
+          }
+          aria-label={
+            syncStatus === 'error'
+              ? 'Cloud sync error'
+              : syncStatus === 'saving'
+                ? 'Saving changes to cloud'
+                : 'Synced to cloud'
+          }
+          className="flex items-center"
+        >
+          {syncStatus === 'error' ? (
+            <CloudAlert
+              className={`w-3.5 h-3.5 shrink-0 ${
+                isLightTheme ? 'text-rose-600' : 'text-rose-400'
+              }`}
+            />
+          ) : syncStatus === 'saving' ? (
+            <CloudUpload
+              className={`w-3.5 h-3.5 shrink-0 animate-pulse ${
+                isLightTheme ? 'text-amber-600' : 'text-amber-400'
+              }`}
+            />
+          ) : (
+            <Cloud className={`${themeConfig.cloudIconColor} ${themeConfig.cloudIconFill} shrink-0`} />
+          )}
         </span>
       </div>
 

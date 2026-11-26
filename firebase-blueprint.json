@@ -188,6 +188,10 @@
         "myName": {
           "type": "string"
         },
+        "avatar": {
+          "type": "string",
+          "enum": ["male", "female"]
+        },
         "domains": {
           "type": "object",
           "additionalProperties": {

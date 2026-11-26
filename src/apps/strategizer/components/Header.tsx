@@ -4,10 +4,21 @@
  */
 
 import React from 'react';
-import { Layers, ShoppingCart, Zap, Sparkles, LogOut, ChevronLeft } from '../../../components/LucideIcons';
+import {
+  Layers,
+  ShoppingCart,
+  Zap,
+  Sparkles,
+  LogOut,
+  ChevronLeft,
+  Cloud,
+  CloudUpload,
+  CloudAlert,
+} from '../../../components/LucideIcons';
 import { Link } from 'react-router-dom';
 import { PaceCard, StrategyCard } from '../types.ts';
 import { User } from 'firebase/auth';
+import type { CloudSyncStatus } from '../../../firebase/SyncStatusContext';
 
 interface HeaderProps {
   cards: PaceCard[];
@@ -17,20 +28,20 @@ interface HeaderProps {
   user: User | null;
   onLogin: () => void;
   onLogout: () => void;
-  isGuestMode?: boolean;
-  syncStatus?: 'syncing' | 'synced' | 'offline';
+  syncStatus?: CloudSyncStatus;
+  syncMessage?: string | null;
 }
 
-export function Header({ 
-  cards, 
+export function Header({
+  cards,
   strategyCards,
-  activeCategory, 
+  activeCategory,
   onCategoryChange,
   user,
   onLogin,
   onLogout,
-  isGuestMode,
   syncStatus = 'synced',
+  syncMessage = null,
 }: HeaderProps) {
   // Calculate dynamic stats for completing goals
   const fasterCompleted = cards.filter(
@@ -65,19 +76,19 @@ export function Header({
           <div className="p-2 py-2 bg-emerald-500 rounded-xl text-white shadow-lg shadow-emerald-500/15">
             <Layers className="w-6 h-6" />
           </div>
-        <div>
-          <h1 className="text-[27px] font-bold text-white tracking-tight">
-            Strategizer
-          </h1>
-          <p className="text-xs text-slate-400 font-medium tracking-wide flex items-center gap-0.5 flex-wrap">
-            For Personal Shoppers
-            <span className="flex items-center gap-2 ml-1">
-               <ShoppingCart className="w-3.5 h-3.5 text-slate-400 relative top-[1px]" />
-            </span>
-          </p>
+          <div>
+            <h1 className="text-[27px] font-bold text-white tracking-tight">
+              Strategizer
+            </h1>
+            <p className="text-xs text-slate-400 font-medium tracking-wide flex items-center gap-0.5 flex-wrap">
+              For Personal Shoppers
+              <span className="flex items-center gap-2 ml-1">
+                <ShoppingCart className="w-3.5 h-3.5 text-slate-400 relative top-[1px]" />
+              </span>
+            </p>
+          </div>
         </div>
       </div>
-    </div>
 
       {/* Navigation menu in the center */}
       <div className="flex flex-col items-center gap-1 bg-slate-950/40 p-1.5 rounded-xl border border-slate-800/60 w-full max-w-[440px] md:max-w-[685px] mx-auto">
@@ -128,7 +139,7 @@ export function Header({
       <div className="flex items-center gap-6 justify-end w-full md:w-auto">
         {/* User Account Info */}
         {user ? (
-          <div className="flex flex-col items-center bg-slate-800 border border-slate-700 py-3 px-4 rounded-lg gap-1 shadow-inner select-none shrink-0 min-w-[140px] leading-none justify-center">
+          <div className="flex flex-col items-center bg-slate-800 border border-slate-700 py-3 px-4 rounded-lg gap-1 shadow-inner select-none shrink-0 min-w-[155px] leading-none justify-center">
             <div className="text-[9px] text-slate-400 font-black tracking-wider uppercase leading-none mb-1">
               Active Shopper
             </div>
@@ -146,26 +157,38 @@ export function Header({
                 </div>
               )}
               <div className="flex flex-col text-left leading-none justify-center">
-                <span className="text-xs font-semibold text-white tracking-wide truncate max-w-[90px] leading-none mb-0.5" title={user.displayName || ''}>
-                  {user.displayName || 'Guest'}
+                <span className="text-xs font-semibold text-white tracking-wide truncate max-w-[90px] leading-none mb-1" title={user.displayName || ''}>
+                  {user.displayName || 'User'}
                 </span>
-                {syncStatus === 'syncing' ? (
-                  <span className="text-[8.0px] text-amber-400 font-semibold uppercase tracking-widest leading-none animate-pulse">
-                    Syncing...
+                {syncStatus === 'saving' ? (
+                  <span
+                    className="inline-flex items-center gap-1 text-[8.5px] text-amber-400 font-semibold uppercase tracking-widest leading-none"
+                    title="Saving changes to cloud..."
+                  >
+                    <CloudUpload className="w-3 h-3 text-amber-400 animate-pulse shrink-0" />
+                    <span>Saving...</span>
                   </span>
-                ) : syncStatus === 'offline' ? (
-                  <span className="text-[8.0px] text-amber-400 font-semibold uppercase tracking-widest leading-none">
-                    Local Cache
+                ) : syncStatus === 'error' ? (
+                  <span
+                    className="inline-flex items-center gap-1 text-[8.5px] text-rose-400 font-semibold uppercase tracking-widest leading-none"
+                    title={syncMessage || 'Cloud sync error — local cache active'}
+                  >
+                    <CloudAlert className="w-3 h-3 text-rose-400 shrink-0" />
+                    <span>Sync Error</span>
                   </span>
                 ) : (
-                  <span className="text-[8.0px] text-emerald-400 font-semibold uppercase tracking-widest leading-none">
-                    Cloud Synced
+                  <span
+                    className="inline-flex items-center gap-1 text-[8.5px] text-emerald-400 font-semibold uppercase tracking-widest leading-none"
+                    title="All changes synced to cloud"
+                  >
+                    <Cloud className="w-3 h-3 text-emerald-400 fill-emerald-400/20 shrink-0" />
+                    <span>Cloud Synced</span>
                   </span>
                 )}
               </div>
               <button
                 onClick={onLogout}
-                className="p-1 text-slate-400 hover:text-rose-500 rounded hover:bg-slate-700/50 transition-all cursor-pointer inline-flex items-center justify-center focus:outline-none shrink-0 ml-1.5"
+                className="p-1 text-slate-400 hover:text-rose-500 rounded hover:bg-slate-700/50 transition-all cursor-pointer inline-flex items-center justify-center focus:outline-none shrink-0 ml-1"
                 title="Sign Out"
               >
                 <LogOut className="w-[18px] h-[18px] stroke-[2.2]" />
@@ -174,16 +197,11 @@ export function Header({
           </div>
         ) : (
           <div className="flex items-center gap-2.5">
-            {isGuestMode && (
-              <span className="text-[10px] text-amber-400/90 font-bold uppercase tracking-wider bg-amber-400/10 border border-amber-400/25 px-2.5 py-1.5 rounded-lg hidden sm:inline-block">
-                Local Mode
-              </span>
-            )}
             <button
               onClick={onLogin}
               type="button"
-              className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold uppercase text-[11px] tracking-wider py-2 px-3.5 rounded-lg shadow-md shadow-emerald-500/15 transition-all cursor-pointer"
-              title="Sign in with Google to sync to cloud"
+              className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold uppercase text-[11px] tracking-wider py-2 px-3.5 rounded-lg shadow-md shadow-emerald-500/15 transition-all cursor-pointer whitespace-nowrap shrink-0"
+              title="Sign in with Google to sync your cards to the cloud"
             >
               Sign In
             </button>
@@ -199,46 +217,46 @@ export function Header({
           {/* Centered Circle Container */}
           <div className="relative flex items-center justify-center h-[43px] w-[43px] shrink-0 my-0.5">
             {goalsMetCount === 0 && (
-              <div 
+              <div
                 style={{ zIndex: 5 }}
                 className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shadow-[0_0_20px_rgba(52,211,153,0.25)] rounded-full transition-transform duration-300 relative"
                 title="Stage 1: Progress Active"
               >
-                <Zap 
-                  className="text-amber-400 fill-amber-400 drop-shadow-[0_0_4px_rgba(251,191,36,0.5)]" 
-                  style={{ width: '20px', height: '20px' }} 
+                <Zap
+                  className="text-amber-400 fill-amber-400 drop-shadow-[0_0_4px_rgba(251,191,36,0.5)]"
+                  style={{ width: '20px', height: '20px' }}
                 />
               </div>
             )}
 
             {goalsMetCount === 1 && (
-              <div 
+              <div
                 style={{ zIndex: 5, width: '32px', height: '32px' }}
                 className="bg-emerald-500/20 border border-emerald-400 flex items-center justify-center shadow-[0_0_25px_#10b981,_0_0_12px_rgba(52,211,153,0.4)] rounded-full transition-transform duration-300 relative"
                 title="Stage 2: One Goal Met"
               >
-                <Zap 
-                  className="text-emerald-400 fill-emerald-300 drop-shadow-[0_0_5px_rgba(52,211,153,0.6)] animate-pulse" 
-                  style={{ width: '22px', height: '22px' }} 
+                <Zap
+                  className="text-emerald-400 fill-emerald-300 drop-shadow-[0_0_5px_rgba(52,211,153,0.6)] animate-pulse"
+                  style={{ width: '22px', height: '22px' }}
                 />
               </div>
             )}
 
             {goalsMetCount === 2 && (
-              <div 
+              <div
                 style={{ zIndex: 5, width: '38px', height: '38px' }}
                 className="bg-emerald-500/28 border border-emerald-400 flex items-center justify-center shadow-[0_0_32px_#10b981] rounded-full transition-transform duration-300 relative"
                 title="Stage 3: Two Goals Met"
               >
-                <Zap 
-                  className="text-emerald-300 fill-emerald-200 drop-shadow-[0_0_6px_rgba(52,211,153,0.7)] animate-pulse" 
-                  style={{ width: '23px', height: '23px' }} 
+                <Zap
+                  className="text-emerald-300 fill-emerald-200 drop-shadow-[0_0_6px_rgba(52,211,153,0.7)] animate-pulse"
+                  style={{ width: '23px', height: '23px' }}
                 />
               </div>
             )}
 
             {goalsMetCount >= 3 && (
-              <div 
+              <div
                 style={{ zIndex: 5, width: '43px', height: '43px' }}
                 className="bg-emerald-500/35 border border-emerald-400 flex items-center justify-center shadow-[0_0_40px_#10b981,_0_0_18px_rgba(52,211,153,0.5)] rounded-full transition-transform duration-300 relative animate-pulse"
                 title="Stage 4: All Three Goals Met!"
@@ -248,9 +266,9 @@ export function Header({
                 <Sparkles className="absolute top-2 -right-2 w-3 h-3 text-yellow-300 animate-bounce" />
                 <Sparkles className="absolute bottom-2 -left-1.5 w-3 h-3 text-emerald-400 animate-pulse" />
 
-                <Zap 
-                  className="text-emerald-300 fill-emerald-200 drop-shadow-[0_0_8px_#34d399]" 
-                  style={{ width: '24px', height: '24px' }} 
+                <Zap
+                  className="text-emerald-300 fill-emerald-200 drop-shadow-[0_0_8px_#34d399]"
+                  style={{ width: '24px', height: '24px' }}
                 />
               </div>
             )}

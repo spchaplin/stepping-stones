@@ -6,14 +6,14 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { RotateCcw } from '../../components/LucideIcons';
 import type { DocumentData } from 'firebase/firestore';
-import { 
-  onSnapshot, 
-  setDoc, 
-  doc, 
-  updateDoc, 
-  deleteDoc, 
-  writeBatch, 
-  serverTimestamp 
+import {
+  onSnapshot,
+  setDoc,
+  doc,
+  updateDoc,
+  deleteDoc,
+  writeBatch,
+  serverTimestamp,
 } from 'firebase/firestore';
 
 import { Header } from './components/Header';
@@ -21,22 +21,21 @@ import { PaceColumn } from './components/PaceColumn';
 import { StrategyColumn } from './components/StrategyColumn';
 import { ResetConfirmModal } from './components/ResetConfirmModal';
 import { LoadingWorkspace } from './components/LoadingWorkspace';
-import { AuthOverlay } from './components/AuthOverlay';
 import { PaceCard, StrategyCard } from './types';
 import { db, handleFirestoreError, OperationType } from '../../firebase/firebase';
 import { saveExistingToFirestore, saveExistingStrategyToFirestore } from './firestoreHelpers';
 import { useAuth } from '../../firebase/AuthContext';
+import { useSyncStatus, useSyncStatusReporter, type CloudSyncStatus } from '../../firebase/SyncStatusContext';
 import { checkGoalThreshold } from './utils/goalThreshold';
-import { readLocalStorage, writeLocalStorage, useAppState, useFirestoreCollectionSync } from '../../hooks/useFirestoreSync';
+import { writeLocalStorage, useAppState, useFirestoreCollectionSync } from '../../hooks/useFirestoreSync';
 import { PRESET_CARDS, INITIAL_STRATEGY_CARDS, restoreCards, restoreStrategyCards } from './cardUtils';
 
 export { PRESET_CARDS, INITIAL_STRATEGY_CARDS, restoreCards, restoreStrategyCards };
 
-// Local storage keys for guest/offline resilience
+// Local storage keys for local-first and offline resilience
 const LOCAL_STORAGE_CARDS_KEY = 'strategizer_local_cards';
 const LOCAL_STORAGE_STRATEGY_KEY = 'strategizer_local_strategy_cards';
 const LOCAL_STORAGE_CATEGORY_KEY = 'strategizer_local_category';
-const LOCAL_STORAGE_GUEST_KEY = 'strategizer_guest_mode';
 
 function restoreCategory(value: unknown): 'strategy' | 'faster' | 'slower' {
   return value === 'strategy' || value === 'faster' || value === 'slower' ? value : 'faster';
@@ -63,14 +62,17 @@ export default function App() {
   // Initialization and sync flags
   const [cardsInitialized, setCardsInitialized] = useState(false);
   const [strategyInitialized, setStrategyInitialized] = useState(false);
-  const [isHydrated, setIsHydrated] = useState(false);
-  const [isRevealed, setIsRevealed] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(true);
+  const [isRevealed, setIsRevealed] = useState(true);
   const [isTimedOut, setIsTimedOut] = useState(false);
+  const [pendingWriteCount, setPendingWriteCount] = useState(0);
+  const [writeError, setWriteError] = useState<string | null>(null);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isBoardInitializedRef = useRef(false);
   const prevGoalsMetRef = useRef<boolean | null>(null);
   const celebrationIntervalRef = useRef<number | null>(null);
   const { user, loading: authLoading, signInWithGoogle, signOutUser } = useAuth();
+  const { status: aggregateSyncStatus, message: aggregateSyncMessage } = useSyncStatus();
 
   // UI state
   const [showResetModal, setShowResetModal] = useState(false);
@@ -78,35 +80,43 @@ export default function App() {
   const [activeCategory, setActiveCategory] = useAppState(
     LOCAL_STORAGE_CATEGORY_KEY,
     'faster' as const,
-    { deserialize: restoreCategory, enabled: !user },
+    { deserialize: restoreCategory, enabled: true },
   );
 
-  // Domain state
+  // Domain state (always persisted to localStorage, and synced to Firestore when signed in)
   const [strategyCards, setStrategyCards] = useAppState(
     LOCAL_STORAGE_STRATEGY_KEY,
     INITIAL_STRATEGY_CARDS,
-    { deserialize: restoreStrategyCards, enabled: !user },
+    { deserialize: restoreStrategyCards, enabled: true },
   );
   const [cards, setCards] = useAppState(
     LOCAL_STORAGE_CARDS_KEY,
     PRESET_CARDS,
-    { deserialize: restoreCards, enabled: !user },
+    { deserialize: restoreCards, enabled: true },
   );
 
-  const [isGuestMode, setIsGuestMode] = useAppState<boolean>(
-    LOCAL_STORAGE_GUEST_KEY,
-    false,
-    {
-      deserialize: (value) => value === true || value === 'true',
-      enabled: !user,
-    },
-  );
-  const [authError, setAuthError] = useState<{
-    code: string;
-    message: string;
-    domain?: string;
-  } | null>(null);
-  const [copiedDomain, setCopiedDomain] = useState(false);
+  const mutationStatus: CloudSyncStatus = !user
+    ? 'local'
+    : writeError
+      ? 'error'
+      : pendingWriteCount > 0
+        ? 'saving'
+        : 'synced';
+  useSyncStatusReporter('strategizer:mutations', mutationStatus, writeError);
+
+  const runCloudMutation = useCallback(async (action: () => Promise<void>) => {
+    setPendingWriteCount((c) => c + 1);
+    setWriteError(null);
+    try {
+      await action();
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Unable to save to cloud';
+      setWriteError(msg);
+      throw error;
+    } finally {
+      setPendingWriteCount((c) => Math.max(0, c - 1));
+    }
+  }, []);
 
   const fireCelebration = async () => {
     if (celebrationIntervalRef.current !== null) {
@@ -141,15 +151,15 @@ export default function App() {
 
       const particleCount = 50 * (timeLeft / duration);
       try {
-        confetti({ 
-          ...defaults, 
-          particleCount, 
-          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } 
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
         });
-        confetti({ 
-          ...defaults, 
-          particleCount, 
-          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } 
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
         });
       } catch (err) {
         console.error('Confetti celebration error:', err);
@@ -195,10 +205,10 @@ export default function App() {
   }, [activeCategory]);
 
   const seedPaceCards = useCallback((uid: string, items: PaceCard[]) => {
-    void saveExistingToFirestore(uid, items);
+    return saveExistingToFirestore(uid, items);
   }, []);
   const seedStrategyCards = useCallback((uid: string, items: StrategyCard[]) => {
-    void saveExistingStrategyToFirestore(uid, items);
+    return saveExistingStrategyToFirestore(uid, items);
   }, []);
 
   useFirestoreCollectionSync<PaceCard>(user?.uid, {
@@ -225,33 +235,33 @@ export default function App() {
     onEmpty: seedStrategyCards,
   });
 
-  // Track universal Auth state changes
+  // Track Auth state changes cleanly without blocking unauthenticated users
   useEffect(() => {
     setCardsInitialized(false);
     setStrategyInitialized(false);
-    setIsHydrated(false);
-    setIsRevealed(false);
     setIsTimedOut(false);
+    setWriteError(null);
+    setPendingWriteCount(0);
     if (syncTimeoutRef.current) {
       clearTimeout(syncTimeoutRef.current);
       syncTimeoutRef.current = null;
     }
     isBoardInitializedRef.current = false;
     prevGoalsMetRef.current = null;
+
     if (user) {
-      setAuthError(null);
-      setIsGuestMode(false);
-      try {
-        localStorage.removeItem(LOCAL_STORAGE_GUEST_KEY);
-      } catch {}
+      setIsHydrated(false);
+      setIsRevealed(false);
+    } else {
+      setIsHydrated(true);
+      setIsRevealed(true);
     }
   }, [user]);
 
-  // Hydration Gate logic: Wait for Firebase sync OR 3s timeout before revealing board
+  // Hydration Gate logic: when signed in, wait for Firestore sync OR 3s timeout before revealing board
   useEffect(() => {
     if (authLoading) return;
 
-    // Unauthenticated (guest / logged out): hydrate immediately
     if (!user) {
       setIsHydrated(true);
       setIsTimedOut(false);
@@ -262,7 +272,6 @@ export default function App() {
       return;
     }
 
-    // Authenticated and Firestore data has fully initialized:
     if (cardsInitialized && strategyInitialized) {
       if (syncTimeoutRef.current) {
         clearTimeout(syncTimeoutRef.current);
@@ -272,7 +281,6 @@ export default function App() {
       return;
     }
 
-    // If waiting for Firestore, start 3-second fallback timer
     if (!syncTimeoutRef.current && !isHydrated) {
       syncTimeoutRef.current = setTimeout(() => {
         setIsTimedOut(true);
@@ -282,7 +290,6 @@ export default function App() {
     }
   }, [user, authLoading, cardsInitialized, strategyInitialized, isHydrated]);
 
-  // Clean up hydration timer on unmount
   useEffect(() => {
     return () => {
       if (syncTimeoutRef.current) {
@@ -308,113 +315,53 @@ export default function App() {
     if (!user) return;
 
     const userRef = doc(db, 'users', user.uid);
-    const unsubscribe = onSnapshot(userRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.data();
-        if (data.activeCategory === 'strategy' || data.activeCategory === 'faster' || data.activeCategory === 'slower') {
-          setActiveCategory(data.activeCategory);
+    const unsubscribe = onSnapshot(
+      userRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.data();
+          if (
+            data.activeCategory === 'strategy' ||
+            data.activeCategory === 'faster' ||
+            data.activeCategory === 'slower'
+          ) {
+            setActiveCategory(data.activeCategory);
+          }
+        } else {
+          // Create user profile document using current local category if cloud profile is empty
+          const initialCategory = latestActiveCategoryRef.current;
+          setDoc(userRef, {
+            userId: user.uid,
+            email: user.email || '',
+            lastLogin: serverTimestamp(),
+            activeCategory: initialCategory,
+          }).catch((err) => {
+            setWriteError(err instanceof Error ? err.message : 'Unable to initialize profile');
+            handleFirestoreError(err, OperationType.CREATE, `users/${user.uid}`);
+          });
         }
-      } else {
-        // Create user profile document on first login
-        const initialCategory = latestActiveCategoryRef.current;
-        setDoc(userRef, {
-          userId: user.uid,
-          email: user.email || '',
-          lastLogin: serverTimestamp(),
-          activeCategory: initialCategory,
-        }).catch((err) => {
-          handleFirestoreError(err, OperationType.CREATE, `users/${user.uid}`);
-        });
-      }
-    }, (error) => {
-      handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
-    });
+      },
+      (error) => {
+        setWriteError(error.message || 'Unable to sync profile');
+        handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
+      },
+    );
 
     return () => unsubscribe();
-  }, [user]);
-
-
+  }, [user, setActiveCategory]);
 
   // Auth Action Handlers
   const handleLogin = async () => {
-    setAuthError(null);
     try {
       await signInWithGoogle();
-    } catch (e: unknown) {
-      const code = typeof e === 'object' && e !== null && 'code' in e ? String((e as { code: unknown }).code) : '';
-      const message = e instanceof Error ? e.message : String(e ?? '');
-
-      if (code === 'auth/popup-closed-by-user') {
-        return;
-      }
-
-      if (code === 'auth/unauthorized-domain' || message.includes('unauthorized-domain')) {
-        console.warn(
-          `Firebase Auth: Domain '${window.location.hostname}' is not authorized in the Firebase console for project 'strategizer'.`
-        );
-        setAuthError({
-          code: 'auth/unauthorized-domain',
-          message: `The domain '${window.location.hostname}' is not authorized in Firebase Authentication.`,
-          domain: window.location.hostname,
-        });
-        setIsGuestMode(false);
-      } else if (code === 'auth/popup-blocked') {
-        setAuthError({
-          code: 'auth/popup-blocked',
-          message: 'The sign-in popup was blocked by your browser. Please allow popups for this site and try again.',
-        });
-        setIsGuestMode(false);
-      } else {
-        setAuthError({
-          code: code || 'auth/error',
-          message: message || 'An error occurred during sign-in.',
-        });
-        setIsGuestMode(false);
-      }
+    } catch {
+      // Handled by AuthContext and displayed via non-blocking AuthErrorToast
     }
-  };
-
-  const handleContinueAsGuest = () => {
-    setIsGuestMode(true);
-    try {
-      localStorage.setItem(LOCAL_STORAGE_GUEST_KEY, 'true');
-    } catch {}
-  };
-
-  const handleCopyDomain = (domainToCopy: string) => {
-    const onSuccess = () => {
-      setCopiedDomain(true);
-      setTimeout(() => setCopiedDomain(false), 2500);
-    };
-
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(domainToCopy).then(onSuccess).catch(() => {
-        fallbackCopy(domainToCopy, onSuccess);
-      });
-    } else {
-      fallbackCopy(domainToCopy, onSuccess);
-    }
-  };
-
-  const fallbackCopy = (text: string, onSuccess: () => void) => {
-    try {
-      const el = document.createElement('textarea');
-      el.value = text;
-      el.style.position = 'fixed';
-      el.style.left = '-9999px';
-      document.body.appendChild(el);
-      el.focus();
-      el.select();
-      document.execCommand('copy');
-      document.body.removeChild(el);
-      onSuccess();
-    } catch {}
   };
 
   const handleLogout = async () => {
     try {
       await signOutUser();
-      setIsGuestMode(true);
       if (celebrationIntervalRef.current !== null) {
         clearInterval(celebrationIntervalRef.current);
         celebrationIntervalRef.current = null;
@@ -434,21 +381,23 @@ export default function App() {
       type,
     };
 
+    const nextOrderIndex = cards.length;
     setCards((prev) => [...prev, newCard]);
     setLastAddedCardId(newId);
 
     if (user) {
       try {
-        const nextOrderIndex = cards.length;
-        await setDoc(doc(db, 'users', user.uid, 'cards', newId), {
-          id: newId,
-          name: '',
-          stage: 1,
-          type,
-          order: nextOrderIndex,
-          userId: user.uid,
-          updatedAt: serverTimestamp(),
-        });
+        await runCloudMutation(() =>
+          setDoc(doc(db, 'users', user.uid, 'cards', newId), {
+            id: newId,
+            name: '',
+            stage: 1,
+            type,
+            order: nextOrderIndex,
+            userId: user.uid,
+            updatedAt: serverTimestamp(),
+          }),
+        );
       } catch (error) {
         handleFirestoreError(error, OperationType.CREATE, `users/${user.uid}/cards/${newId}`);
       }
@@ -457,15 +406,17 @@ export default function App() {
 
   const handleUpdateName = async (id: string, name: string) => {
     setCards((prev) =>
-      prev.map((card) => (card.id === id ? { ...card, name } : card))
+      prev.map((card) => (card.id === id ? { ...card, name } : card)),
     );
 
     if (user) {
       try {
-        await updateDoc(doc(db, 'users', user.uid, 'cards', id), {
-          name,
-          updatedAt: serverTimestamp()
-        });
+        await runCloudMutation(() =>
+          updateDoc(doc(db, 'users', user.uid, 'cards', id), {
+            name,
+            updatedAt: serverTimestamp(),
+          }),
+        );
       } catch (error) {
         handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}/cards/${id}`);
       }
@@ -475,15 +426,17 @@ export default function App() {
   const handleUpdateStage = async (id: string, stage: number) => {
     if (stage >= 1 && stage <= 5) {
       setCards((prev) =>
-        prev.map((card) => (card.id === id ? { ...card, stage } : card))
+        prev.map((card) => (card.id === id ? { ...card, stage } : card)),
       );
 
       if (user) {
         try {
-          await updateDoc(doc(db, 'users', user.uid, 'cards', id), {
-            stage,
-            updatedAt: serverTimestamp()
-          });
+          await runCloudMutation(() =>
+            updateDoc(doc(db, 'users', user.uid, 'cards', id), {
+              stage,
+              updatedAt: serverTimestamp(),
+            }),
+          );
         } catch (error) {
           handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}/cards/${id}`);
         }
@@ -496,7 +449,7 @@ export default function App() {
 
     if (user) {
       try {
-        await deleteDoc(doc(db, 'users', user.uid, 'cards', id));
+        await runCloudMutation(() => deleteDoc(doc(db, 'users', user.uid, 'cards', id)));
       } catch (error) {
         handleFirestoreError(error, OperationType.DELETE, `users/${user.uid}/cards/${id}`);
       }
@@ -515,23 +468,24 @@ export default function App() {
     const reorderedList = [...cards];
     reorderedList.splice(draggedIdx, 1);
     reorderedList.splice(targetIdx, 0, draggedCard);
+    setCards(reorderedList);
 
     if (user) {
       try {
-        const batch = writeBatch(db);
-        reorderedList.forEach((card, index) => {
-          const cardRef = doc(db, 'users', user.uid, 'cards', card.id);
-          batch.update(cardRef, {
-            order: index,
-            updatedAt: serverTimestamp()
+        await runCloudMutation(async () => {
+          const batch = writeBatch(db);
+          reorderedList.forEach((card, index) => {
+            const cardRef = doc(db, 'users', user.uid, 'cards', card.id);
+            batch.update(cardRef, {
+              order: index,
+              updatedAt: serverTimestamp(),
+            });
           });
+          await batch.commit();
         });
-        await batch.commit();
       } catch (error) {
         handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}/cards`);
       }
-    } else {
-      setCards(reorderedList);
     }
   };
 
@@ -540,19 +494,21 @@ export default function App() {
     const newId = `strategy-${Date.now()}`;
     const newCard: StrategyCard = { id: newId, name: '' };
 
+    const nextOrderIndex = strategyCards.length;
     setStrategyCards((prev) => [...prev, newCard]);
     setLastAddedCardId(newId);
 
     if (user) {
       try {
-        const nextOrderIndex = strategyCards.length;
-        await setDoc(doc(db, 'users', user.uid, 'strategyCards', newId), {
-          id: newId,
-          name: '',
-          order: nextOrderIndex,
-          userId: user.uid,
-          updatedAt: serverTimestamp(),
-        });
+        await runCloudMutation(() =>
+          setDoc(doc(db, 'users', user.uid, 'strategyCards', newId), {
+            id: newId,
+            name: '',
+            order: nextOrderIndex,
+            userId: user.uid,
+            updatedAt: serverTimestamp(),
+          }),
+        );
       } catch (error) {
         handleFirestoreError(error, OperationType.CREATE, `users/${user.uid}/strategyCards/${newId}`);
       }
@@ -561,15 +517,17 @@ export default function App() {
 
   const handleUpdateStrategyCardName = async (id: string, name: string) => {
     setStrategyCards((prev) =>
-      prev.map((card) => (card.id === id ? { ...card, name } : card))
+      prev.map((card) => (card.id === id ? { ...card, name } : card)),
     );
 
     if (user) {
       try {
-        await updateDoc(doc(db, 'users', user.uid, 'strategyCards', id), {
-          name,
-          updatedAt: serverTimestamp()
-        });
+        await runCloudMutation(() =>
+          updateDoc(doc(db, 'users', user.uid, 'strategyCards', id), {
+            name,
+            updatedAt: serverTimestamp(),
+          }),
+        );
       } catch (error) {
         handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}/strategyCards/${id}`);
       }
@@ -581,7 +539,7 @@ export default function App() {
 
     if (user) {
       try {
-        await deleteDoc(doc(db, 'users', user.uid, 'strategyCards', id));
+        await runCloudMutation(() => deleteDoc(doc(db, 'users', user.uid, 'strategyCards', id)));
       } catch (error) {
         handleFirestoreError(error, OperationType.DELETE, `users/${user.uid}/strategyCards/${id}`);
       }
@@ -597,23 +555,24 @@ export default function App() {
     const reorderedList = [...strategyCards];
     reorderedList.splice(draggedIdx, 1);
     reorderedList.splice(targetIdx, 0, draggedCard);
+    setStrategyCards(reorderedList);
 
     if (user) {
       try {
-        const batch = writeBatch(db);
-        reorderedList.forEach((card, index) => {
-          const cardRef = doc(db, 'users', user.uid, 'strategyCards', card.id);
-          batch.update(cardRef, {
-            order: index,
-            updatedAt: serverTimestamp()
+        await runCloudMutation(async () => {
+          const batch = writeBatch(db);
+          reorderedList.forEach((card, index) => {
+            const cardRef = doc(db, 'users', user.uid, 'strategyCards', card.id);
+            batch.update(cardRef, {
+              order: index,
+              updatedAt: serverTimestamp(),
+            });
           });
+          await batch.commit();
         });
-        await batch.commit();
       } catch (error) {
         handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}/strategyCards`);
       }
-    } else {
-      setStrategyCards(reorderedList);
     }
   };
 
@@ -631,24 +590,26 @@ export default function App() {
     // 2. If authenticated, delete all cards from Firestore
     if (user) {
       try {
-        const batch = writeBatch(db);
-        
-        cards.forEach((card) => {
-          const cardRef = doc(db, 'users', user.uid, 'cards', card.id);
-          batch.delete(cardRef);
+        await runCloudMutation(async () => {
+          const batch = writeBatch(db);
+
+          cards.forEach((card) => {
+            const cardRef = doc(db, 'users', user.uid, 'cards', card.id);
+            batch.delete(cardRef);
+          });
+
+          strategyCards.forEach((card) => {
+            const cardRef = doc(db, 'users', user.uid, 'strategyCards', card.id);
+            batch.delete(cardRef);
+          });
+
+          // Also ensure preset IDs are deleted if present
+          batch.delete(doc(db, 'users', user.uid, 'cards', 'preset-f1'));
+          batch.delete(doc(db, 'users', user.uid, 'cards', 'preset-s1'));
+          batch.delete(doc(db, 'users', user.uid, 'strategyCards', 'strategy-init-1'));
+
+          await batch.commit();
         });
-
-        strategyCards.forEach((card) => {
-          const cardRef = doc(db, 'users', user.uid, 'strategyCards', card.id);
-          batch.delete(cardRef);
-        });
-
-        // Also ensure preset IDs are deleted if present
-        batch.delete(doc(db, 'users', user.uid, 'cards', 'preset-f1'));
-        batch.delete(doc(db, 'users', user.uid, 'cards', 'preset-s1'));
-        batch.delete(doc(db, 'users', user.uid, 'strategyCards', 'strategy-init-1'));
-
-        await batch.commit();
       } catch (error) {
         handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}`);
       }
@@ -658,35 +619,40 @@ export default function App() {
   const fasterCards = cards.filter((c) => c.type === 'faster');
   const slowerCards = cards.filter((c) => c.type === 'slower');
 
-  const syncStatus: 'syncing' | 'synced' | 'offline' = 
-    user && !isHydrated ? 'syncing' : (isTimedOut && (!cardsInitialized || !strategyInitialized)) ? 'offline' : 'synced';
+  const effectiveSyncStatus: CloudSyncStatus = !user
+    ? 'local'
+    : isTimedOut && (!cardsInitialized || !strategyInitialized)
+      ? 'error'
+      : aggregateSyncStatus;
 
   return (
     <div className="w-screen h-screen flex flex-col bg-slate-950 text-slate-200 overflow-hidden font-sans">
       {/* 1) Dynamic dashboard header */}
-      <Header 
-        cards={cards} 
+      <Header
+        cards={cards}
         strategyCards={strategyCards}
-        activeCategory={activeCategory} 
+        activeCategory={activeCategory}
         user={user}
         onLogin={handleLogin}
         onLogout={handleLogout}
-        isGuestMode={isGuestMode}
-        syncStatus={syncStatus}
+        syncStatus={effectiveSyncStatus}
+        syncMessage={aggregateSyncMessage}
         onCategoryChange={async (cat) => {
           setActiveCategory(cat);
 
           if (user) {
             try {
-              await updateDoc(doc(db, 'users', user.uid), {
-                activeCategory: cat,
-                lastLogin: serverTimestamp(),
-              });
+              await runCloudMutation(() =>
+                updateDoc(doc(db, 'users', user.uid), {
+                  activeCategory: cat,
+                  lastLogin: serverTimestamp(),
+                }),
+              );
             } catch (error) {
               handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}`);
             }
           }
-        }} 
+        }}
       />
 
       {/* 2) Main Workspace */}
@@ -694,15 +660,15 @@ export default function App() {
         {!isHydrated ? (
           <LoadingWorkspace message="Loading card history" />
         ) : (
-          <div 
+          <div
             className={`flex-1 h-full flex flex-col relative transition-all duration-300 ease-out ${
-              isRevealed 
-                ? 'opacity-100 translate-y-0' 
+              isRevealed
+                ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-2 pointer-events-none'
             }`}
           >
-            <div 
-              className="flex-1 h-full flex-col overflow-hidden" 
+            <div
+              className="flex-1 h-full flex-col overflow-hidden"
               style={{ display: activeCategory === 'strategy' ? 'flex' : 'none' }}
             >
               <StrategyColumn
@@ -716,8 +682,8 @@ export default function App() {
               />
             </div>
 
-            <div 
-              className="flex-1 h-full flex-col overflow-hidden" 
+            <div
+              className="flex-1 h-full flex-col overflow-hidden"
               style={{ display: activeCategory === 'faster' ? 'flex' : 'none' }}
             >
               <PaceColumn
@@ -732,8 +698,8 @@ export default function App() {
               />
             </div>
 
-            <div 
-              className="flex-1 h-full flex-col overflow-hidden" 
+            <div
+              className="flex-1 h-full flex-col overflow-hidden"
               style={{ display: activeCategory === 'slower' ? 'flex' : 'none' }}
             >
               <PaceColumn
@@ -750,7 +716,7 @@ export default function App() {
 
             {/* Offline Local Cache Notice if 3-second fallback triggered */}
             {isTimedOut && (!cardsInitialized || !strategyInitialized) && (
-              <div 
+              <div
                 className="absolute bottom-4 left-4 z-30 px-3.5 py-1.5 rounded-full bg-slate-900/95 border border-amber-500/30 text-amber-300 shadow-xl text-xs font-semibold flex items-center gap-2 backdrop-blur-md animate-in fade-in slide-in-from-bottom-2 duration-300 select-none"
                 role="status"
               >
@@ -773,7 +739,7 @@ export default function App() {
           </div>
         )}
       </main>
-      
+
       {/* Reset Confirmation Modal */}
       <ResetConfirmModal
         isOpen={showResetModal}
@@ -787,17 +753,6 @@ export default function App() {
           WORK SMARTER, NOT HARDER
         </div>
       </footer>
-
-      {/* Authentication Required / Domain Authorization Overlay */}
-      {!user && !authLoading && !isGuestMode && (
-        <AuthOverlay
-          authError={authError}
-          copiedDomain={copiedDomain}
-          onLogin={handleLogin}
-          onContinueAsGuest={handleContinueAsGuest}
-          onCopyDomain={handleCopyDomain}
-        />
-      )}
     </div>
   );
 }

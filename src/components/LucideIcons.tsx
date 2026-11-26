@@ -65,7 +65,9 @@ type IconName =
   | 'scroll-text'
   | 'landmark'
   | 'eye'
-  | 'star';
+  | 'star'
+  | 'cloud-upload'
+  | 'cloud-alert';
 
 interface LucideIconProps extends Omit<SVGProps<SVGSVGElement>, 'width' | 'height' | 'viewBox' | 'children'> {
   size?: number;
@@ -152,3 +154,5 @@ export const ScrollText = createLucideIcon('scroll-text');
 export const Landmark = createLucideIcon('landmark');
 export const Eye = createLucideIcon('eye');
 export const Star = createLucideIcon('star');
+export const CloudUpload = createLucideIcon('cloud-upload');
+export const CloudAlert = createLucideIcon('cloud-alert');
