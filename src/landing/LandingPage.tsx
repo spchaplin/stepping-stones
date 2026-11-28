@@ -78,18 +78,14 @@ function StarCanvas() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Check if user prefers reduced motion
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) return;
-
-    let animId: number;
+    let animId = 0;
     let isRunning = true;
 
     interface Star {
       x: number;
       y: number;
       r: number;
-      speed: number;
+      speed: number; // pixels per second falling vertically
       bucket: number;
     }
 
@@ -107,11 +103,25 @@ function StarCanvas() {
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const prevWidth = width || window.innerWidth;
+      const prevHeight = height || window.innerHeight;
       width = window.innerWidth;
       height = window.innerHeight;
       canvas.width = Math.floor(width * dpr);
       canvas.height = Math.floor(height * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      if (prevWidth > 0 && prevHeight > 0) {
+        const scaleX = width / prevWidth;
+        const scaleY = height / prevHeight;
+        for (let b = 0; b < 3; b++) {
+          const group = buckets[b];
+          for (let i = 0; i < group.length; i++) {
+            group[i].x *= scaleX;
+            group[i].y *= scaleY;
+          }
+        }
+      }
     };
     resize();
     window.addEventListener('resize', resize);
@@ -123,13 +133,18 @@ function StarCanvas() {
         x: Math.random() * width,
         y: Math.random() * height,
         r: Math.random() * 1.2 + 0.3,
-        speed: Math.random() * 0.12 + 0.02,
+        speed: Math.random() * 14 + 6,
         bucket,
       });
     }
 
-    const draw = () => {
+    let lastTime = performance.now();
+
+    const draw = (now: number) => {
       if (!isRunning) return;
+
+      const dt = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
 
       ctx.clearRect(0, 0, width, height);
 
@@ -139,7 +154,7 @@ function StarCanvas() {
         ctx.beginPath();
         for (let i = 0; i < group.length; i++) {
           const s = group[i];
-          s.y += s.speed;
+          s.y += s.speed * dt;
           if (s.y > height) {
             s.y = 0;
             s.x = Math.random() * width;
@@ -160,6 +175,7 @@ function StarCanvas() {
         cancelAnimationFrame(animId);
       } else if (!isRunning) {
         isRunning = true;
+        lastTime = performance.now();
         animId = requestAnimationFrame(draw);
       }
     };
@@ -178,8 +194,9 @@ function StarCanvas() {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none"
+      className="fixed inset-0 w-full h-full pointer-events-none"
       style={{ zIndex: 0 }}
+      aria-hidden="true"
     />
   );
 }
